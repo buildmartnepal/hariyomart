@@ -1,65 +1,69 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "hariyo-mart-nepal",
+  "name": "hariyomart",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2026-08-14",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "workers_dev": true,
-  "preview_urls": true,
+  "compatibility_date": "2026-08-13",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS",
+    "binding": "ASSETS"
   },
+
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1,
+    "head_sampling_rate": 1
   },
+
   "vars": {
     "APP_ENV": "production",
-    "NEXT_PUBLIC_SITE_URL": "https://hariyo-mart-nepal.YOUR_SUBDOMAIN.workers.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://hariyomart.workers.dev",
     "NEXT_PUBLIC_API_URL": "/api",
-    "SESSION_COOKIE_NAME": "hariyo_session",
+    "SESSION_COOKIE_NAME": "hariyo_session"
   },
+
   "d1_databases": [
     {
       "binding": "HARIYO_DB",
       "database_name": "hariyo-mart-production-apac",
       "database_id": "4be4c98b-6637-4e18-a990-a789222925d4",
-      "migrations_dir": "migrations",
-    },
+      "migrations_dir": "migrations"
+    }
   ],
+
   "kv_namespaces": [
     {
       "binding": "HARIYO_KV",
-      "id": "fc22c7ded52641b2af4f1f1c68ecbd0e",
-    },
+      "id": "fc22c7ded52641b2af4f1f1c68ecbd0e"
+    }
   ],
+
   "r2_buckets": [
     {
       "binding": "HARIYO_MEDIA",
-      "bucket_name": "hariyo-mart-media",
+      "bucket_name": "hariyo-mart-media"
     },
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "hariyo-mart-opennext-cache",
-    },
+      "bucket_name": "hariyo-mart-opennext-cache"
+    }
   ],
+
   "queues": {
     "producers": [
       {
         "binding": "HARIYO_EVENTS",
-        "queue": "hariyo-mart-events",
-      },
-    ],
+        "queue": "hariyo-mart-events"
+      }
+    ]
   },
+
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "hariyo-mart-nepal",
-    },
-    {
-      "binding": "HARIYO_SERVICES",
-      "service": "hariyo-mart-services",
-    },
-  ],
+      "service": "hariyomart"
+    }
+  ]
 }
