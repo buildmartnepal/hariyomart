@@ -42,19 +42,22 @@ function findWorkersUrl(output) {
   return urls.find((url) => new URL(url).hostname.startsWith('hariyo-mart-nepal.')) || urls[0];
 }
 
-console.log('\n1/7 Checking Cloudflare login');
+console.log('\n1/8 Checking Cloudflare login');
 wrangler(['whoami']);
 
-console.log('\n2/7 Deploying the private services Worker');
+console.log('\n2/8 Applying D1 migrations and idempotent marketplace seed');
+run(npm, ['run', 'cloudflare:db:remote']);
+
+console.log('\n3/8 Deploying the private services Worker');
 wrangler([
   'deploy',
   '--config',
   'infra/cloudflare/services/wrangler.jsonc',
   '--message',
-  'Hariyo Mart v6 services production release',
+  'Hariyo Mart v6.1 services production release',
 ]);
 
-console.log('\n3/7 Deploying the public Worker to resolve its workers.dev URL');
+console.log('\n4/8 Deploying the public Worker to resolve its workers.dev URL');
 const firstDeploy = run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy'], { capture: true });
 const deploymentOutput = `${firstDeploy.stdout || ''}\n${firstDeploy.stderr || ''}`;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || findWorkersUrl(deploymentOutput);
@@ -64,7 +67,7 @@ if (!siteUrl || !URL.canParse(siteUrl) || new URL(siteUrl).protocol !== 'https:'
   );
 }
 
-console.log('\n4/7 Installing missing production secrets');
+console.log('\n5/8 Installing missing production secrets');
 const secretList = wrangler(['secret', 'list', '--config', 'apps/web/wrangler.jsonc'], {
   capture: true,
   allowFailure: true,
@@ -88,7 +91,7 @@ if (missingSecrets.length) {
   console.log('All required secrets already exist; no secrets were rotated.');
 }
 
-console.log(`\n5/7 Configuring the production hostname: ${siteUrl}`);
+console.log(`\n6/8 Configuring the production hostname: ${siteUrl}`);
 const config = fs.readFileSync(webConfig, 'utf8');
 const configured = config.replace(
   /("NEXT_PUBLIC_SITE_URL"\s*:\s*")[^"]+("\s*,?)/,
@@ -99,24 +102,31 @@ if (configured === config && !config.includes(siteUrl)) {
 }
 fs.writeFileSync(webConfig, configured);
 
-console.log('\n6/7 Rebuilding and publishing the final hostname-aware Worker');
+console.log('\n7/8 Rebuilding and publishing the final hostname-aware Worker');
 run(npm, ['run', 'cloudflare:config:check']);
 run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy']);
 
-console.log('\n7/7 Verifying the live marketplace');
+console.log('\n8/8 Verifying the live marketplace');
 const health = await fetch(`${siteUrl}/api/health`);
 const products = await fetch(`${siteUrl}/api/products?limit=2`);
-if (!health.ok || !products.ok) {
-  throw new Error(`Live verification failed: health=${health.status}, products=${products.status}`);
+const serviceAreas = await fetch(`${siteUrl}/api/locations/service-areas`);
+if (!health.ok || !products.ok || !serviceAreas.ok) {
+  throw new Error(
+    `Live verification failed: health=${health.status}, products=${products.status}, serviceAreas=${serviceAreas.status}`,
+  );
 }
 const healthBody = await health.json();
 const productBody = await products.json();
+const serviceAreaBody = await serviceAreas.json();
 console.log(
   JSON.stringify(
     {
       siteUrl,
       health: healthBody,
-      productsReturned: Array.isArray(productBody?.products) ? productBody.products.length : null,
+      productsReturned: Array.isArray(productBody?.data) ? productBody.data.length : null,
+      serviceAreasReturned: Array.isArray(serviceAreaBody?.data)
+        ? serviceAreaBody.data.length
+        : null,
     },
     null,
     2,

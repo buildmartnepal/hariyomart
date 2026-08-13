@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "6.0.0",
+  "version": "6.1.0",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -55,10 +55,6 @@
     "eslint-config-next": "16.3.0",
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
-    "typescript-eslint": "^8.46.1",
-    "wrangler": "^4.123.0"
-  },
-  "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.2"
+    "typescript-eslint": "^8.46.1"
   }
 }

@@ -255,6 +255,8 @@ export function farmForProduct(product: Product) {
     farmerVerified?: boolean;
     deliveryRadiusKm?: number;
     municipality?: string;
+    lat?: number;
+    lng?: number;
   };
   if (live.farmName)
     return {
@@ -266,8 +268,12 @@ export function farmForProduct(product: Product) {
       province: product.province,
       district: product.district,
       municipality: live.municipality || product.district,
-      lat: 0,
-      lng: 0,
+      lat: Number.isFinite(live.lat)
+        ? Number(live.lat)
+        : farms.find((f) => f.province === product.province)?.lat || 0,
+      lng: Number.isFinite(live.lng)
+        ? Number(live.lng)
+        : farms.find((f) => f.province === product.province)?.lng || 0,
       verified: live.farmerVerified !== false,
       rating: product.rating || 4.8,
       story: 'Independent Hariyo Mart farmer store with traceable marketplace inventory.',

@@ -1,4 +1,4 @@
-# Hariyo Mart Nepal v6 — Cloudflare Production Runbook
+# Hariyo Mart Nepal v6.1 — Cloudflare Production Runbook
 
 ## Production topology
 
@@ -61,7 +61,10 @@ Never place secret values in `wrangler.jsonc`, `.env.production.example`, mobile
 npm run cloudflare:db:remote
 ```
 
-This applies the versioned D1 migration and idempotently loads seven verified province seller tenants plus 84 starter products. Re-running the seed does not overwrite live rows.
+This applies every versioned D1 migration and idempotently loads seven verified province seller
+tenants plus 84 starter products. The v6.1 migration adds content, service areas, promotions, reviews,
+support, inventory history, notifications and platform settings. Re-running the seed does not
+overwrite live rows.
 
 ## 4. Verify and deploy
 
@@ -72,8 +75,9 @@ npm run deploy:cloudflare:web
 ```
 
 For the first deployment, the source release also provides one resumable command. It deploys the
-services Worker first, resolves the account's real `workers.dev` hostname, installs only missing
-production secrets, rebuilds the public Worker with that hostname and verifies the live API:
+pending D1 migrations first, deploys the services Worker, resolves the account's real `workers.dev`
+hostname, installs only missing production secrets, rebuilds the public Worker with that hostname
+and verifies products and service-area data through the live API:
 
 ```bash
 npm run finish:cloudflare

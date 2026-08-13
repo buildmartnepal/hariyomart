@@ -25,7 +25,11 @@ export const adminSections = [
   'warehouses',
   'payments',
   'content',
+  'promotions',
+  'reviews',
+  'support',
   'analytics',
+  'settings',
 ] as const;
 export const farmerSections = [
   'overview',

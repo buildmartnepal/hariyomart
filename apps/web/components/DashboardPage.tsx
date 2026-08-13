@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { HarvestPublisher } from './HarvestPublisher';
 import { WorkspaceLive } from './WorkspaceLive';
 import { BadgeCheck, Plus, Store } from 'lucide-react';
+import { OperationsManager } from './OperationsManager';
 const roleCopy = {
   Farmer: {
     kicker: 'SELLER WORKSPACE',
@@ -88,7 +89,20 @@ export function DashboardPage({
                     </h2>
                   </div>
                 </div>
-                <WorkspaceLive role={role} section={section} />
+                {role === 'Admin' &&
+                [
+                  'content',
+                  'delivery-zones',
+                  'promotions',
+                  'support',
+                  'reviews',
+                  'settings',
+                  'analytics',
+                ].includes(section) ? (
+                  <OperationsManager section={section} />
+                ) : (
+                  <WorkspaceLive role={role} section={section} />
+                )}
               </>
             )}
           </div>

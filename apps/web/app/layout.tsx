@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { CartProvider } from '@/components/CartProvider';
 import { CartDrawer } from '@/components/CartDrawer';
 import { AuthProvider } from '@/components/AuthProvider';
+import { LocationProvider } from '@/components/LocationProvider';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hariyomart.example'),
   title: {
@@ -35,12 +36,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AuthProvider>
-          <CartProvider>
-            <Header />
-            <CartDrawer />
-            {children}
-            <Footer />
-          </CartProvider>
+          <LocationProvider>
+            <CartProvider>
+              <Header />
+              <CartDrawer />
+              {children}
+              <Footer />
+            </CartProvider>
+          </LocationProvider>
         </AuthProvider>
       </body>
     </html>

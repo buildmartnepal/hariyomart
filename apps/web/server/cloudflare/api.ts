@@ -26,6 +26,21 @@ import {
   verifyPassword,
   type CloudflareUserRow,
 } from './platform';
+import {
+  adminBlog,
+  adminOperations,
+  adminPromotions,
+  adminReviews,
+  adminServiceAreas,
+  adminSettings,
+  adminSupport,
+  createSupportTicket,
+  inventoryEvents,
+  newsletterSubscribe,
+  productReviews,
+  publicBlog,
+  publicServiceAreas,
+} from './operations';
 
 const buyerRegistration = z.object({
   name: z.string().min(2).max(100),
@@ -540,18 +555,40 @@ async function patchProduct(req: NextRequest, id: string) {
     if (tenant?.status !== 'verified')
       throw new CloudflareApiError(409, 'Verify the seller tenant before activating products');
   }
-  await env.HARIYO_DB.prepare(
+  const now = new Date().toISOString();
+  const stockChanged = input.stock !== undefined && input.stock !== Number(product.stock || 0);
+  const updateStatement = env.HARIYO_DB.prepare(
     `UPDATE products SET status=COALESCE(?,status),price=COALESCE(?,price),stock=COALESCE(?,stock),delivery_radius_km=COALESCE(?,delivery_radius_km),updated_at=? WHERE id=?`,
-  )
-    .bind(
-      input.status || null,
-      input.price ?? null,
-      input.stock ?? null,
-      input.deliveryRadiusKm ?? null,
-      new Date().toISOString(),
-      product.id,
-    )
-    .run();
+  ).bind(
+    input.status || null,
+    input.price ?? null,
+    input.stock ?? null,
+    input.deliveryRadiusKm ?? null,
+    now,
+    product.id,
+  );
+  if (stockChanged) {
+    await env.HARIYO_DB.batch([
+      updateStatement,
+      env.HARIYO_DB.prepare(
+        `INSERT INTO inventory_events (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason,reference_type,reference_id)
+         VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ).bind(
+        crypto.randomUUID(),
+        product.id,
+        product.tenant_id,
+        user.id,
+        'adjustment',
+        Number(input.stock) - Number(product.stock || 0),
+        Number(input.stock),
+        'Stock updated from product workspace',
+        'product_update',
+        product.id,
+      ),
+    ]);
+  } else {
+    await updateStatement.run();
+  }
   await audit(req, user, 'product.updated', 'product', product.id, input);
   return apiJson({ ok: true, id: product.id, ...input });
 }
@@ -1228,7 +1265,7 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '6.0.0',
+    version: '6.1.0',
     status: Object.values(required).every(Boolean) ? 'ready' : 'degraded',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues',
     database,
@@ -1328,6 +1365,7 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     )
       return await dashboard(req, segments[1]);
     if (route === 'locations/provinces' && method === 'GET') return apiJson(catalog.provinces);
+    if (route === 'locations/service-areas' && method === 'GET') return await publicServiceAreas();
     if (
       segments[0] === 'locations' &&
       segments[1] === 'provinces' &&
@@ -1343,6 +1381,52 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (segments[0] === 'media' && segments.length > 1 && method === 'GET')
       return await media(req, segments.slice(1).join('/'));
     if (route === 'payments/providers' && method === 'GET') return payments();
+    if (route === 'content/newsletter' && method === 'POST') return await newsletterSubscribe(req);
+    if (route === 'content/blog' && method === 'GET') return await publicBlog(req);
+    if (segments[0] === 'content' && segments[1] === 'blog' && segments[2] && method === 'GET')
+      return await publicBlog(req, segments[2]);
+    if (route === 'support/tickets' && method === 'POST') return await createSupportTicket(req);
+    if (segments[0] === 'reviews' && segments[1] && ['GET', 'POST'].includes(method))
+      return await productReviews(req, segments[1]);
+    if (route === 'inventory/events' && ['GET', 'POST'].includes(method))
+      return await inventoryEvents(req);
+    if (route === 'admin/operations' && method === 'GET') return await adminOperations(req);
+    if (route === 'admin/content/posts' && ['GET', 'POST'].includes(method))
+      return await adminBlog(req);
+    if (
+      segments[0] === 'admin' &&
+      segments[1] === 'content' &&
+      segments[2] === 'posts' &&
+      segments[3] &&
+      method === 'PATCH'
+    )
+      return await adminBlog(req, segments[3]);
+    if (route === 'admin/service-areas' && ['GET', 'POST'].includes(method))
+      return await adminServiceAreas(req);
+    if (
+      segments[0] === 'admin' &&
+      segments[1] === 'service-areas' &&
+      segments[2] &&
+      method === 'PATCH'
+    )
+      return await adminServiceAreas(req, segments[2]);
+    if (route === 'admin/promotions' && ['GET', 'POST'].includes(method))
+      return await adminPromotions(req);
+    if (
+      segments[0] === 'admin' &&
+      segments[1] === 'promotions' &&
+      segments[2] &&
+      method === 'PATCH'
+    )
+      return await adminPromotions(req, segments[2]);
+    if (route === 'admin/support' && method === 'GET') return await adminSupport(req);
+    if (segments[0] === 'admin' && segments[1] === 'support' && segments[2] && method === 'PATCH')
+      return await adminSupport(req, segments[2]);
+    if (route === 'admin/reviews' && method === 'GET') return await adminReviews(req);
+    if (segments[0] === 'admin' && segments[1] === 'reviews' && segments[2] && method === 'PATCH')
+      return await adminReviews(req, segments[2]);
+    if (route === 'admin/settings' && ['GET', 'PUT'].includes(method))
+      return await adminSettings(req);
     throw new CloudflareApiError(404, 'Route not found');
   } catch (error) {
     const details = error instanceof CloudflareApiError ? error.details : undefined;

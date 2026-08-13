@@ -1,15 +1,19 @@
-# Hariyo Mart Nepal v6.0 — Cloudflare Marketplace SaaS
+# Hariyo Mart Nepal v6.1 — Advanced Cloudflare Marketplace SaaS
 
 Hariyo Mart is a production-oriented marketplace connecting buyers with farmers, cooperatives and produce sellers across Nepal. The web SaaS, marketplace API, data, live inventory coordination, media and background events now run on Cloudflare. The Expo app uses the same API.
 
 ## Working product surface
 
 - 84 Nepal-focused starter products across all seven provinces
-- Responsive Next.js 16 storefront, nearby search, seller pages, cart and checkout
+- Premium square-card Next.js 16 storefront with persistent location, radius, district, organic,
+  stock and distance-aware discovery controls
 - Guest cash-on-delivery orders with idempotency and phone-based tracking
 - Buyer accounts, rotating sessions, addresses, wishlist, rewards and order history
 - Farmer onboarding, tenant workspace, R2 harvest photos, inventory and fulfillment tools
 - Admin verification, listing moderation, orders, settlement views and audit history
+- D1 content publishing, service zones, promotions, review moderation, support desk, inventory
+  event history, newsletter subscribers, notifications and platform settings
+- Hariyo Journal with eight useful buyer, farmer and regional food stories
 - Expo Router app with SecureStore auth, location discovery and shared marketplace checkout
 - Online payment providers safely disabled until merchant onboarding and webhook certification
 
@@ -63,7 +67,8 @@ For this provisioned release, authenticate Wrangler on a machine that permits Wo
 npm run finish:cloudflare
 ```
 
-The command is resumable and will not rotate production secrets that already exist.
+The command is resumable, applies all pending D1 migrations (including the v6.1 operations schema)
+and will not rotate production secrets that already exist.
 
 Real secrets, payment keys and merchant credentials are never stored in this repository. Cloudflare
 resource IDs are non-secret deployment identifiers; regenerate the config before targeting another

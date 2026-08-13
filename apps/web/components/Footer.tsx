@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Store } from 'lucide-react';
+import { Headphones, MapPin, ShieldCheck, Store, Truck } from 'lucide-react';
+import { NewsletterSignup } from './NewsletterSignup';
 export function Footer() {
   return (
     <footer className="footer">
@@ -26,6 +27,7 @@ export function Footer() {
                 <Store size={15} /> Sell on Hariyo
               </Link>
             </div>
+            <NewsletterSignup />
           </div>
           <div className="footer-grid-links">
             <div>
@@ -34,6 +36,7 @@ export function Footer() {
               <Link href="/nearby">Nearby products</Link>
               <Link href="/categories/vegetables">Categories</Link>
               <Link href="/info/bulk-orders">Bulk orders</Link>
+              <Link href="/account/subscriptions">Subscriptions</Link>
             </div>
             <div>
               <h4>Farmers</h4>
@@ -41,6 +44,7 @@ export function Footer() {
               <Link href="/farmer/overview">Farmer dashboard</Link>
               <Link href="/info/farmers">Meet farmers</Link>
               <Link href="/how-it-works">How it works</Link>
+              <Link href="/farmer/inventory">Manage inventory</Link>
             </div>
             <div>
               <h4>Company</h4>
@@ -48,6 +52,7 @@ export function Footer() {
               <Link href="/blog">Stories</Link>
               <Link href="/info/sustainability">Sustainability</Link>
               <Link href="/info/contact">Contact</Link>
+              <Link href="/info/careers">Careers</Link>
             </div>
             <div>
               <h4>Support</h4>
@@ -55,7 +60,34 @@ export function Footer() {
               <Link href="/info/returns">Returns</Link>
               <Link href="/info/privacy">Privacy</Link>
               <Link href="/info/terms">Terms</Link>
+              <Link href="/track">Track an order</Link>
             </div>
+          </div>
+        </div>
+        <div className="footer-operations">
+          <div>
+            <MapPin size={20} />
+            <span>
+              <b>Serving all Nepal</b>Koshi to Sudurpashchim
+            </span>
+          </div>
+          <div>
+            <Truck size={20} />
+            <span>
+              <b>Local fulfilment</b>Delivery or farm pickup
+            </span>
+          </div>
+          <div>
+            <ShieldCheck size={20} />
+            <span>
+              <b>Safer commerce</b>Verified seller workflows
+            </span>
+          </div>
+          <div>
+            <Headphones size={20} />
+            <span>
+              <b>Buyer & seller help</b>Support ticket workspace
+            </span>
           </div>
         </div>
         <div className="copyright">

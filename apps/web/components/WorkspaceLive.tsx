@@ -20,12 +20,24 @@ import {
 import { useAuth } from './AuthProvider';
 
 type Props = { role: 'Farmer' | 'Admin' | 'Account'; section: string };
-type Bundle = { dash: any; products: any[]; orders: any[]; tenants: any[] };
+type Bundle = {
+  dash: any;
+  products: any[];
+  orders: any[];
+  tenants: any[];
+  inventoryEvents: any[];
+};
 const nf = (n: any) => new Intl.NumberFormat('en-NP').format(Number(n || 0));
 const money = (n: any) => `NPR ${nf(Math.round(Number(n || 0)))}`;
 export function WorkspaceLive({ role, section }: Props) {
   const auth = useAuth();
-  const [data, setData] = useState<Bundle>({ dash: null, products: [], orders: [], tenants: [] });
+  const [data, setData] = useState<Bundle>({
+    dash: null,
+    products: [],
+    orders: [],
+    tenants: [],
+    inventoryEvents: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [action, setAction] = useState('');
@@ -59,6 +71,10 @@ export function WorkspaceLive({ role, section }: Props) {
         keys.push('products');
         requests.push(auth.apiRequest('/products/seller/mine'));
       }
+      if (role === 'Farmer' && section === 'inventory') {
+        keys.push('inventoryEvents');
+        requests.push(auth.apiRequest('/inventory/events'));
+      }
       if (
         role === 'Farmer' &&
         ['orders', 'payments', 'payouts', 'customers', 'overview'].includes(section)
@@ -82,12 +98,19 @@ export function WorkspaceLive({ role, section }: Props) {
         requests.push(auth.apiRequest('/orders/seller'));
       }
       const extra = await Promise.all(requests);
-      const next: Bundle = { dash, products: [], orders: [], tenants: [] };
+      const next: Bundle = {
+        dash,
+        products: [],
+        orders: [],
+        tenants: [],
+        inventoryEvents: [],
+      };
       extra.forEach((x, i) => {
         const key = keys[i] as keyof Bundle;
         if (key === 'products') next.products = Array.isArray(x?.data) ? x.data : [];
         if (key === 'orders') next.orders = Array.isArray(x) ? x : [];
         if (key === 'tenants') next.tenants = Array.isArray(x?.data) ? x.data : [];
+        if (key === 'inventoryEvents') next.inventoryEvents = Array.isArray(x?.data) ? x.data : [];
       });
       setData(next);
     } catch (e) {
@@ -376,6 +399,15 @@ function FarmerView({ section, data, action, run, auth }: any) {
             + List harvest
           </Link>
         </DataPanel>
+        {section === 'inventory' && (
+          <InventoryManager
+            products={data.products}
+            events={data.inventoryEvents}
+            auth={auth}
+            run={run}
+            action={action}
+          />
+        )}
       </>
     );
   if (section === 'orders')
@@ -929,6 +961,99 @@ function BuyerView({ section, data, auth, run, action }: any) {
         <ModuleGrid section={section} />
       </DataPanel>
     </>
+  );
+}
+
+function InventoryManager({ products, events, auth, run, action }: any) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    void run('inventory-adjustment', () =>
+      auth.apiRequest('/inventory/events', {
+        method: 'POST',
+        body: JSON.stringify({
+          productId: data.get('productId'),
+          eventType: data.get('eventType'),
+          quantityChange: Number(data.get('quantityChange')),
+          reason: data.get('reason'),
+        }),
+      }),
+    );
+    form.reset();
+  }
+  return (
+    <DataPanel
+      title="Inventory event ledger"
+      subtitle="Record harvests, spoilage, returns and corrections. Every change is linked to the actor and final stock level."
+    >
+      <form className="inventory-adjust-form" onSubmit={submit}>
+        <label>
+          Product
+          <select name="productId" required>
+            <option value="">Choose a listing</option>
+            {products.map((product: any) => (
+              <option value={product._id} key={product._id}>
+                {product.name} · {product.stock} {product.unit}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Event
+          <select name="eventType">
+            <option value="harvest">New harvest</option>
+            <option value="adjustment">Stock correction</option>
+            <option value="return">Customer return</option>
+            <option value="spoilage">Spoilage / loss</option>
+          </select>
+        </label>
+        <label>
+          Change (+ or −)
+          <input
+            name="quantityChange"
+            type="number"
+            step="any"
+            required
+            placeholder="e.g. 20 or -3"
+          />
+        </label>
+        <label>
+          Reason
+          <input
+            name="reason"
+            required
+            minLength={2}
+            placeholder="Harvest batch or adjustment note"
+          />
+        </label>
+        <button className="btn btn-primary" type="submit" disabled={!!action || !products.length}>
+          Save inventory event
+        </button>
+      </form>
+      <div className="inventory-event-list">
+        {events.length ? (
+          events.slice(0, 30).map((item: any) => (
+            <div key={item.id}>
+              <span>
+                <b>{item.product_name}</b>
+                <small>{item.reason || item.event_type}</small>
+              </span>
+              <em className={Number(item.quantity_change) >= 0 ? 'stock-in' : 'stock-out'}>
+                {Number(item.quantity_change) >= 0 ? '+' : ''}
+                {item.quantity_change}
+              </em>
+              <span>
+                <b>{item.stock_after}</b>
+                <small>stock after</small>
+              </span>
+            </div>
+          ))
+        ) : (
+          <Empty text="No inventory events recorded yet." />
+        )}
+      </div>
+    </DataPanel>
   );
 }
 

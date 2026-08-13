@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { infoPages } from '@/lib/info-pages';
+import { SupportTicketForm } from '@/components/SupportTicketForm';
 export function generateStaticParams() {
   return infoPages.map((p) => ({ slug: p.slug }));
 }
@@ -28,6 +29,7 @@ export default async function Info({ params }: { params: Promise<{ slug: string 
       </section>
       <section className="section">
         <div className="container" style={{ maxWidth: 850 }}>
+          {slug === 'contact' && <SupportTicketForm />}
           <h2>Designed for trust and practical use</h2>
           <p className="section-copy">
             This page is connected to the platform content model and can be managed through the

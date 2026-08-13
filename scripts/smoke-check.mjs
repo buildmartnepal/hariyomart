@@ -7,6 +7,7 @@ const must = [
   'apps/web/server/cloudflare/platform.ts',
   'apps/web/server/cloudflare/checkout.ts',
   'apps/web/migrations/0001_hariyo_platform.sql',
+  'apps/web/migrations/0002_operations_content.sql',
   'apps/web/seed/cloudflare.sql',
   'apps/web/wrangler.jsonc',
   'apps/web/open-next.config.ts',
@@ -15,6 +16,8 @@ const must = [
   'apps/web/server/data/catalog.json',
   'apps/web/components/AuthProvider.tsx',
   'apps/web/components/LocationMarket.tsx',
+  'apps/web/components/LocationProvider.tsx',
+  'apps/web/components/OperationsManager.tsx',
   'apps/web/components/HarvestPublisher.tsx',
   'apps/web/components/OrderTracker.tsx',
   'apps/web/app/track/page.tsx',
@@ -49,6 +52,13 @@ for (const route of [
   "route === 'uploads'",
   "segments[0] === 'media'",
   'system/readiness',
+  'content/newsletter',
+  'locations/service-areas',
+  'admin/operations',
+  'admin/content/posts',
+  'admin/promotions',
+  'admin/support',
+  'inventory/events',
 ]) {
   if (!api.includes(route)) throw new Error(`Next API dispatcher missing ${route}`);
 }
@@ -128,4 +138,22 @@ if (!checkout.includes('HARIYO_DB.batch') || !checkout.includes('idempotency_key
   throw new Error('D1 checkout must use atomic batches and idempotency');
 }
 
-console.log('Hariyo Mart Nepal Cloudflare v6 production smoke check PASS');
+const operations = fs.readFileSync('apps/web/server/cloudflare/operations.ts', 'utf8');
+for (const marker of [
+  'newsletterSubscribe',
+  'adminBlog',
+  'adminServiceAreas',
+  'adminPromotions',
+  'adminSupport',
+  'adminReviews',
+  'inventoryEvents',
+]) {
+  if (!operations.includes(marker)) throw new Error(`Operations API missing ${marker}`);
+}
+
+const finishDeploy = fs.readFileSync('scripts/finish-cloudflare-deploy.mjs', 'utf8');
+if (!finishDeploy.includes("['run', 'cloudflare:db:remote']")) {
+  throw new Error('One-command deployment must apply remote D1 migrations');
+}
+
+console.log('Hariyo Mart Nepal Cloudflare v6.1 production smoke check PASS');

@@ -16,8 +16,8 @@ import { catalog, type Product } from '@/lib/catalog';
 import { distanceKm, farms, locationPresets, nearbyProducts } from '@/lib/marketplace';
 import { ProductCard } from './ProductCard';
 import { useCart } from './CartProvider';
+import { useMarketLocation } from './LocationProvider';
 
-type Place = { name: string; lat: number; lng: number };
 type ApiProduct = Partial<Product> & {
   _id?: string;
   slug: string;
@@ -37,7 +37,6 @@ type ApiProduct = Partial<Product> & {
   rating?: number;
   tenantSlug?: string;
 };
-const defaultPlace: Place = { ...locationPresets[0] };
 const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
 function normalize(p: ApiProduct): Product {
   const province = catalog.provinces.find((x) => x.slug === p.province);
@@ -120,11 +119,8 @@ function LiveProductCard({ item }: { item: ApiProduct }) {
   );
 }
 export function LocationMarket() {
-  const [place, setPlace] = useState<Place>(defaultPlace);
-  const [radius, setRadius] = useState(150);
+  const { place, radius, locating, message, setRadius, choosePreset, locate } = useMarketLocation();
   const [category, setCategory] = useState('all');
-  const [locating, setLocating] = useState(false);
-  const [message, setMessage] = useState('Showing products closest to Kathmandu.');
   const [liveItems, setLiveItems] = useState<ApiProduct[] | null>(null);
   const [loading, setLoading] = useState(false);
   const fallback = useMemo(
@@ -180,25 +176,6 @@ export function LocationMarket() {
     };
   }, [place, radius, category]);
   const items = liveItems ?? fallback;
-  function locate() {
-    if (!navigator.geolocation) {
-      setMessage('Location is not available in this browser. Choose a city instead.');
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPlace({ name: 'Your location', lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setMessage('Matched using your current location.');
-        setLocating(false);
-      },
-      () => {
-        setMessage('Location permission was not granted. Choose a nearby city.');
-        setLocating(false);
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
-    );
-  }
   return (
     <div className="location-market">
       <div className="location-panel">
@@ -221,14 +198,7 @@ export function LocationMarket() {
             <span>
               <MapPin size={16} /> Delivery city
             </span>
-            <select
-              value={place.name}
-              onChange={(e) => {
-                const p = locationPresets.find((x) => x.name === e.target.value) || defaultPlace;
-                setPlace({ ...p });
-                setMessage(`Showing products closest to ${p.name}.`);
-              }}
-            >
+            <select value={place.name} onChange={(e) => choosePreset(e.target.value)}>
               <option value="Your location" disabled>
                 Your location
               </option>

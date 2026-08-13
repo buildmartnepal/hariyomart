@@ -1,26 +1,31 @@
-import Link from 'next/link';
-import { blogPosts } from '@/lib/blog';
+import { BookOpen, Sprout } from 'lucide-react';
+import { BlogJournal } from '@/components/BlogJournal';
 export default function Blog() {
   return (
     <main>
-      <section className="page-hero">
+      <section className="page-hero blog-hero">
         <div className="container">
-          <h1>Stories, recipes and practical guides</h1>
+          <span className="eyebrow">Hariyo Journal</span>
+          <h1>Know your food. Meet the people growing it.</h1>
           <p className="section-copy">
-            SEO-ready editorial routes for farm stories, food education and seasonal discovery.
+            Practical buying guides, regional food knowledge and field-tested lessons for farmers
+            building a digital business in Nepal.
           </p>
+          <div className="blog-topic-row">
+            <span>
+              <BookOpen size={16} /> Buying guides
+            </span>
+            <span>
+              <Sprout size={16} /> Farm stories
+            </span>
+            <span>🍲 Food knowledge</span>
+            <span>🧺 Seller academy</span>
+          </div>
         </div>
       </section>
-      <section className="section">
-        <div className="container grid province-grid">
-          {blogPosts.map((p, i) => (
-            <Link href={`/blog/${p.slug}`} className="province-card" key={p.slug}>
-              <div className="mapdot">{['🌱', '🍎', '🍵', '🌾'][i % 4]}</div>
-              <h3>{p.title}</h3>
-              <p>{p.excerpt}</p>
-              <small>Read article →</small>
-            </Link>
-          ))}
+      <section className="section journal-section">
+        <div className="container">
+          <BlogJournal />
         </div>
       </section>
     </main>

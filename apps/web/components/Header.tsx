@@ -2,13 +2,27 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Crosshair, LogIn, Menu, Search, ShoppingCart, Store, UserRound, X } from 'lucide-react';
+import {
+  ChevronDown,
+  Crosshair,
+  LogIn,
+  MapPin,
+  Menu,
+  Search,
+  ShoppingCart,
+  Store,
+  UserRound,
+  X,
+} from 'lucide-react';
 import { useCart } from './CartProvider';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { useAuth } from './AuthProvider';
+import { useMarketLocation } from './LocationProvider';
+import { locationPresets } from '@/lib/marketplace';
 export function Header() {
   const cart = useCart(),
     auth = useAuth();
+  const market = useMarketLocation();
   const [open, setOpen] = useState(false);
   const accountHref =
     auth.user?.role === 'admin'
@@ -20,6 +34,31 @@ export function Header() {
           : '/login';
   return (
     <header className="header">
+      <div className="market-announcement">
+        <div className="container announcement-inner">
+          <span>Fresh harvests, verified farms and transparent prices across all 7 provinces.</span>
+          <div className="header-location">
+            <MapPin size={14} />
+            <label htmlFor="header-delivery-city">Deliver near</label>
+            <select
+              id="header-delivery-city"
+              value={market.place.name}
+              onChange={(event) => market.choosePreset(event.target.value)}
+              aria-label="Delivery city"
+            >
+              {market.place.name === 'Your location' && (
+                <option value="Your location">Your location</option>
+              )}
+              {locationPresets.map((place) => (
+                <option key={place.name} value={place.name}>
+                  {place.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={13} aria-hidden="true" />
+          </div>
+        </div>
+      </div>
       <div className="container nav">
         <Link href="/" className="brand-link" onClick={() => setOpen(false)}>
           <Image
@@ -76,6 +115,10 @@ export function Header() {
         <div className="mobile-nav">
           <div className="container">
             <div className="mobile-actions">
+              <button className="mobile-locate" onClick={market.locate}>
+                <MapPin size={18} />{' '}
+                {market.locating ? 'Finding you…' : `Deliver near ${market.place.name}`}
+              </button>
               <Link href="/nearby" onClick={() => setOpen(false)}>
                 <Crosshair size={18} /> Find nearby food
               </Link>
