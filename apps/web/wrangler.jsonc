@@ -4,8 +4,7 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-13",
   "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
+    "nodejs_compat"
   ],
 
   "assets": {
@@ -65,10 +64,6 @@
     {
       "binding": "WORKER_SELF_REFERENCE",
       "service": "hariyomart"
-    },
-    {
-      "binding": "HARIYO_SERVICES",
-      "service": "hariyo-mart-services"
     }
   ]
 }
