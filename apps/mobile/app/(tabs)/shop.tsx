@@ -1,7 +1,8 @@
-import { Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { catalog } from '@/data/catalog';
-import { Screen, Header, ProductCard, colors } from '@/components/ui';
+import { Header, ProductGrid, Screen, useMobileColors } from '@/components/ui';
 const api = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 function normalize(p: any) {
   const province = catalog.provinces.find((x) => x.slug === p.province);
@@ -26,7 +27,10 @@ function normalize(p: any) {
   };
 }
 export default function Shop() {
+  const params = useLocalSearchParams<{ category?: string }>();
+  const palette = useMobileColors();
   const [q, setQ] = useState('');
+  const [category, setCategory] = useState(params.category || 'all');
   const [live, setLive] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -50,10 +54,12 @@ export default function Shop() {
   const source = live ?? catalog.products;
   const products = useMemo(
     () =>
-      source.filter((p: any) =>
-        `${p.name} ${p.shortDescription || ''}`.toLowerCase().includes(q.toLowerCase()),
+      source.filter(
+        (p: any) =>
+          (category === 'all' || p.category === category) &&
+          `${p.name} ${p.shortDescription || ''}`.toLowerCase().includes(q.toLowerCase()),
       ),
-    [q, source],
+    [category, q, source],
   );
   return (
     <Screen>
@@ -69,21 +75,50 @@ export default function Shop() {
         value={q}
         onChangeText={setQ}
         placeholder="Search tea, apple, honey..."
+        placeholderTextColor={palette.muted}
         style={{
-          backgroundColor: 'white',
+          color: palette.dark,
+          backgroundColor: palette.card,
           borderWidth: 1,
-          borderColor: colors.line,
+          borderColor: palette.line,
           padding: 15,
           borderRadius: 15,
-          marginBottom: 16,
+          marginBottom: 12,
         }}
       />
-      {products.map((p: any) => (
-        <ProductCard p={p as any} key={p.slug} />
-      ))}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
+        {[{ slug: 'all', name: 'All', emoji: '✦' }, ...catalog.categories].map((item) => {
+          const selected = category === item.slug;
+          return (
+            <Pressable
+              key={item.slug}
+              onPress={() => setCategory(item.slug)}
+              style={{
+                paddingHorizontal: 13,
+                paddingVertical: 10,
+                borderRadius: 99,
+                marginRight: 8,
+                backgroundColor: selected ? palette.green : palette.card,
+                borderWidth: 1,
+                borderColor: selected ? palette.green : palette.line,
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+            >
+              <Text style={{ color: selected ? '#062D22' : palette.dark, fontWeight: '800' }}>
+                {item.emoji} {item.name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <ProductGrid products={products as any} />
       {!products.length && !loading && (
-        <View style={{ padding: 18, borderRadius: 18, backgroundColor: 'white' }}>
-          <Text style={{ fontWeight: '900', color: colors.dark }}>No matching harvests</Text>
+        <View style={{ padding: 18, borderRadius: 18, backgroundColor: palette.card }}>
+          <Text style={{ fontWeight: '900', color: palette.dark }}>No matching harvests</Text>
+          <Text style={{ color: palette.muted, marginTop: 5 }}>
+            Try another category or search.
+          </Text>
         </View>
       )}
     </Screen>

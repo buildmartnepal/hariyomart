@@ -125,8 +125,11 @@ for (const key of [
 }
 
 const catalog = JSON.parse(fs.readFileSync('apps/web/server/data/catalog.json', 'utf8'));
-if (!Array.isArray(catalog.products) || catalog.products.length !== 84) {
-  throw new Error(`Expected 84 catalog products, got ${catalog.products?.length}`);
+if (!Array.isArray(catalog.products) || catalog.products.length !== 98) {
+  throw new Error(`Expected 98 catalog products, got ${catalog.products?.length}`);
+}
+if (!Array.isArray(catalog.categories) || catalog.categories.length !== 23) {
+  throw new Error(`Expected 23 catalog categories, got ${catalog.categories?.length}`);
 }
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
@@ -147,6 +150,10 @@ for (const marker of [
   'adminSupport',
   'adminReviews',
   'inventoryEvents',
+  'adminCategories',
+  'adminPages',
+  'adminMedia',
+  'adminAudit',
 ]) {
   if (!operations.includes(marker)) throw new Error(`Operations API missing ${marker}`);
 }
@@ -156,4 +163,4 @@ if (!finishDeploy.includes("['run', 'cloudflare:db:remote']")) {
   throw new Error('One-command deployment must apply remote D1 migrations');
 }
 
-console.log('Hariyo Mart Nepal Cloudflare v6.1 production smoke check PASS');
+console.log('Hariyo Mart Nepal Cloudflare v6.2 production smoke check PASS');

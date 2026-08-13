@@ -158,6 +158,19 @@ img {
   place-items: center;
   cursor: pointer;
 }
+.theme-button {
+  width: auto;
+  min-width: 42px;
+  padding: 0 11px;
+  display: inline-flex;
+  gap: 6px;
+  color: var(--ink);
+}
+.theme-button span {
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-transform: capitalize;
+}
 .province-select {
   border: 1px solid var(--line);
   background: var(--surface);
@@ -2716,6 +2729,93 @@ body {
 @media (max-width: 620px) {
   .farmer-directory {
     grid-template-columns: 1fr;
+  }
+}
+
+/* v6.2 colour modes — explicit tokens keep every workspace usable in light and dark. */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --soft: #eef6e8;
+  --surface-raised: #ffffff;
+  --focus: #277e4e;
+}
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #07130f;
+  --surface: #0d2019;
+  --surface-raised: #132a21;
+  --ink: #effaf4;
+  --muted: #a7bbb1;
+  --primary: #9bea4d;
+  --primary-strong: #9bea4d;
+  --dark: #020d09;
+  --line: #29473b;
+  --cream: #10291f;
+  --soft: #10291f;
+  --shadow: 0 22px 65px rgba(0, 0, 0, 0.32);
+  --soft-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+  --focus: #b5f676;
+}
+[data-theme='dark'] body {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(155, 234, 77, 0.08), transparent 25%), var(--bg);
+}
+[data-theme='dark']
+  :where(
+    .product-card,
+    .category-card,
+    .province-card,
+    .story-card,
+    .filter,
+    .market-location-toolbar,
+    .operations-panel,
+    .operations-form,
+    .operations-metrics > div,
+    .workspace-state,
+    .workspace-table,
+    .data-panel,
+    .metric,
+    .auth-card,
+    .checkout-card,
+    .order-summary,
+    .cart-page-item,
+    .feature-module,
+    .tenant-card,
+    .location-panel,
+    .nearby-farms,
+    .featured-story
+  ) {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme='dark'] :where(input, select, textarea, .icon-btn, .province-select) {
+  background-color: var(--surface-raised);
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme='dark'] :where(.page-hero, .soft-section, .intro-section) {
+  background-color: color-mix(in srgb, var(--surface) 82%, var(--bg));
+}
+[data-theme='dark'] :where(.marketplace-hero, .blog-hero) {
+  background:
+    radial-gradient(circle at 85% 20%, rgba(155, 234, 77, 0.12), transparent 28%),
+    linear-gradient(135deg, #0d2019, #111c17);
+}
+[data-theme='dark'] .story-card-art {
+  background: linear-gradient(135deg, #17372b, #3d3420);
+}
+[data-theme='dark'] .newsletter-form input {
+  background: rgba(255, 255, 255, 0.08);
+}
+[data-theme='dark'] :focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .theme-button span {
+    display: none;
   }
 }
 .checkout-grid {
@@ -5296,7 +5396,325 @@ body {
 .inventory-event-list .stock-out {
   color: #ad3f36;
 }
+.category-rail {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: 18px 2px 8px;
+  scroll-snap-type: x proximity;
+}
+.category-rail a {
+  flex: 0 0 auto;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  scroll-snap-align: start;
+  box-shadow: var(--soft-shadow);
+}
+.category-rail a span {
+  font-size: 1.35rem;
+}
+.category-rail a b {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.home-how {
+  background: color-mix(in srgb, var(--cream) 74%, var(--bg));
+}
+.home-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 30px;
+}
+.home-step-grid article,
+.trust-feature-grid article,
+.home-journal-grid > a {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--soft-shadow);
+}
+.home-step-grid article > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--primary-strong);
+}
+.home-step-grid article > div span {
+  font-size: 1.8rem;
+  font-weight: 950;
+  color: color-mix(in srgb, var(--primary-strong) 30%, transparent);
+}
+.home-step-grid h3,
+.trust-feature-grid h3,
+.home-journal-grid h3 {
+  margin: 17px 0 7px;
+}
+.home-step-grid p,
+.trust-feature-grid p,
+.home-journal-grid p {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+.trust-platform-section {
+  overflow: hidden;
+}
+.trust-platform-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 54px;
+  align-items: center;
+}
+.trust-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.trust-feature-grid svg {
+  color: var(--primary-strong);
+}
+.home-journal {
+  background: color-mix(in srgb, var(--surface) 72%, var(--cream));
+}
+.home-journal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.home-journal-grid > a {
+  color: inherit;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+.home-journal-grid > a:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+.home-journal-grid > a > span {
+  font-size: 2.6rem;
+}
+.home-journal-grid small {
+  display: block;
+  color: var(--primary-strong);
+  font-weight: 900;
+  margin-top: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.home-journal-grid b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary-strong);
+  font-size: 0.72rem;
+}
+.hero-media > img {
+  object-position: 62% center;
+}
+.role-journey-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 30px;
+}
+.role-journey-grid article {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 24px;
+  background: var(--surface);
+  box-shadow: var(--soft-shadow);
+}
+.role-journey-grid article > svg {
+  color: var(--primary-strong);
+}
+.role-journey-grid small {
+  display: block;
+  margin-top: 18px;
+  color: var(--primary-strong);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+.role-journey-grid h3 {
+  margin: 8px 0 14px;
+  font-size: 1.35rem;
+}
+.role-journey-grid ul {
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 0.8rem;
+}
+.role-journey-grid a {
+  display: inline-flex;
+  margin-top: 12px;
+  color: var(--primary-strong);
+  font-weight: 900;
+  font-size: 0.75rem;
+}
+.how-faq {
+  background: color-mix(in srgb, var(--cream) 64%, var(--bg));
+}
+.how-faq-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 58px;
+  align-items: start;
+}
+.how-faq-list {
+  display: grid;
+  gap: 10px;
+}
+.how-faq-list details {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 0 16px;
+}
+.how-faq-list summary {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  font-weight: 850;
+}
+.how-faq-list summary svg {
+  color: var(--primary-strong);
+  flex: none;
+}
+.how-faq-list p {
+  color: var(--muted);
+  line-height: 1.7;
+  padding: 0 26px 16px;
+  margin: 0;
+  font-size: 0.8rem;
+}
+.info-page-content {
+  display: grid;
+  gap: 14px;
+}
+.content-source-note {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 11px;
+  color: var(--primary-strong);
+  background: var(--surface);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+.info-page-content > section {
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0 28px;
+}
+.info-page-content h2 {
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  margin: 0 0 12px;
+}
+.info-page-content p {
+  color: var(--muted);
+  line-height: 1.85;
+}
+.info-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 8px 0 28px;
+}
+.info-highlight-grid > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.info-highlight-grid svg {
+  flex: none;
+  color: var(--primary-strong);
+}
+
+/* Final dark overrides stay last so later feature modules cannot reintroduce light surfaces. */
+[data-theme='dark']
+  :where(
+    .product-card,
+    .category-card,
+    .province-card,
+    .story-card,
+    .filter,
+    .market-location-toolbar,
+    .operations-panel,
+    .operations-form,
+    .operations-metrics > div,
+    .workspace-state,
+    .workspace-table,
+    .data-panel,
+    .metric,
+    .auth-card,
+    .checkout-card,
+    .order-summary,
+    .cart-page-item,
+    .feature-module,
+    .tenant-card,
+    .location-panel,
+    .nearby-farms,
+    .featured-story,
+    .support-ticket-form,
+    .category-rail a,
+    .home-step-grid article,
+    .trust-feature-grid article,
+    .home-journal-grid > a,
+    .role-journey-grid article,
+    .how-faq-list details,
+    .content-source-note,
+    .info-highlight-grid > div
+  ) {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme='dark'] :where(input, select, textarea, .icon-btn, .province-select) {
+  background-color: var(--surface-raised);
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme='dark'] :where(.page-hero, .soft-section, .intro-section, .home-how, .home-journal) {
+  background-color: color-mix(in srgb, var(--surface) 82%, var(--bg));
+}
 @media (max-width: 1100px) {
+  .home-step-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .trust-platform-grid {
+    grid-template-columns: 1fr;
+  }
+  .role-journey-grid {
+    grid-template-columns: 1fr;
+  }
+  .how-faq-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .info-highlight-grid {
+    grid-template-columns: 1fr;
+  }
   .inventory-adjust-form {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -5305,6 +5723,15 @@ body {
   }
 }
 @media (max-width: 620px) {
+  .home-step-grid,
+  .trust-feature-grid,
+  .home-journal-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-step-grid article,
+  .trust-feature-grid article {
+    padding: 17px;
+  }
   .inventory-adjust-form {
     grid-template-columns: 1fr;
   }

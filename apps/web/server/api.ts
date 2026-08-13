@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 import type { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
@@ -41,6 +41,13 @@ const cloudinaryImage = z
       return false;
     }
   }, 'Product images must use the configured Cloudinary account');
+
+function safeSecretEqual(actual: string, expected?: string) {
+  if (!expected) return false;
+  const actualHash = createHash('sha256').update(actual).digest();
+  const expectedHash = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(actualHash, expectedHash);
+}
 
 const buyerRegistration = z.object({
   name: z.string().min(2).max(100),
@@ -415,7 +422,7 @@ async function me(req: NextRequest) {
 async function bootstrapAdmin(req: NextRequest) {
   await authThrottle(req, 'bootstrap', 5);
   const key = req.headers.get('x-bootstrap-key') || '';
-  if (!process.env.ADMIN_BOOTSTRAP_KEY || key !== process.env.ADMIN_BOOTSTRAP_KEY)
+  if (!safeSecretEqual(key, process.env.ADMIN_BOOTSTRAP_KEY))
     throw new ApiError(403, 'Admin bootstrap is disabled or key is invalid');
   await database();
   const parsed = adminBootstrap.safeParse(await body(req));

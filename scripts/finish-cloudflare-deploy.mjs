@@ -54,7 +54,7 @@ wrangler([
   '--config',
   'infra/cloudflare/services/wrangler.jsonc',
   '--message',
-  'Hariyo Mart v6.1 services production release',
+  'Hariyo Mart v6.2 services production release',
 ]);
 
 console.log('\n4/8 Deploying the public Worker to resolve its workers.dev URL');
@@ -137,6 +137,9 @@ if (adminBootstrapKey) {
   console.log('\nSAVE THIS ONE-TIME ADMIN BOOTSTRAP KEY IN A PASSWORD MANAGER:');
   console.log(adminBootstrapKey);
   console.log('Delete or rotate ADMIN_BOOTSTRAP_KEY after creating the first admin.');
+  console.log(
+    'Run `npm run bootstrap:admin` to create the owner account with a hidden password prompt.',
+  );
 }
 
 console.log(`\nHariyo Mart is live: ${siteUrl}`);

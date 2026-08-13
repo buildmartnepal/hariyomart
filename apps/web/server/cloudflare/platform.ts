@@ -119,6 +119,21 @@ export async function requestBody(req: NextRequest) {
   }
 }
 
+export async function safeSecretEqual(actual: string | null, expected: string | undefined) {
+  if (!actual || !expected) return false;
+  const [actualHash, expectedHash] = await Promise.all(
+    [actual, expected].map(
+      async (value) =>
+        new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))),
+    ),
+  );
+  let difference = 0;
+  for (let index = 0; index < actualHash.length; index++) {
+    difference |= actualHash[index] ^ expectedHash[index];
+  }
+  return difference === 0;
+}
+
 export async function enforceRateLimit(req: NextRequest, limit = 180, windowSeconds = 60) {
   const env = cloudflareEnv();
   if (!env.HARIYO_SERVICES) return;

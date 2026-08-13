@@ -1,13 +1,15 @@
 import { Stack } from 'expo-router';
+import { useColorScheme } from 'react-native';
 import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
 export default function Layout() {
+  const dark = useColorScheme() === 'dark';
   return (
     <AuthProvider>
       <CartProvider>
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: '#062D22' },
+            headerStyle: { backgroundColor: dark ? '#10241C' : '#062D22' },
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: '800' },
           }}

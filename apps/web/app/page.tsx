@@ -5,15 +5,21 @@ import {
   BadgeCheck,
   Building2,
   ChefHat,
+  CircleCheckBig,
+  Clock3,
+  HeartHandshake,
   LocateFixed,
   PackageCheck,
   Smartphone,
   Store,
+  Sprout,
   Tractor,
   Truck,
   UsersRound,
+  WalletCards,
 } from 'lucide-react';
 import { catalog } from '@/lib/catalog';
+import { blogPosts } from '@/lib/blog';
 import { ProductCard } from '@/components/ProductCard';
 import { LocationMarket } from '@/components/LocationMarket';
 export default function Home() {
@@ -61,11 +67,12 @@ export default function Home() {
               </div>
               <div className="hero-media">
                 <Image
-                  src="/hero-vegetables.jpg"
-                  alt="Fresh vegetables grown in Nepal"
-                  width={1200}
-                  height={900}
+                  src="/marketing/hariyo-farmer-hero-v2.webp"
+                  alt="Nepali farmer holding a basket of fresh vegetables on a hillside farm"
+                  width={1693}
+                  height={929}
                   priority
+                  sizes="(max-width: 820px) 100vw, 52vw"
                 />
                 <div className="floating-order">
                   <span className="status-dot" />
@@ -198,6 +205,64 @@ export default function Home() {
               </Link>
             ))}
           </div>
+          <div className="category-rail" aria-label="More product categories">
+            {catalog.categories.slice(12).map((category) => (
+              <Link href={`/categories/${category.slug}`} key={category.slug}>
+                <span>{category.emoji}</span>
+                <b>{category.name}</b>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="section home-how">
+        <div className="container">
+          <div className="split-heading">
+            <div>
+              <span className="eyebrow">Simple from field to doorstep</span>
+              <h2 className="section-title">Know what happens after you tap “Add”.</h2>
+            </div>
+            <Link href="/how-it-works" className="text-link">
+              Explore every step <ArrowRight size={17} />
+            </Link>
+          </div>
+          <div className="home-step-grid">
+            {[
+              [
+                <LocateFixed key="locate" />,
+                '1',
+                'Set your market',
+                'Use your location or choose a Nepal city and delivery radius.',
+              ],
+              [
+                <Store key="store" />,
+                '2',
+                'Compare real sellers',
+                'See origin, farm verification, live stock, price and delivery fit.',
+              ],
+              [
+                <PackageCheck key="pack" />,
+                '3',
+                'One safe checkout',
+                'A mixed cart becomes seller-level fulfilments with one buyer order.',
+              ],
+              [
+                <Truck key="truck" />,
+                '4',
+                'Track every delivery',
+                'Follow packing, pickup, delivery and seller settlement independently.',
+              ],
+            ].map(([icon, number, title, copy]) => (
+              <article key={String(number)}>
+                <div>
+                  {icon}
+                  <span>{number}</span>
+                </div>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
       <section className="section dark-system">
@@ -252,6 +317,58 @@ export default function Home() {
             <Link href="/farmer/overview" className="btn btn-secondary">
               Preview seller dashboard
             </Link>
+          </div>
+        </div>
+      </section>
+      <section className="section trust-platform-section">
+        <div className="container trust-platform-grid">
+          <div className="trust-platform-copy">
+            <span className="eyebrow">More than a product catalogue</span>
+            <h2 className="section-title">
+              A marketplace operating system for Nepal’s food economy.
+            </h2>
+            <p className="section-copy">
+              Hariyo Mart connects buyer discovery with seller operations, content, support,
+              fulfilment and traceability—without hiding where each product originated.
+            </p>
+            <div className="hero-actions">
+              <Link className="btn btn-primary" href="/register">
+                Create buyer account
+              </Link>
+              <Link className="btn btn-soft" href="/sell">
+                Open farmer studio
+              </Link>
+            </div>
+          </div>
+          <div className="trust-feature-grid">
+            {[
+              [
+                <CircleCheckBig key="verified" />,
+                'Verified workflows',
+                'Farmer onboarding, product review and public moderation.',
+              ],
+              [
+                <Sprout key="stock" />,
+                'Harvest-aware stock',
+                'Reservations, adjustments, spoilage and low-stock watch.',
+              ],
+              [
+                <HeartHandshake key="support" />,
+                'Buyer & seller support',
+                'Ticket triage, reviews, returns and transparent order records.',
+              ],
+              [
+                <WalletCards key="settlement" />,
+                'Seller settlement',
+                'Commission, farmer net and payout status per fulfilment.',
+              ],
+            ].map(([icon, title, copy]) => (
+              <article key={String(title)}>
+                {icon}
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -354,6 +471,32 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+      <section className="section home-journal">
+        <div className="container">
+          <div className="split-heading">
+            <div>
+              <span className="eyebrow">Hariyo Journal</span>
+              <h2 className="section-title">Buy better. Grow better. Waste less.</h2>
+            </div>
+            <Link href="/blog" className="text-link">
+              Read all field stories <ArrowRight size={17} />
+            </Link>
+          </div>
+          <div className="home-journal-grid">
+            {blogPosts.slice(0, 3).map((post) => (
+              <Link href={`/blog/${post.slug}`} key={post.slug}>
+                <span>{post.emoji}</span>
+                <small>{post.category}</small>
+                <h3>{post.title}</h3>
+                <p>{post.excerpt}</p>
+                <b>
+                  <Clock3 size={14} /> {post.readTime}
+                </b>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

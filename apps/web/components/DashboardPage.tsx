@@ -92,12 +92,16 @@ export function DashboardPage({
                 {role === 'Admin' &&
                 [
                   'content',
+                  'categories',
+                  'pages',
+                  'media',
                   'delivery-zones',
                   'promotions',
                   'support',
                   'reviews',
                   'settings',
                   'analytics',
+                  'audit-log',
                 ].includes(section) ? (
                   <OperationsManager section={section} />
                 ) : (

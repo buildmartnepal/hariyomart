@@ -2,11 +2,19 @@ import { Router } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { User } from '../models/User.js';
 import { Tenant } from '../models/Tenant.js';
 import { Farm } from '../models/Farm.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 export const authRouter = Router();
+
+function safeSecretEqual(actual: string, expected?: string) {
+  if (!expected) return false;
+  const actualHash = createHash('sha256').update(actual).digest();
+  const expectedHash = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(actualHash, expectedHash);
+}
 const register = z.object({
   name: z.string().min(2),
   email: z.string().email(),
@@ -217,11 +225,11 @@ authRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
 const adminBootstrap = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-  password: z.string().min(10),
+  password: z.string().min(12),
 });
 authRouter.post('/bootstrap-admin', async (req, res) => {
   const key = String(req.headers['x-bootstrap-key'] || '');
-  if (!process.env.ADMIN_BOOTSTRAP_KEY || key !== process.env.ADMIN_BOOTSTRAP_KEY)
+  if (!safeSecretEqual(key, process.env.ADMIN_BOOTSTRAP_KEY))
     return res.status(403).json({ error: 'Admin bootstrap is disabled or key is invalid' });
   if (!process.env.MONGODB_URI) return res.status(503).json({ error: 'Connect MongoDB first' });
   const p = adminBootstrap.safeParse(req.body);

@@ -1,6 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BadgeCheck, Boxes, LocateFixed, PackageCheck, Route, Store, Wallet } from 'lucide-react';
+import {
+  BadgeCheck,
+  Boxes,
+  CircleHelp,
+  LocateFixed,
+  PackageCheck,
+  Route,
+  ShieldCheck,
+  Smartphone,
+  Store,
+  Wallet,
+} from 'lucide-react';
 export const metadata: Metadata = {
   title: 'How Hariyo Mart Works',
   description:
@@ -113,6 +124,95 @@ export default function How() {
             <Link href="/sell" className="btn btn-primary">
               Open a farmer store →
             </Link>
+          </div>
+        </div>
+      </section>
+      <section className="section role-journeys">
+        <div className="container">
+          <div className="split-heading">
+            <div>
+              <span className="eyebrow">One system, three workspaces</span>
+              <h2 className="section-title">The right controls for every role.</h2>
+            </div>
+            <p className="section-copy">
+              Buyers get one simple marketplace while farmers and operators receive purpose-built,
+              permission-scoped tools.
+            </p>
+          </div>
+          <div className="role-journey-grid">
+            <article>
+              <Smartphone />
+              <small>BUYER</small>
+              <h3>Discover and order</h3>
+              <ul>
+                <li>Location-ranked marketplace</li>
+                <li>Multi-seller cart and checkout</li>
+                <li>Order tracking, reviews and repeat baskets</li>
+              </ul>
+              <Link href="/shop">Open marketplace →</Link>
+            </article>
+            <article>
+              <Store />
+              <small>FARMER</small>
+              <h3>Run a digital farm store</h3>
+              <ul>
+                <li>Harvest publishing and live inventory</li>
+                <li>Delivery radius and fulfilment updates</li>
+                <li>Customer, settlement and payout records</li>
+              </ul>
+              <Link href="/sell">Start seller onboarding →</Link>
+            </article>
+            <article>
+              <ShieldCheck />
+              <small>ADMIN</small>
+              <h3>Operate the platform</h3>
+              <ul>
+                <li>Farmer and product verification</li>
+                <li>Categories, pages, media and promotions</li>
+                <li>Support, audit history and system settings</li>
+              </ul>
+              <Link href="/login">Secure admin sign-in →</Link>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section className="section how-faq">
+        <div className="container how-faq-layout">
+          <div>
+            <span className="eyebrow">Practical questions</span>
+            <h2 className="section-title">Before your first order or listing.</h2>
+            <p className="section-copy">
+              Availability, delivery and seller coverage are intentionally live—they change by
+              harvest, route and location.
+            </p>
+          </div>
+          <div className="how-faq-list">
+            {[
+              [
+                'Can one order include several farms?',
+                'Yes. The buyer sees one order, while the backend creates a separate fulfilment, commission and payout record for each seller.',
+              ],
+              [
+                'What if no farmer serves my location?',
+                'Increase the radius, select a nearby city or request coverage. Products only appear when the seller can reasonably serve the chosen market.',
+              ],
+              [
+                'How does a product become public?',
+                'A farmer lists a draft, submits it for review, and an administrator verifies the seller, category, claims, media and serviceability before activation.',
+              ],
+              [
+                'Are online payments enabled?',
+                'Cash on delivery is launch-ready. eSewa, Khalti, Fonepay and card adapters remain disabled until merchant onboarding and signed callback flows are certified.',
+              ],
+            ].map(([question, answer]) => (
+              <details key={question}>
+                <summary>
+                  <CircleHelp size={18} />
+                  {question}
+                </summary>
+                <p>{answer}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>

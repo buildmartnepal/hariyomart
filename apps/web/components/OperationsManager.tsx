@@ -5,7 +5,11 @@ import {
   BookOpen,
   CheckCircle2,
   CircleDollarSign,
+  FileText,
+  History,
   Headphones,
+  Images,
+  Layers3,
   LoaderCircle,
   MapPinned,
   Megaphone,
@@ -23,7 +27,11 @@ type Props = { section: string };
 type Resource = Record<string, any>;
 
 const resourceEndpoints: Record<string, string> = {
+  categories: '/admin/catalog/categories',
   content: '/admin/content/posts',
+  pages: '/admin/content/pages',
+  media: '/admin/media',
+  'audit-log': '/admin/audit',
   'delivery-zones': '/admin/service-areas',
   promotions: '/admin/promotions',
   support: '/admin/support',
@@ -112,7 +120,11 @@ export function OperationsManager({ section }: Props) {
         </div>
       )}
       <OperationsMetrics summary={summary} />
+      {section === 'categories' && <CategoryManager items={items} mutate={mutate} />}
       {section === 'content' && <ContentManager items={items} mutate={mutate} />}
+      {section === 'pages' && <PageManager items={items} mutate={mutate} />}
+      {section === 'media' && <MediaManager items={items} />}
+      {section === 'audit-log' && <AuditManager items={items} />}
       {section === 'delivery-zones' && <ServiceAreaManager items={items} mutate={mutate} />}
       {section === 'promotions' && <PromotionManager items={items} mutate={mutate} />}
       {section === 'support' && <SupportManager items={items} mutate={mutate} />}
@@ -141,6 +153,263 @@ function OperationsMetrics({ summary }: { summary: Resource | null }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function CategoryManager({ items, mutate }: ManagerProps) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    void mutate('/admin/catalog/categories', 'POST', {
+      slug: data.get('slug'),
+      name: data.get('name'),
+      description: data.get('description'),
+      emoji: data.get('emoji'),
+      sortOrder: Number(data.get('sortOrder')),
+      active: true,
+      seoTitle: data.get('seoTitle') || null,
+      seoDescription: data.get('seoDescription') || null,
+    });
+    event.currentTarget.reset();
+  }
+  return (
+    <OperationsPanel
+      icon={<Layers3 />}
+      title="Category control"
+      copy="Create, order, pause and optimize the product taxonomy stored in D1."
+    >
+      <form className="operations-form" onSubmit={submit}>
+        <div className="form-grid">
+          <label>
+            Category name
+            <input name="name" required minLength={2} />
+          </label>
+          <label>
+            URL slug
+            <input name="slug" required pattern="[a-z0-9-]+" placeholder="fresh-produce" />
+          </label>
+        </div>
+        <label>
+          Buyer-facing description
+          <textarea name="description" required minLength={6} rows={2} />
+        </label>
+        <div className="form-grid">
+          <label>
+            Emoji
+            <input name="emoji" defaultValue="🌱" required />
+          </label>
+          <label>
+            Sort order
+            <input name="sortOrder" type="number" min={0} defaultValue={300} required />
+          </label>
+        </div>
+        <div className="form-grid">
+          <label>
+            SEO title
+            <input name="seoTitle" maxLength={180} />
+          </label>
+          <label>
+            SEO description
+            <input name="seoDescription" maxLength={320} />
+          </label>
+        </div>
+        <button className="btn btn-primary" type="submit">
+          <Save size={16} /> Create category
+        </button>
+      </form>
+      <ResourceTable headers={['Category', 'Description', 'Order', 'Action']}>
+        {items.map((item) => (
+          <div className="operations-row" key={item.slug}>
+            <span>
+              <b>
+                {item.emoji} {item.name}
+              </b>
+              <small>/{item.slug}</small>
+            </span>
+            <span>{item.description}</span>
+            <span>{item.sortOrder}</span>
+            <span>
+              <button
+                onClick={() =>
+                  void mutate(`/admin/catalog/categories/${item.slug}`, 'PATCH', {
+                    active: !item.active,
+                  })
+                }
+              >
+                {item.active ? 'Pause' : 'Activate'}
+              </button>
+            </span>
+          </div>
+        ))}
+      </ResourceTable>
+    </OperationsPanel>
+  );
+}
+
+function PageManager({ items, mutate }: ManagerProps) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const paragraphs = String(data.get('body') || '')
+      .split(/\n\s*\n/)
+      .filter(Boolean);
+    void mutate('/admin/content/pages', 'POST', {
+      title: data.get('title'),
+      slug: data.get('slug'),
+      summary: data.get('summary'),
+      sections: [{ heading: data.get('heading'), paragraphs }],
+      status: data.get('status'),
+      seoTitle: data.get('seoTitle') || null,
+      seoDescription: data.get('seoDescription') || null,
+    });
+    event.currentTarget.reset();
+  }
+  return (
+    <OperationsPanel
+      icon={<FileText />}
+      title="Page publishing"
+      copy="Build reusable public information pages with controlled publication states."
+    >
+      <form className="operations-form" onSubmit={submit}>
+        <div className="form-grid">
+          <label>
+            Page title
+            <input name="title" required />
+          </label>
+          <label>
+            URL slug
+            <input name="slug" pattern="[a-z0-9-]+" required />
+          </label>
+        </div>
+        <label>
+          Summary
+          <textarea name="summary" rows={2} required minLength={10} />
+        </label>
+        <label>
+          Section heading
+          <input name="heading" defaultValue="What you need to know" required />
+        </label>
+        <label>
+          Page paragraphs
+          <textarea
+            name="body"
+            rows={6}
+            required
+            minLength={20}
+            placeholder="Separate paragraphs with a blank line."
+          />
+        </label>
+        <div className="form-grid">
+          <label>
+            SEO title
+            <input name="seoTitle" maxLength={180} />
+          </label>
+          <label>
+            SEO description
+            <input name="seoDescription" maxLength={320} />
+          </label>
+        </div>
+        <label>
+          Publication state
+          <select name="status">
+            <option value="draft">Draft</option>
+            <option value="published">Publish now</option>
+          </select>
+        </label>
+        <button className="btn btn-primary" type="submit">
+          <Save size={16} /> Save page
+        </button>
+      </form>
+      <ResourceTable headers={['Page', 'Summary', 'State', 'Action']}>
+        {items.map((item) => (
+          <div className="operations-row" key={item.id}>
+            <span>
+              <b>{item.title}</b>
+              <small>/{item.slug}</small>
+            </span>
+            <span>{item.summary}</span>
+            <span>
+              <State value={item.status} />
+            </span>
+            <span className="operation-actions">
+              {item.status !== 'published' && (
+                <button
+                  onClick={() =>
+                    void mutate(`/admin/content/pages/${item.id}`, 'PATCH', { status: 'published' })
+                  }
+                >
+                  Publish
+                </button>
+              )}
+              <button
+                onClick={() =>
+                  void mutate(`/admin/content/pages/${item.id}`, 'PATCH', { status: 'archived' })
+                }
+              >
+                Archive
+              </button>
+            </span>
+          </div>
+        ))}
+      </ResourceTable>
+    </OperationsPanel>
+  );
+}
+
+function MediaManager({ items }: { items: Resource[] }) {
+  return (
+    <OperationsPanel
+      icon={<Images />}
+      title="R2 media library"
+      copy="Inspect uploaded object metadata, owners and tenant scope without exposing the private bucket."
+    >
+      <ResourceTable headers={['Object', 'Owner', 'Type', 'Size']}>
+        {items.map((item) => (
+          <div className="operations-row" key={item.id}>
+            <span>
+              <b>{item.object_key}</b>
+              <small>{item.created_at}</small>
+            </span>
+            <span>
+              {item.owner_name}
+              <small>{item.tenant_name || 'Platform'}</small>
+            </span>
+            <span>{item.content_type}</span>
+            <span>{Math.max(1, Math.round(Number(item.size_bytes || 0) / 1024))} KB</span>
+          </div>
+        ))}
+      </ResourceTable>
+    </OperationsPanel>
+  );
+}
+
+function AuditManager({ items }: { items: Resource[] }) {
+  return (
+    <OperationsPanel
+      icon={<History />}
+      title="Security audit trail"
+      copy="Review role-sensitive actions with actor, tenant, entity and request origin context."
+    >
+      <ResourceTable headers={['Action', 'Actor', 'Entity', 'When']}>
+        {items.map((item) => (
+          <div className="operations-row" key={item.id}>
+            <span>
+              <b>{String(item.action).replaceAll('.', ' ')}</b>
+              <small>{item.ip || 'internal'}</small>
+            </span>
+            <span>
+              {item.actor_name || 'System'}
+              <small>{item.tenant_name || 'Platform'}</small>
+            </span>
+            <span>
+              {item.entity_type || '—'}
+              <small>{item.entity_id || ''}</small>
+            </span>
+            <span>{item.created_at}</span>
+          </div>
+        ))}
+      </ResourceTable>
+    </OperationsPanel>
   );
 }
 

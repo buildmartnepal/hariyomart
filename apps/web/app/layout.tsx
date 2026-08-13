@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <AuthProvider>
           <LocationProvider>
@@ -46,6 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </LocationProvider>
         </AuthProvider>
       </body>
+      <Script id="hariyo-theme" strategy="beforeInteractive">
+        {`try{var m=localStorage.getItem('hariyo-theme')||'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m}catch(e){}`}
+      </Script>
     </html>
   );
 }

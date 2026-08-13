@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { infoPages } from '@/lib/info-pages';
+import { infoPageDetails, infoPages } from '@/lib/info-pages';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
+import { InfoPageContent } from '@/components/InfoPageContent';
 export function generateStaticParams() {
   return infoPages.map((p) => ({ slug: p.slug }));
 }
@@ -18,6 +19,7 @@ export default async function Info({ params }: { params: Promise<{ slug: string 
   const { slug } = await params;
   const p = infoPages.find((x) => x.slug === slug);
   if (!p) notFound();
+  const details = infoPageDetails(slug);
   return (
     <main>
       <section className="page-hero">
@@ -30,27 +32,11 @@ export default async function Info({ params }: { params: Promise<{ slug: string 
       <section className="section">
         <div className="container" style={{ maxWidth: 850 }}>
           {slug === 'contact' && <SupportTicketForm />}
-          <h2>Designed for trust and practical use</h2>
-          <p className="section-copy">
-            This page is connected to the platform content model and can be managed through the
-            administration system. The supplied implementation includes semantic headings, metadata,
-            responsive layout and reusable content sections.
-          </p>
-          <h2>What this section supports</h2>
-          <div className="feature-list">
-            <div>
-              ✓ <span>English and Nepali content variants</span>
-            </div>
-            <div>
-              ✓ <span>SEO title, description, canonical URL and structured data</span>
-            </div>
-            <div>
-              ✓ <span>CMS-managed text, media, FAQs and calls to action</span>
-            </div>
-            <div>
-              ✓ <span>Revision history and role-based publishing approval</span>
-            </div>
-          </div>
+          <InfoPageContent
+            slug={slug}
+            sections={details.sections}
+            highlights={details.highlights}
+          />
           <div className="farm-banner" style={{ marginTop: 36, gridTemplateColumns: '1fr' }}>
             <h2 style={{ margin: 0 }}>Need assistance?</h2>
             <p style={{ color: '#c5d8d0' }}>

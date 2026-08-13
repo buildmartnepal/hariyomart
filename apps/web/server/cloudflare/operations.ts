@@ -77,6 +77,37 @@ const promotionInput = z.object({
   active: z.boolean().default(true),
 });
 
+const categoryInput = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9-]+$/),
+  name: z.string().min(2).max(100),
+  description: z.string().min(6).max(300),
+  emoji: z.string().min(1).max(16).default('🌱'),
+  imageUrl: z.string().max(500).nullable().optional(),
+  active: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).max(10_000).default(0),
+  seoTitle: z.string().max(180).nullable().optional(),
+  seoDescription: z.string().max(320).nullable().optional(),
+});
+
+const cmsPageInput = z.object({
+  title: z.string().min(3).max(180),
+  slug: z
+    .string()
+    .min(2)
+    .max(120)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
+  summary: z.string().min(10).max(500),
+  sections: contentSections,
+  status: z.enum(['draft', 'published', 'archived']).default('draft'),
+  seoTitle: z.string().max(180).nullable().optional(),
+  seoDescription: z.string().max(320).nullable().optional(),
+});
+
 const reviewInput = z.object({
   rating: z.coerce.number().int().min(1).max(5),
   title: z.string().max(120).optional(),
@@ -162,6 +193,38 @@ function promotionPublic(row: Record<string, unknown>) {
   };
 }
 
+function categoryPublic(row: Record<string, unknown>) {
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    emoji: row.emoji,
+    imageUrl: row.image_url,
+    active: Boolean(row.active),
+    sortOrder: Number(row.sort_order || 0),
+    seoTitle: row.seo_title,
+    seoDescription: row.seo_description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function pagePublic(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    summary: row.summary,
+    sections: parseJson(String(row.sections_json || '[]'), []),
+    status: row.status,
+    seoTitle: row.seo_title,
+    seoDescription: row.seo_description,
+    publishedAt: row.published_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function newsletterSubscribe(req: NextRequest) {
   const input = validation(newsletterInput, await requestBody(req));
   const env = cloudflareEnv();
@@ -200,6 +263,22 @@ export async function publicServiceAreas() {
     .HARIYO_DB.prepare('SELECT * FROM service_areas WHERE active=1 ORDER BY province,name')
     .all<Record<string, unknown>>();
   return apiJson({ data: (result.results || []).map(areaPublic) });
+}
+
+export async function publicCategories() {
+  const result = await cloudflareEnv()
+    .HARIYO_DB.prepare('SELECT * FROM categories WHERE active=1 ORDER BY sort_order,name')
+    .all<Record<string, unknown>>();
+  return apiJson({ data: (result.results || []).map(categoryPublic) });
+}
+
+export async function publicPage(slug: string) {
+  const row = await cloudflareEnv()
+    .HARIYO_DB.prepare("SELECT * FROM cms_pages WHERE slug=? AND status='published'")
+    .bind(slug)
+    .first<Record<string, unknown>>();
+  if (!row) throw new CloudflareApiError(404, 'Page not found');
+  return apiJson({ page: pagePublic(row) });
 }
 
 export async function productReviews(req: NextRequest, productSlug: string) {
@@ -382,6 +461,165 @@ export async function adminBlog(req: NextRequest, id?: string) {
     .run();
   await audit(req, user, 'content.updated', 'blog_post', String(current.id), input);
   return apiJson({ id: current.id, slug, title, ok: true });
+}
+
+export async function adminCategories(req: NextRequest, slug?: string) {
+  const user = await requireAuth(req, ['admin']);
+  const env = cloudflareEnv();
+  if (req.method === 'GET') {
+    const result = await env.HARIYO_DB.prepare(
+      'SELECT * FROM categories ORDER BY sort_order,name LIMIT 300',
+    ).all<Record<string, unknown>>();
+    return apiJson({ data: (result.results || []).map(categoryPublic) });
+  }
+  const now = new Date().toISOString();
+  if (req.method === 'POST') {
+    const input = validation(categoryInput, await requestBody(req));
+    await env.HARIYO_DB.prepare(
+      `INSERT INTO categories (slug,name,description,emoji,image_url,active,sort_order,seo_title,seo_description,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    )
+      .bind(
+        input.slug,
+        input.name,
+        input.description,
+        input.emoji,
+        input.imageUrl || null,
+        input.active ? 1 : 0,
+        input.sortOrder,
+        input.seoTitle || null,
+        input.seoDescription || null,
+        now,
+        now,
+      )
+      .run();
+    await audit(req, user, 'category.created', 'category', input.slug, { name: input.name });
+    return apiJson({ slug: input.slug, ok: true }, 201);
+  }
+  if (!slug) throw new CloudflareApiError(400, 'Category slug required');
+  const current = await env.HARIYO_DB.prepare('SELECT * FROM categories WHERE slug=?')
+    .bind(slug)
+    .first<Record<string, unknown>>();
+  if (!current) throw new CloudflareApiError(404, 'Category not found');
+  const input = validation(categoryInput.partial().omit({ slug: true }), await requestBody(req));
+  await env.HARIYO_DB.prepare(
+    `UPDATE categories SET name=?,description=?,emoji=?,image_url=?,active=?,sort_order=?,seo_title=?,seo_description=?,updated_at=? WHERE slug=?`,
+  )
+    .bind(
+      input.name ?? current.name,
+      input.description ?? current.description,
+      input.emoji ?? current.emoji,
+      input.imageUrl === undefined ? current.image_url : input.imageUrl,
+      input.active === undefined ? current.active : input.active ? 1 : 0,
+      input.sortOrder ?? current.sort_order,
+      input.seoTitle === undefined ? current.seo_title : input.seoTitle,
+      input.seoDescription === undefined ? current.seo_description : input.seoDescription,
+      now,
+      slug,
+    )
+    .run();
+  await audit(req, user, 'category.updated', 'category', slug, input);
+  return apiJson({ slug, ok: true });
+}
+
+export async function adminPages(req: NextRequest, id?: string) {
+  const user = await requireAuth(req, ['admin']);
+  const env = cloudflareEnv();
+  if (req.method === 'GET') {
+    const result = await env.HARIYO_DB.prepare(
+      'SELECT * FROM cms_pages ORDER BY updated_at DESC LIMIT 300',
+    ).all<Record<string, unknown>>();
+    return apiJson({ data: (result.results || []).map(pagePublic) });
+  }
+  const now = new Date().toISOString();
+  if (req.method === 'POST') {
+    const input = validation(cmsPageInput, await requestBody(req));
+    const pageId = crypto.randomUUID();
+    const slug = slugify(input.slug || input.title);
+    const publishedAt = input.status === 'published' ? now : null;
+    await env.HARIYO_DB.prepare(
+      `INSERT INTO cms_pages (id,slug,title,summary,sections_json,status,seo_title,seo_description,updated_by,published_at,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    )
+      .bind(
+        pageId,
+        slug,
+        input.title,
+        input.summary,
+        JSON.stringify(input.sections),
+        input.status,
+        input.seoTitle || null,
+        input.seoDescription || null,
+        user.id,
+        publishedAt,
+        now,
+        now,
+      )
+      .run();
+    await audit(req, user, 'page.created', 'cms_page', pageId, { slug, status: input.status });
+    return apiJson({ id: pageId, slug, ok: true }, 201);
+  }
+  if (!id) throw new CloudflareApiError(400, 'Page id required');
+  const current = await env.HARIYO_DB.prepare('SELECT * FROM cms_pages WHERE id=? OR slug=?')
+    .bind(id, id)
+    .first<Record<string, unknown>>();
+  if (!current) throw new CloudflareApiError(404, 'Page not found');
+  const input = validation(cmsPageInput.partial(), await requestBody(req));
+  const status = input.status ?? String(current.status);
+  const publishedAt =
+    status === 'published' ? String(current.published_at || now) : current.published_at;
+  await env.HARIYO_DB.prepare(
+    `UPDATE cms_pages SET slug=?,title=?,summary=?,sections_json=?,status=?,seo_title=?,seo_description=?,updated_by=?,published_at=?,updated_at=? WHERE id=?`,
+  )
+    .bind(
+      input.slug ? slugify(input.slug) : current.slug,
+      input.title ?? current.title,
+      input.summary ?? current.summary,
+      input.sections ? JSON.stringify(input.sections) : current.sections_json,
+      status,
+      input.seoTitle === undefined ? current.seo_title : input.seoTitle,
+      input.seoDescription === undefined ? current.seo_description : input.seoDescription,
+      user.id,
+      publishedAt,
+      now,
+      current.id,
+    )
+    .run();
+  await audit(req, user, 'page.updated', 'cms_page', String(current.id), input);
+  return apiJson({ id: current.id, slug: input.slug || current.slug, ok: true });
+}
+
+export async function adminMedia(req: NextRequest) {
+  await requireAuth(req, ['admin']);
+  const result = await cloudflareEnv()
+    .HARIYO_DB.prepare(
+      `SELECT m.id,m.object_key,m.content_type,m.size_bytes,m.created_at,u.name AS owner_name,t.name AS tenant_name
+       FROM media m JOIN users u ON u.id=m.owner_id LEFT JOIN tenants t ON t.id=m.tenant_id
+       ORDER BY m.created_at DESC LIMIT 300`,
+    )
+    .all<Record<string, unknown>>();
+  return apiJson({ data: result.results || [] });
+}
+
+export async function adminAudit(req: NextRequest) {
+  await requireAuth(req, ['admin']);
+  const url = new URL(req.url);
+  const action = url.searchParams.get('action');
+  const statement = action
+    ? cloudflareEnv()
+        .HARIYO_DB.prepare(
+          `SELECT a.*,u.name AS actor_name,t.name AS tenant_name FROM audit_logs a
+           LEFT JOIN users u ON u.id=a.actor_id LEFT JOIN tenants t ON t.id=a.tenant_id
+           WHERE a.action=? ORDER BY a.created_at DESC LIMIT 300`,
+        )
+        .bind(action)
+    : cloudflareEnv().HARIYO_DB.prepare(
+        `SELECT a.*,u.name AS actor_name,t.name AS tenant_name FROM audit_logs a
+         LEFT JOIN users u ON u.id=a.actor_id LEFT JOIN tenants t ON t.id=a.tenant_id
+         ORDER BY a.created_at DESC LIMIT 300`,
+      );
+  const result = await statement.all<Record<string, unknown>>();
+  return apiJson({ data: result.results || [] });
 }
 
 export async function adminServiceAreas(req: NextRequest, id?: string) {

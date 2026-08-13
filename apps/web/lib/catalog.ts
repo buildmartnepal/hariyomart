@@ -146,6 +146,48 @@ export const catalog = {
       "name": "Dry Fruits",
       "description": "Nuts, seeds and dried fruits",
       "emoji": "🌰"
+    },
+    {
+      "slug": "mushrooms",
+      "name": "Mushrooms",
+      "description": "Fresh specialty mushrooms from controlled farms",
+      "emoji": "🍄"
+    },
+    {
+      "slug": "eggs-poultry",
+      "name": "Eggs & Poultry",
+      "description": "Traceable eggs and responsibly raised poultry",
+      "emoji": "🥚"
+    },
+    {
+      "slug": "flour-baking",
+      "name": "Flour & Baking",
+      "description": "Stoneground flour and local baking staples",
+      "emoji": "🥣"
+    },
+    {
+      "slug": "seedlings-plants",
+      "name": "Seedlings & Plants",
+      "description": "Healthy nursery plants for farms and home gardens",
+      "emoji": "🌱"
+    },
+    {
+      "slug": "farm-boxes",
+      "name": "Farm Boxes",
+      "description": "Curated seasonal baskets from nearby growers",
+      "emoji": "🧺"
+    },
+    {
+      "slug": "flowers",
+      "name": "Flowers",
+      "description": "Fresh local flowers and seasonal garlands",
+      "emoji": "🌼"
+    },
+    {
+      "slug": "natural-care",
+      "name": "Natural Care",
+      "description": "Farm-origin soaps, balms and botanical care",
+      "emoji": "🧼"
     }
   ],
   "products": [
@@ -2164,11 +2206,345 @@ export const catalog = {
         "Secure food-grade packaging"
       ],
       "image": "/products/tea-coffee.svg"
+    },
+    {
+      "slug": "koshi-oyster-mushroom",
+      "name": "Fresh Oyster Mushroom",
+      "category": "mushrooms",
+      "province": "koshi",
+      "provinceName": "Koshi Province",
+      "district": "Sunsari",
+      "emoji": "🍄",
+      "unit": "500 g",
+      "price": 290,
+      "oldPrice": 330,
+      "rating": 4.8,
+      "stock": 46,
+      "organic": false,
+      "featured": true,
+      "shortDescription": "Same-day oyster mushrooms grown in a controlled Sunsari farm room.",
+      "description": "Fresh Oyster Mushroom from Sunsari is harvested in small batches and packed for short local delivery routes. Each listing includes harvest timing, storage guidance and live stock for households and restaurants.",
+      "benefits": [
+        "Harvest-date visibility",
+        "Controlled farm production",
+        "Restaurant packs available"
+      ],
+      "image": "/products/vegetables.svg"
+    },
+    {
+      "slug": "koshi-kiwi-sapling",
+      "name": "Kiwi Fruit Sapling",
+      "category": "seedlings-plants",
+      "province": "koshi",
+      "provinceName": "Koshi Province",
+      "district": "Dhankuta",
+      "emoji": "🌱",
+      "unit": "1 plant",
+      "price": 480,
+      "oldPrice": 520,
+      "rating": 4.7,
+      "stock": 120,
+      "organic": true,
+      "featured": false,
+      "shortDescription": "Nursery-raised kiwi sapling with basic planting and care guidance.",
+      "description": "A healthy nursery-raised kiwi sapling supplied with age, variety and planting guidance. Delivery is scheduled to protect the live plant during transport.",
+      "benefits": [
+        "Nursery traceability",
+        "Planting guide included",
+        "Scheduled live-plant delivery"
+      ],
+      "image": "/products/leafy-greens.svg"
+    },
+    {
+      "slug": "madhesh-free-range-eggs",
+      "name": "Free-Range Village Eggs",
+      "category": "eggs-poultry",
+      "province": "madhesh",
+      "provinceName": "Madhesh Province",
+      "district": "Dhanusha",
+      "emoji": "🥚",
+      "unit": "12 eggs",
+      "price": 360,
+      "oldPrice": 390,
+      "rating": 4.9,
+      "stock": 84,
+      "organic": false,
+      "featured": true,
+      "shortDescription": "Graded village eggs collected from small Dhanusha poultry farms.",
+      "description": "Free-range village eggs are collected, checked and packed in protective trays with collection-date visibility. Stock reflects sellable trays rather than estimated flock output.",
+      "benefits": [
+        "Collection date shown",
+        "Protective tray packing",
+        "Small-farm sourcing"
+      ],
+      "image": "/products/dairy.svg"
+    },
+    {
+      "slug": "madhesh-stoneground-wheat-flour",
+      "name": "Stoneground Wheat Flour",
+      "category": "flour-baking",
+      "province": "madhesh",
+      "provinceName": "Madhesh Province",
+      "district": "Sarlahi",
+      "emoji": "🥣",
+      "unit": "2 kg",
+      "price": 310,
+      "oldPrice": 340,
+      "rating": 4.7,
+      "stock": 96,
+      "organic": false,
+      "featured": false,
+      "shortDescription": "Freshly milled whole-wheat flour from Sarlahi grain cooperatives.",
+      "description": "Whole wheat is cleaned and stoneground in scheduled batches, then packed with milling date and storage guidance for fresher household use.",
+      "benefits": [
+        "Milling date traceability",
+        "Whole-grain flour",
+        "Cooperative packed"
+      ],
+      "image": "/products/grains.svg"
+    },
+    {
+      "slug": "bagmati-shiitake-mushroom",
+      "name": "Fresh Shiitake Mushroom",
+      "category": "mushrooms",
+      "province": "bagmati",
+      "provinceName": "Bagmati Province",
+      "district": "Lalitpur",
+      "emoji": "🍄",
+      "unit": "250 g",
+      "price": 420,
+      "oldPrice": 470,
+      "rating": 4.9,
+      "stock": 35,
+      "organic": true,
+      "featured": true,
+      "shortDescription": "Premium shiitake harvested for Kathmandu Valley delivery windows.",
+      "description": "Fresh shiitake from a climate-managed Lalitpur grow room, packed in breathable food-safe trays and sold against live harvested stock.",
+      "benefits": [
+        "Valley same-day option",
+        "Small-batch harvest",
+        "Breathable food-safe pack"
+      ],
+      "image": "/products/vegetables.svg"
+    },
+    {
+      "slug": "bagmati-family-farm-box",
+      "name": "Kathmandu Family Farm Box",
+      "category": "farm-boxes",
+      "province": "bagmati",
+      "provinceName": "Bagmati Province",
+      "district": "Kathmandu",
+      "emoji": "🧺",
+      "unit": "5 kg box",
+      "price": 1490,
+      "oldPrice": 1650,
+      "rating": 4.8,
+      "stock": 28,
+      "organic": false,
+      "featured": true,
+      "shortDescription": "A rotating family basket of eight or more Valley vegetables and herbs.",
+      "description": "The Kathmandu Family Farm Box combines the freshest serviceable harvests from verified Valley sellers. The exact mix changes by season and is confirmed before dispatch.",
+      "benefits": [
+        "Eight or more seasonal items",
+        "Multi-farm traceability",
+        "Weekly subscription ready"
+      ],
+      "image": "/products/vegetables.svg"
+    },
+    {
+      "slug": "gandaki-buckwheat-flour",
+      "name": "Mountain Buckwheat Flour",
+      "category": "flour-baking",
+      "province": "gandaki",
+      "provinceName": "Gandaki Province",
+      "district": "Mustang",
+      "emoji": "🥣",
+      "unit": "1 kg",
+      "price": 640,
+      "oldPrice": 690,
+      "rating": 4.8,
+      "stock": 51,
+      "organic": true,
+      "featured": true,
+      "shortDescription": "Stone-milled highland buckwheat flour from Mustang grower groups.",
+      "description": "Mustang buckwheat is batch-milled and packed with origin, milling date and storage instructions for traditional and modern recipes.",
+      "benefits": [
+        "Highland origin",
+        "Batch milling record",
+        "Traditional grain variety"
+      ],
+      "image": "/products/grains.svg"
+    },
+    {
+      "slug": "gandaki-seasonal-flower-bouquet",
+      "name": "Seasonal Farm Flower Bouquet",
+      "category": "flowers",
+      "province": "gandaki",
+      "provinceName": "Gandaki Province",
+      "district": "Kaski",
+      "emoji": "🌼",
+      "unit": "1 bouquet",
+      "price": 850,
+      "oldPrice": 950,
+      "rating": 4.7,
+      "stock": 24,
+      "organic": false,
+      "featured": false,
+      "shortDescription": "A grower-arranged bouquet using flowers in season around Pokhara.",
+      "description": "Seasonal flowers are cut to order, hydrated and arranged by a Kaski grower. Colour and variety change naturally with field availability.",
+      "benefits": [
+        "Cut to order",
+        "Local seasonal varieties",
+        "Low-plastic wrapping"
+      ],
+      "image": "/products/herbs-spices.svg"
+    },
+    {
+      "slug": "lumbini-country-eggs",
+      "name": "Country Chicken Eggs",
+      "category": "eggs-poultry",
+      "province": "lumbini",
+      "provinceName": "Lumbini Province",
+      "district": "Rupandehi",
+      "emoji": "🥚",
+      "unit": "15 eggs",
+      "price": 460,
+      "oldPrice": 500,
+      "rating": 4.8,
+      "stock": 72,
+      "organic": false,
+      "featured": true,
+      "shortDescription": "Farm-packed country chicken eggs with collection batch details.",
+      "description": "Country chicken eggs from small Rupandehi farms are pooled through one verified cooperative, graded and packed by collection batch.",
+      "benefits": [
+        "Collection batch record",
+        "Cooperative quality check",
+        "Protective packing"
+      ],
+      "image": "/products/dairy.svg"
+    },
+    {
+      "slug": "lumbini-mustard-seedlings",
+      "name": "Mustard Green Seedlings",
+      "category": "seedlings-plants",
+      "province": "lumbini",
+      "provinceName": "Lumbini Province",
+      "district": "Kapilvastu",
+      "emoji": "🌱",
+      "unit": "24-cell tray",
+      "price": 390,
+      "oldPrice": 430,
+      "rating": 4.6,
+      "stock": 44,
+      "organic": true,
+      "featured": false,
+      "shortDescription": "Ready-to-transplant mustard green seedlings in a reusable nursery tray.",
+      "description": "Uniform mustard green seedlings supplied in a protected nursery tray with transplant timing and first-week care notes.",
+      "benefits": [
+        "Uniform transplant size",
+        "Care instructions",
+        "Reusable nursery tray"
+      ],
+      "image": "/products/leafy-greens.svg"
+    },
+    {
+      "slug": "karnali-highland-grain-box",
+      "name": "Karnali Highland Grain Box",
+      "category": "farm-boxes",
+      "province": "karnali",
+      "provinceName": "Karnali Province",
+      "district": "Jumla",
+      "emoji": "🧺",
+      "unit": "4 kg box",
+      "price": 2450,
+      "oldPrice": 2690,
+      "rating": 4.9,
+      "stock": 19,
+      "organic": true,
+      "featured": true,
+      "shortDescription": "A traceable box of Marshi rice, beans, millet and buckwheat from Jumla.",
+      "description": "The Karnali Highland Grain Box preserves product and grower-group identity across four heritage staples, packed for scheduled intercity delivery.",
+      "benefits": [
+        "Four heritage staples",
+        "Grower-group traceability",
+        "Gift-ready reusable box"
+      ],
+      "image": "/products/grains.svg"
+    },
+    {
+      "slug": "karnali-wild-nettle-soap",
+      "name": "Wild Nettle Farm Soap",
+      "category": "natural-care",
+      "province": "karnali",
+      "provinceName": "Karnali Province",
+      "district": "Mugu",
+      "emoji": "🧼",
+      "unit": "100 g bar",
+      "price": 340,
+      "oldPrice": 380,
+      "rating": 4.7,
+      "stock": 63,
+      "organic": true,
+      "featured": false,
+      "shortDescription": "Small-batch plant soap made with responsibly collected nettle and local oils.",
+      "description": "A simple cold-process soap from a Mugu women-led producer group. Ingredient and batch information is shown without medical or exaggerated skin claims.",
+      "benefits": [
+        "Small-batch production",
+        "Producer-group traceability",
+        "Plastic-light packaging"
+      ],
+      "image": "/products/honey.svg"
+    },
+    {
+      "slug": "sudurpashchim-marigold-garland",
+      "name": "Fresh Marigold Garland",
+      "category": "flowers",
+      "province": "sudurpashchim",
+      "provinceName": "Sudurpashchim Province",
+      "district": "Kailali",
+      "emoji": "🌼",
+      "unit": "1 metre",
+      "price": 420,
+      "oldPrice": 470,
+      "rating": 4.8,
+      "stock": 75,
+      "organic": false,
+      "featured": true,
+      "shortDescription": "Made-to-order marigold garland from Kailali flower growers.",
+      "description": "Marigolds are harvested and threaded against confirmed orders, with seasonal colour variation and a realistic local delivery window.",
+      "benefits": [
+        "Made to order",
+        "Fresh field flowers",
+        "Festival bulk enquiry"
+      ],
+      "image": "/products/herbs-spices.svg"
+    },
+    {
+      "slug": "sudurpashchim-millet-flour",
+      "name": "Stoneground Millet Flour",
+      "category": "flour-baking",
+      "province": "sudurpashchim",
+      "provinceName": "Sudurpashchim Province",
+      "district": "Doti",
+      "emoji": "🥣",
+      "unit": "1 kg",
+      "price": 390,
+      "oldPrice": 430,
+      "rating": 4.8,
+      "stock": 88,
+      "organic": true,
+      "featured": false,
+      "shortDescription": "Fresh stoneground millet flour sourced from Doti hill farms.",
+      "description": "Doti millet is cleaned, stoneground and packed with milling-date traceability for dhido, roti and everyday baking.",
+      "benefits": [
+        "Milling date shown",
+        "Hill-farm sourcing",
+        "Food-grade sealed pack"
+      ],
+      "image": "/products/grains.svg"
     }
   ]
 } as const;
-
-export type SeedProduct = (typeof catalog.products)[number];
 
 export type Product = {
   slug: string;
@@ -2189,11 +2565,20 @@ export type Product = {
   description: string;
   benefits: readonly string[];
   image: string;
-  farmName?: string;
-  farmSlug?: string;
-  farmerVerified?: boolean;
-  deliveryRadiusKm?: number;
-  municipality?: string;
   minimumOrder?: number;
-  updatedAt?: string;
+};
+
+export type Category = {
+  slug: string;
+  name: string;
+  description: string;
+  emoji: string;
+};
+
+export type Province = {
+  slug: string;
+  name: string;
+  description: string;
+  district: string;
+  specialty: string;
 };

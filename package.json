@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "6.1.0",
+  "version": "6.2.0",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -23,6 +23,7 @@
     "deploy:cloudflare:web": "npm --workspace apps/web run cf:deploy",
     "deploy:cloudflare": "npm run cloudflare:config:check && npm run cloudflare:types:check && npm run deploy:cloudflare:services && npm run deploy:cloudflare:web",
     "finish:cloudflare": "node scripts/finish-cloudflare-deploy.mjs",
+    "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "cloudflare:db:local": "npm --workspace apps/web run cf:db:local",
     "cloudflare:db:remote": "npm --workspace apps/web run cf:db:remote",
     "build:all": "npm run build && npm run build:legacy-api && npm run build:mobile",
@@ -35,6 +36,7 @@
     "format:check": "prettier --check .",
     "audit:prod": "npm audit --workspace apps/web --omit=dev --audit-level=high",
     "db:seed": "npm --workspace apps/web run db:seed",
+    "catalog:sync": "node apps/web/scripts/sync-catalog.mjs && node apps/web/scripts/generate-cloudflare-seed.mjs",
     "env:check": "npm --workspace apps/web run env:check",
     "validate": "node scripts/validate-content.mjs",
     "smoke": "node scripts/smoke-check.mjs",

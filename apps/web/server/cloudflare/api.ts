@@ -20,6 +20,7 @@ import {
   refreshFromRequest,
   requestBody,
   requireAuth,
+  safeSecretEqual,
   revokeSession,
   rotateSession,
   slugify,
@@ -27,8 +28,12 @@ import {
   type CloudflareUserRow,
 } from './platform';
 import {
+  adminAudit,
   adminBlog,
+  adminCategories,
+  adminMedia,
   adminOperations,
+  adminPages,
   adminPromotions,
   adminReviews,
   adminServiceAreas,
@@ -39,6 +44,8 @@ import {
   newsletterSubscribe,
   productReviews,
   publicBlog,
+  publicCategories,
+  publicPage,
   publicServiceAreas,
 } from './operations';
 
@@ -391,7 +398,7 @@ async function me(req: NextRequest) {
 async function bootstrapAdmin(req: NextRequest) {
   const env = cloudflareEnv();
   const key = req.headers.get('x-bootstrap-key');
-  if (!env.ADMIN_BOOTSTRAP_KEY || key !== env.ADMIN_BOOTSTRAP_KEY)
+  if (!(await safeSecretEqual(key, env.ADMIN_BOOTSTRAP_KEY)))
     throw new CloudflareApiError(403, 'Invalid bootstrap key');
   const existing = await env.HARIYO_DB.prepare(
     "SELECT COUNT(*) AS count FROM users WHERE role='admin'",
@@ -1265,7 +1272,7 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '6.1.0',
+    version: '6.2.0',
     status: Object.values(required).every(Boolean) ? 'ready' : 'degraded',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues',
     database,
@@ -1385,6 +1392,9 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (route === 'content/blog' && method === 'GET') return await publicBlog(req);
     if (segments[0] === 'content' && segments[1] === 'blog' && segments[2] && method === 'GET')
       return await publicBlog(req, segments[2]);
+    if (route === 'catalog/categories' && method === 'GET') return await publicCategories();
+    if (segments[0] === 'content' && segments[1] === 'pages' && segments[2] && method === 'GET')
+      return await publicPage(segments[2]);
     if (route === 'support/tickets' && method === 'POST') return await createSupportTicket(req);
     if (segments[0] === 'reviews' && segments[1] && ['GET', 'POST'].includes(method))
       return await productReviews(req, segments[1]);
@@ -1401,6 +1411,28 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
       method === 'PATCH'
     )
       return await adminBlog(req, segments[3]);
+    if (route === 'admin/catalog/categories' && ['GET', 'POST'].includes(method))
+      return await adminCategories(req);
+    if (
+      segments[0] === 'admin' &&
+      segments[1] === 'catalog' &&
+      segments[2] === 'categories' &&
+      segments[3] &&
+      method === 'PATCH'
+    )
+      return await adminCategories(req, segments[3]);
+    if (route === 'admin/content/pages' && ['GET', 'POST'].includes(method))
+      return await adminPages(req);
+    if (
+      segments[0] === 'admin' &&
+      segments[1] === 'content' &&
+      segments[2] === 'pages' &&
+      segments[3] &&
+      method === 'PATCH'
+    )
+      return await adminPages(req, segments[3]);
+    if (route === 'admin/media' && method === 'GET') return await adminMedia(req);
+    if (route === 'admin/audit' && method === 'GET') return await adminAudit(req);
     if (route === 'admin/service-areas' && ['GET', 'POST'].includes(method))
       return await adminServiceAreas(req);
     if (

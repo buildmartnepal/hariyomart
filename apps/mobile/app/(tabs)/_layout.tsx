@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Text, useColorScheme } from 'react-native';
 const Icon = ({ x }: { x: string }) => <Text style={{ fontSize: 17 }}>{x}</Text>;
 export default function TabsLayout() {
+  const dark = useColorScheme() === 'dark';
   return (
     <Tabs
       screenOptions={{
@@ -9,7 +10,13 @@ export default function TabsLayout() {
         tabBarActiveTintColor: '#4F9E1C',
         tabBarInactiveTintColor: '#728079',
         tabBarLabelStyle: { fontWeight: '800', fontSize: 10 },
-        tabBarStyle: { height: 74, paddingTop: 6, paddingBottom: 10, backgroundColor: '#FFFFFF' },
+        tabBarStyle: {
+          height: 74,
+          paddingTop: 6,
+          paddingBottom: 10,
+          backgroundColor: dark ? '#10241C' : '#FFFFFF',
+          borderTopColor: dark ? '#29473B' : '#DDE7D8',
+        },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: () => <Icon x="⌂" /> }} />
