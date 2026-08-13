@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Hariyo Mart Nepal",
+    "slug": "hariyo-mart-nepal",
+    "scheme": "hariyo",
+    "version": "5.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#062D22"
+    },
+    "ios": {
+      "bundleIdentifier": "com.hariyomart.nepal",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Hariyo Mart Nepal uses your location to show nearby farmers, pickup points and delivery options."
+      }
+    },
+    "android": {
+      "package": "com.hariyomart.nepal",
+      "adaptiveIcon": {
+        "backgroundColor": "#062D22"
+      },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Hariyo Mart Nepal to use your location to match nearby farmers and delivery options."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

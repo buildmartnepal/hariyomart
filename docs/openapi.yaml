@@ -1,0 +1,141 @@
+openapi: 3.1.0
+info:
+  title: Hariyo Mart Nepal Marketplace API
+  version: 2.0.0
+  description: Location-based multi-tenant farmer marketplace API for discovery, farmer SaaS, products and multi-seller orders.
+servers:
+  - url: http://localhost:4000
+paths:
+  /health:
+    get:
+      summary: Service health and capability flags
+      responses:
+        '200': {description: Healthy}
+  /api/marketplace/nearby:
+    get:
+      summary: Find serviceable products nearest to a buyer
+      parameters:
+        - {in: query, name: lat, required: true, schema: {type: number}}
+        - {in: query, name: lng, required: true, schema: {type: number}}
+        - {in: query, name: radiusKm, schema: {type: number, default: 150, maximum: 1000}}
+        - {in: query, name: category, schema: {type: string, default: all}}
+        - {in: query, name: limit, schema: {type: integer, default: 40, maximum: 100}}
+      responses:
+        '200': {description: Distance-sorted, serviceable farmer inventory}
+        '400': {description: Coordinates missing or invalid}
+  /api/marketplace/farms:
+    get:
+      summary: List verified farms or find farms near coordinates
+      parameters:
+        - {in: query, name: lat, schema: {type: number}}
+        - {in: query, name: lng, schema: {type: number}}
+        - {in: query, name: radiusKm, schema: {type: number}}
+      responses:
+        '200': {description: Verified farms}
+  /api/marketplace/farms/{slug}:
+    get:
+      summary: Live verified farmer storefront and active products
+      parameters:
+        - {in: path, name: slug, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Farm and products}
+        '404': {description: Farm not found}
+  /api/marketplace/delivery-quote:
+    post:
+      summary: Quote delivery between buyer and seller coordinates
+      responses:
+        '200': {description: Delivery distance, fee and recommendation}
+  /api/products:
+    get:
+      summary: Public active seller products
+      parameters:
+        - {in: query, name: q, schema: {type: string}}
+        - {in: query, name: category, schema: {type: string}}
+        - {in: query, name: province, schema: {type: string}}
+        - {in: query, name: limit, schema: {type: integer}}
+        - {in: query, name: page, schema: {type: integer}}
+      responses:
+        '200': {description: Product collection enriched with farmer details}
+    post:
+      summary: Publish a tenant-scoped farmer harvest for review
+      security: [{bearerAuth: []}]
+      responses:
+        '201': {description: Product created as pending_review}
+  /api/products/seller/mine:
+    get:
+      summary: Seller-owned products
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Tenant product collection}
+  /api/products/{slug}:
+    get:
+      summary: Public active product with farmer details
+      parameters: [{in: path, name: slug, required: true, schema: {type: string}}]
+      responses:
+        '200': {description: Product}
+        '404': {description: Not found}
+  /api/auth/register:
+    post:
+      summary: Register a buyer account
+      responses:
+        '201': {description: Registered}
+  /api/auth/register-farmer:
+    post:
+      summary: Create farmer tenant, user and farm
+      responses:
+        '201': {description: Farmer store created pending verification}
+  /api/auth/login:
+    post:
+      summary: Obtain access and refresh tokens
+      responses:
+        '200': {description: Authenticated}
+  /api/auth/refresh:
+    post:
+      summary: Refresh an access token
+      responses:
+        '200': {description: New access token}
+  /api/tenants/mine:
+    get:
+      summary: Current seller tenant and farms
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Tenant workspace}
+  /api/tenants:
+    get:
+      summary: Admin tenant directory
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Tenant collection}
+  /api/tenants/{id}/verify:
+    patch:
+      summary: Admin verify or reject seller tenant
+      security: [{bearerAuth: []}]
+      parameters: [{in: path, name: id, required: true, schema: {type: string}}]
+      responses:
+        '200': {description: Updated tenant}
+  /api/orders/guest:
+    post:
+      summary: Create one guest order split into seller fulfillments
+      responses:
+        '201': {description: Multi-seller order created}
+  /api/orders:
+    post:
+      summary: Create authenticated buyer order
+      security: [{bearerAuth: []}]
+      responses:
+        '201': {description: Multi-seller order created}
+  /api/orders/mine:
+    get:
+      summary: Buyer order history
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Orders}
+  /api/orders/seller:
+    get:
+      summary: Seller order/fulfillment queue scoped by tenant
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Seller orders}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

@@ -1,0 +1,60 @@
+{
+  "name": "hariyo-mart-nepal",
+  "private": true,
+  "version": "6.0.0",
+  "packageManager": "npm@11.9.0",
+  "workspaces": [
+    "apps/web",
+    "apps/api",
+    "apps/mobile"
+  ],
+  "scripts": {
+    "dev": "npm --workspace apps/web run dev",
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:api:legacy": "npm --workspace apps/api run dev",
+    "dev:mobile": "npm --workspace apps/mobile run start",
+    "build": "npm --workspace apps/web run build",
+    "build:cloudflare": "npm --workspace apps/web run cf:build",
+    "preview:cloudflare": "npm --workspace apps/web run cf:preview",
+    "cloudflare:types": "npm --workspace apps/web run cf:types && wrangler types --config infra/cloudflare/services/wrangler.jsonc --env-interface CloudflareServicesEnv infra/cloudflare/services/cloudflare-env.generated.d.ts",
+    "cloudflare:types:check": "npm --workspace apps/web run cf:types:check && wrangler types --config infra/cloudflare/services/wrangler.jsonc --env-interface CloudflareServicesEnv infra/cloudflare/services/cloudflare-env.generated.d.ts --check",
+    "cloudflare:config:check": "node scripts/check-cloudflare-config.mjs",
+    "deploy:cloudflare:services": "wrangler deploy --config infra/cloudflare/services/wrangler.jsonc",
+    "deploy:cloudflare:web": "npm --workspace apps/web run cf:deploy",
+    "deploy:cloudflare": "npm run cloudflare:config:check && npm run cloudflare:types:check && npm run deploy:cloudflare:services && npm run deploy:cloudflare:web",
+    "finish:cloudflare": "node scripts/finish-cloudflare-deploy.mjs",
+    "cloudflare:db:local": "npm --workspace apps/web run cf:db:local",
+    "cloudflare:db:remote": "npm --workspace apps/web run cf:db:remote",
+    "build:all": "npm run build && npm run build:legacy-api && npm run build:mobile",
+    "build:legacy-api": "npm --workspace apps/api run build",
+    "build:mobile": "npm --workspace apps/mobile run export",
+    "typecheck": "npm --workspace apps/web run typecheck && npm --workspace apps/api run typecheck && npm --workspace apps/mobile run typecheck && tsc -p infra/cloudflare/services/tsconfig.json",
+    "test": "npm --workspace apps/web run test",
+    "lint": "eslint apps/web apps/api apps/mobile infra/cloudflare scripts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "audit:prod": "npm audit --workspace apps/web --omit=dev --audit-level=high",
+    "db:seed": "npm --workspace apps/web run db:seed",
+    "env:check": "npm --workspace apps/web run env:check",
+    "validate": "node scripts/validate-content.mjs",
+    "smoke": "node scripts/smoke-check.mjs",
+    "release:check": "npm run cloudflare:types:check && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run validate && npm run smoke && npm run audit:prod && npm run build:all && npm run build:cloudflare"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "overrides": {
+    "@types/react": "19.2.18",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native-worklets": "0.10.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.3.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.46.1"
+  }
+}

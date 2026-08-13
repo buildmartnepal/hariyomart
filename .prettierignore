@@ -1,0 +1,14 @@
+node_modules
+.next
+.expo
+dist
+coverage
+package-lock.json
+apps/web/server/data/catalog.json
+apps/api/src/data/catalog.json
+apps/mobile/data/catalog.ts
+apps/web/lib/catalog.ts
+demo
+docs/*.yaml
+docs/*.csv
+**/cloudflare-env.generated.d.ts

@@ -1,0 +1,173 @@
+Page,Route,Audience,Purpose
+Home,/,Public,"Homepage with hero, categories, provinces and products"
+Shop,/shop,Public,Search and filter catalogue
+Cart,/cart,Customer,Basket
+Checkout,/checkout,Customer,Delivery and payment form
+Blog,/blog,Public,Article index
+Fresh Fruits,/categories/fresh-fruits,Public,Category landing page
+Vegetables,/categories/vegetables,Public,Category landing page
+Leafy Greens,/categories/leafy-greens,Public,Category landing page
+Herbs & Spices,/categories/herbs-spices,Public,Category landing page
+Tea & Coffee,/categories/tea-coffee,Public,Category landing page
+Honey,/categories/honey,Public,Category landing page
+Grains,/categories/grains,Public,Category landing page
+Lentils & Beans,/categories/lentils-beans,Public,Category landing page
+Dairy,/categories/dairy,Public,Category landing page
+Natural Oils,/categories/oils,Public,Category landing page
+Pickles,/categories/pickles,Public,Category landing page
+Healthy Snacks,/categories/snacks,Public,Category landing page
+Baby Food,/categories/baby-food,Public,Category landing page
+Sugar-Free,/categories/sugar-free,Public,Category landing page
+Juices,/categories/juices,Public,Category landing page
+Dry Fruits,/categories/dry-fruits,Public,Category landing page
+Ilam Orthodox Tea,/products/koshi-ilam-orthodox-tea,Public,SEO product detail page
+Large Cardamom,/products/koshi-large-cardamom,Public,SEO product detail page
+Fresh Ginger,/products/koshi-fresh-ginger,Public,SEO product detail page
+Mandarin Orange,/products/koshi-mandarin-orange,Public,SEO product detail page
+Akabare Chilli,/products/koshi-akabare-chilli,Public,SEO product detail page
+Kiwi Fruit,/products/koshi-kiwi-fruit,Public,SEO product detail page
+Bamboo Shoot Pickle,/products/koshi-bamboo-shoot-pickle,Public,SEO product detail page
+Green Tea,/products/koshi-green-tea,Public,SEO product detail page
+Avocado,/products/koshi-avocado,Public,SEO product detail page
+Buckwheat Flour,/products/koshi-buckwheat-flour,Public,SEO product detail page
+Lapsi Candy,/products/koshi-lapsi-candy,Public,SEO product detail page
+Fresh Coriander,/products/koshi-fresh-coriander,Public,SEO product detail page
+Basmati Rice,/products/madhesh-basmati-rice,Public,SEO product detail page
+Malda Mango,/products/madhesh-malda-mango,Public,SEO product detail page
+Red Lentils,/products/madhesh-red-lentils,Public,SEO product detail page
+Bottle Gourd,/products/madhesh-bottle-gourd,Public,SEO product detail page
+Cauliflower,/products/madhesh-cauliflower,Public,SEO product detail page
+Green Peas,/products/madhesh-green-peas,Public,SEO product detail page
+Sugarcane Jaggery,/products/madhesh-sugarcane-jaggery,Public,SEO product detail page
+Makhana,/products/madhesh-makhana,Public,SEO product detail page
+Pigeon Pea,/products/madhesh-pigeon-pea,Public,SEO product detail page
+Mustard Greens,/products/madhesh-mustard-greens,Public,SEO product detail page
+Guava,/products/madhesh-guava,Public,SEO product detail page
+Amla Pickle,/products/madhesh-amla-pickle,Public,SEO product detail page
+Organic Broccoli,/products/bagmati-organic-broccoli,Public,SEO product detail page
+Buffalo Ghee,/products/bagmati-buffalo-ghee,Public,SEO product detail page
+Oyster Mushroom,/products/bagmati-oyster-mushroom,Public,SEO product detail page
+Spinach Leaves,/products/bagmati-spinach-leaves,Public,SEO product detail page
+Cherry Tomato,/products/bagmati-cherry-tomato,Public,SEO product detail page
+Farm Yoghurt,/products/bagmati-farm-yoghurt,Public,SEO product detail page
+Fresh Paneer,/products/bagmati-fresh-paneer,Public,SEO product detail page
+Carrot,/products/bagmati-carrot,Public,SEO product detail page
+Cucumber,/products/bagmati-cucumber,Public,SEO product detail page
+Microgreens,/products/bagmati-microgreens,Public,SEO product detail page
+Cold Brew Coffee,/products/bagmati-cold-brew-coffee,Public,SEO product detail page
+Baby Cereal Mix,/products/bagmati-baby-cereal-mix,Public,SEO product detail page
+Mustang Apple,/products/gandaki-mustang-apple,Public,SEO product detail page
+Wildflower Honey,/products/gandaki-wildflower-honey,Public,SEO product detail page
+Himalayan Bean,/products/gandaki-himalayan-bean,Public,SEO product detail page
+Arabica Coffee,/products/gandaki-arabica-coffee,Public,SEO product detail page
+Dried Apple,/products/gandaki-dried-apple,Public,SEO product detail page
+Buckwheat Noodles,/products/gandaki-buckwheat-noodles,Public,SEO product detail page
+Fresh Trout Fillet,/products/gandaki-fresh-trout-fillet,Public,SEO product detail page
+Mountain Thyme,/products/gandaki-mountain-thyme,Public,SEO product detail page
+Pear,/products/gandaki-pear,Public,SEO product detail page
+Tangerine Marmalade,/products/gandaki-tangerine-marmalade,Public,SEO product detail page
+Pumpkin Seeds,/products/gandaki-pumpkin-seeds,Public,SEO product detail page
+Organic Oats,/products/gandaki-organic-oats,Public,SEO product detail page
+Mustard Oil,/products/lumbini-mustard-oil,Public,SEO product detail page
+Black Gram,/products/lumbini-black-gram,Public,SEO product detail page
+Brown Rice,/products/lumbini-brown-rice,Public,SEO product detail page
+Turmeric Powder,/products/lumbini-turmeric-powder,Public,SEO product detail page
+Chickpeas,/products/lumbini-chickpeas,Public,SEO product detail page
+Flattened Rice,/products/lumbini-flattened-rice,Public,SEO product detail page
+Sesame Oil,/products/lumbini-sesame-oil,Public,SEO product detail page
+Tomato Pickle,/products/lumbini-tomato-pickle,Public,SEO product detail page
+Papaya,/products/lumbini-papaya,Public,SEO product detail page
+Maize Flour,/products/lumbini-maize-flour,Public,SEO product detail page
+Peanut Butter,/products/lumbini-peanut-butter,Public,SEO product detail page
+Herbal Infusion,/products/lumbini-herbal-infusion,Public,SEO product detail page
+Marshi Rice,/products/karnali-marshi-rice,Public,SEO product detail page
+Jumla Walnut,/products/karnali-jumla-walnut,Public,SEO product detail page
+Black Bean,/products/karnali-black-bean,Public,SEO product detail page
+Sea Buckthorn Juice,/products/karnali-sea-buckthorn-juice,Public,SEO product detail page
+Red Rice,/products/karnali-red-rice,Public,SEO product detail page
+Dried Apricot,/products/karnali-dried-apricot,Public,SEO product detail page
+Nettle Powder,/products/karnali-nettle-powder,Public,SEO product detail page
+Foxtail Millet,/products/karnali-foxtail-millet,Public,SEO product detail page
+Mountain Garlic,/products/karnali-mountain-garlic,Public,SEO product detail page
+Chino Rice,/products/karnali-chino-rice,Public,SEO product detail page
+Hemp Seed,/products/karnali-hemp-seed,Public,SEO product detail page
+Herbal Salt,/products/karnali-herbal-salt,Public,SEO product detail page
+Finger Millet Flour,/products/sudurpashchim-finger-millet-flour,Public,SEO product detail page
+Chiuri Honey,/products/sudurpashchim-chiuri-honey,Public,SEO product detail page
+Lemon Pickle,/products/sudurpashchim-lemon-pickle,Public,SEO product detail page
+Roasted Soybean,/products/sudurpashchim-roasted-soybean,Public,SEO product detail page
+Kodo Cookies,/products/sudurpashchim-kodo-cookies,Public,SEO product detail page
+Citrus Squash,/products/sudurpashchim-citrus-squash,Public,SEO product detail page
+Horse Gram,/products/sudurpashchim-horse-gram,Public,SEO product detail page
+Cold-Pressed Sesame Oil,/products/sudurpashchim-cold-pressed-sesame-oil,Public,SEO product detail page
+Local Banana,/products/sudurpashchim-local-banana,Public,SEO product detail page
+Radish Pickle,/products/sudurpashchim-radish-pickle,Public,SEO product detail page
+Amaranth Flour,/products/sudurpashchim-amaranth-flour,Public,SEO product detail page
+Forest Herb Tea,/products/sudurpashchim-forest-herb-tea,Public,SEO product detail page
+Koshi Province,/provinces/koshi,Public,Province marketplace
+Madhesh Province,/provinces/madhesh,Public,Province marketplace
+Bagmati Province,/provinces/bagmati,Public,Province marketplace
+Gandaki Province,/provinces/gandaki,Public,Province marketplace
+Lumbini Province,/provinces/lumbini,Public,Province marketplace
+Karnali Province,/provinces/karnali,Public,Province marketplace
+Sudurpashchim Province,/provinces/sudurpashchim,Public,Province marketplace
+About Hariyo Mart,/info/about,Public/CMS,A digital farm-to-home marketplace created for Nepal’s diverse agricultural economy.
+Our Farmer Network,/info/farmers,Public/CMS,"Profiles, verification workflows and transparent sourcing for growers and cooperatives."
+Contact and Support,/info/contact,Public/CMS,"Customer care, business enquiries, farmer onboarding and delivery support."
+Fresh Box Subscriptions,/info/subscriptions,Public/CMS,"Weekly and monthly boxes personalized by province, household size and dietary preference."
+Bulk and Institutional Orders,/info/bulk-orders,Public/CMS,"Procurement tools for restaurants, hotels, schools, offices and retailers."
+Nepali Recipes,/info/recipes,Public/CMS,Practical seasonal recipes using traceable local ingredients.
+Sustainability,/info/sustainability,Public/CMS,"Lower food miles, reusable packaging pilots and responsible sourcing standards."
+Frequently Asked Questions,/info/faq,Public/CMS,"Answers about ordering, delivery, payments, quality and returns."
+Returns and Refunds,/info/returns,Public/CMS,"A fair policy for damaged, incorrect or quality-sensitive products."
+Privacy Policy,/info/privacy,Public/CMS,"How the platform handles personal data, account information and location preferences."
+Terms and Conditions,/info/terms,Public/CMS,"Marketplace terms for customers, vendors, farmers and delivery partners."
+Delivery Information,/info/delivery,Public/CMS,"Service zones, cold-chain handling, delivery windows and proof of delivery."
+Quality Standards,/info/quality,Public/CMS,"Product grading, hygiene, storage, traceability and complaint resolution."
+Careers,/info/careers,Public/CMS,"Opportunities in technology, operations, agriculture, quality and logistics."
+Press and Media,/info/press,Public/CMS,"Brand facts, media contacts and downloadable company information."
+Hariyo Rewards,/info/loyalty,Public/CMS,"Points, tier benefits, referral credit and province discovery rewards."
+Payment Methods,/info/payments,Public/CMS,"Cash on delivery and integration-ready eSewa, Khalti, FonePay and cards."
+Accessibility,/info/accessibility,Public/CMS,"Commitment to inclusive content, keyboard use, contrast and readable interfaces."
+Organic Food in Nepal: A Practical Buyer’s Guide,/blog/organic-food-nepal,Public/CMS,SEO editorial article
+Seasonal Produce Across Nepal’s Seven Provinces,/blog/seven-provinces-seasonal-produce,Public/CMS,SEO editorial article
+From Mustang Orchard to Kathmandu Kitchen,/blog/mustang-apple-story,Public/CMS,SEO editorial article
+How to Choose Authentic Ilam Tea,/blog/ilam-tea-guide,Public/CMS,SEO editorial article
+Why Karnali Marshi Rice Matters,/blog/marshi-rice-karnali,Public/CMS,SEO editorial article
+Building a Reliable Farm-to-Home Cold Chain,/blog/farm-to-home-cold-chain,Public/CMS,SEO editorial article
+A Guide to Nepal’s Regional Honey,/blog/nepali-honey-types,Public/CMS,SEO editorial article
+Planning a Local and Healthy School Lunch,/blog/healthy-school-lunch,Public/CMS,SEO editorial article
+Seven Ways Households Can Reduce Food Waste,/blog/reduce-food-waste,Public/CMS,SEO editorial article
+How Digital Marketplaces Support Small Farmers,/blog/farmer-digital-marketplace,Public/CMS,SEO editorial article
+How to Store Fresh Vegetables Safely,/blog/vegetable-storage,Public/CMS,SEO editorial article
+Nepal’s Heritage Grains and Modern Diets,/blog/heritage-grains-nepal,Public/CMS,SEO editorial article
+Overview,/account/overview,Customer,Authenticated customer workspace
+Orders,/account/orders,Customer,Authenticated customer workspace
+Addresses,/account/addresses,Customer,Authenticated customer workspace
+Wishlist,/account/wishlist,Customer,Authenticated customer workspace
+Subscriptions,/account/subscriptions,Customer,Authenticated customer workspace
+Wallet,/account/wallet,Customer,Authenticated customer workspace
+Rewards,/account/rewards,Customer,Authenticated customer workspace
+Reviews,/account/reviews,Customer,Authenticated customer workspace
+Returns,/account/returns,Customer,Authenticated customer workspace
+Settings,/account/settings,Customer,Authenticated customer workspace
+Overview,/admin/overview,Admin,Role-protected administration workspace
+Users,/admin/users,Admin,Role-protected administration workspace
+Products,/admin/products,Admin,Role-protected administration workspace
+Categories,/admin/categories,Admin,Role-protected administration workspace
+Orders,/admin/orders,Admin,Role-protected administration workspace
+Inventory,/admin/inventory,Admin,Role-protected administration workspace
+Warehouses,/admin/warehouses,Admin,Role-protected administration workspace
+Payments,/admin/payments,Admin,Role-protected administration workspace
+Delivery,/admin/delivery,Admin,Role-protected administration workspace
+Coupons,/admin/coupons,Admin,Role-protected administration workspace
+Content,/admin/content,Admin,Role-protected administration workspace
+Analytics,/admin/analytics,Admin,Role-protected administration workspace
+Overview,/farmer/overview,Farmer,Role-protected farmer workspace
+Products,/farmer/products,Farmer,Role-protected farmer workspace
+Harvest-Calendar,/farmer/harvest-calendar,Farmer,Role-protected farmer workspace
+Orders,/farmer/orders,Farmer,Role-protected farmer workspace
+Inventory,/farmer/inventory,Farmer,Role-protected farmer workspace
+Payments,/farmer/payments,Farmer,Role-protected farmer workspace
+Certifications,/farmer/certifications,Farmer,Role-protected farmer workspace
+Profile,/farmer/profile,Farmer,Role-protected farmer workspace
