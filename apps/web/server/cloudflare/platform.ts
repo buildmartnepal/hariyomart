@@ -159,7 +159,10 @@ export async function verifyTurnstile(
 ) {
   const env = cloudflareEnv();
   const secret = env.TURNSTILE_SECRET_KEY;
-  const mode = env.TURNSTILE_ENFORCEMENT_MODE || 'web';
+  // Wrangler type generation narrows plain-text vars to their current literal
+  // value (for example "web"). Widen here because deployments may intentionally
+  // configure any supported enforcement mode without changing application code.
+  const mode = String(env.TURNSTILE_ENFORCEMENT_MODE || 'web') as 'web' | 'all' | 'off';
   if (!secret || mode === 'off') return { configured: Boolean(secret), success: true, skipped: true };
   const isMobile = req.headers.get('x-client-platform')?.toLowerCase() === 'mobile';
   if (mode === 'web' && isMobile)

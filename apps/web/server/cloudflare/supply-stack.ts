@@ -3,7 +3,7 @@ import { apiJson, cloudflareEnv } from './platform';
 async function probeV8Schema() {
   const env = cloudflareEnv();
   try {
-    const checks = await env.HARIYO_DB.batch([
+    await env.HARIYO_DB.batch([
       env.HARIYO_DB.prepare('SELECT code FROM plan_catalog LIMIT 1'),
       env.HARIYO_DB.prepare('SELECT tenant_id FROM tenant_members LIMIT 1'),
       env.HARIYO_DB.prepare('SELECT id FROM produce_lots LIMIT 1'),
@@ -12,7 +12,7 @@ async function probeV8Schema() {
       env.HARIYO_DB.prepare('SELECT id FROM integration_outbox LIMIT 1'),
     ]);
     return {
-      schemaReady: checks.every((result) => result.success !== false),
+      schemaReady: true,
       detail: 'Cloudflare D1 v8 produce-SaaS tables are available.',
     };
   } catch {
