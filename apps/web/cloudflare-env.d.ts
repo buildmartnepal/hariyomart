@@ -9,4 +9,7 @@ interface HariyoWorkerSecrets {
   FONEPAY_MERCHANT_CODE?: string;
 }
 
-type HariyoCloudflareBindings = CloudflareEnv & HariyoWorkerSecrets;
+type HariyoCloudflareBindings = CloudflareEnv & HariyoWorkerSecrets & {
+  /** Optional advanced coordination Worker. The web Worker has D1 fallbacks when it is absent. */
+  HARIYO_SERVICES?: Fetcher;
+};

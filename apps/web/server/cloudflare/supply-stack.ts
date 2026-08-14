@@ -33,7 +33,7 @@ async function probeServices() {
       configured: false,
       inventoryCoordinator: false,
       workflows: false,
-      detail: 'Deploy hariyo-mart-services and bind HARIYO_SERVICES.',
+      detail: 'Standalone D1 fallbacks are active. The private services Worker is an optional advanced coordination layer.',
     };
   }
   try {
@@ -63,9 +63,9 @@ export async function supplyStackStatus() {
   const [d1, services] = await Promise.all([probeV8Schema(), probeServices()]);
   return apiJson({
     service: 'hariyo-mart-cloudflare-native-produce-saas',
-    version: '8.3.1',
+    version: '8.3.3',
     mode: 'cloudflare-native',
-    sourceOfTruth: 'cloudflare-d1-with-durable-object-coordination',
+    sourceOfTruth: services.configured ? 'cloudflare-d1-with-durable-object-coordination' : 'cloudflare-d1-standalone',
     d1,
     auth: {
       provider: 'cloudflare-workers-d1-sessions',

@@ -26,19 +26,31 @@ function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
 async function nextNumber(tenantId: string, key: string, prefix: string) {
   const env = cloudflareEnv();
   if (env.HARIYO_SERVICES) {
-    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/sequence', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ tenantId, key, prefix }),
-    });
-    if (response.ok) {
-      const body = (await response.json()) as { formatted?: string };
-      if (body.formatted) return body.formatted;
+    try {
+      const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/sequence', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ tenantId, key, prefix }),
+      });
+      if (response.ok) {
+        const body = (await response.json()) as { formatted?: string };
+        if (body.formatted) return body.formatted;
+      }
+    } catch {
+      // Fall through to D1 sequence allocation.
     }
   }
-  if (env.APP_ENV === 'production')
-    throw new CloudflareApiError(503, 'Tenant sequencing service is unavailable');
-  return `${prefix}-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
+  const row = await env.HARIYO_DB.prepare(
+    `INSERT INTO tenant_sequences(tenant_id,sequence_key,next_value,updated_at)
+     VALUES (?,?,2,datetime('now'))
+     ON CONFLICT(tenant_id,sequence_key) DO UPDATE SET
+       next_value=tenant_sequences.next_value+1,updated_at=datetime('now')
+     RETURNING next_value-1 AS value`,
+  )
+    .bind(tenantId, key)
+    .first<{ value: number }>();
+  const value = Number(row?.value || 1);
+  return `${prefix}-${String(value).padStart(6, '0')}`;
 }
 
 export async function supplyOverview(req: NextRequest) {

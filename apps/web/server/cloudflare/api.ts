@@ -872,20 +872,21 @@ async function placeOrder(req: NextRequest, guest: boolean) {
         body: JSON.stringify(payload),
       });
       responseData = await serviceResponse.json();
-      if (!serviceResponse.ok)
-        throw new CloudflareApiError(
-          serviceResponse.status,
-          String((responseData as { error?: string }).error || 'Checkout failed'),
-        );
+      if (!serviceResponse.ok) {
+        // Validation/conflict responses are authoritative. Infrastructure failures fall back to D1.
+        if (serviceResponse.status < 500)
+          throw new CloudflareApiError(
+            serviceResponse.status,
+            String((responseData as { error?: string }).error || 'Checkout failed'),
+          );
+        responseData = await checkoutCore(env, payload);
+      }
     } catch (error) {
       if (error instanceof CloudflareApiError) throw error;
-      if (env.APP_ENV === 'production')
-        throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
+      // Standalone mode is production-supported: D1 remains the source of truth.
       responseData = await checkoutCore(env, payload);
     }
   } else {
-    if (env.APP_ENV === 'production')
-      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
     responseData = await checkoutCore(env, payload);
   }
   await audit(req, user, 'order.placed', 'order', (responseData as { id?: string }).id, {

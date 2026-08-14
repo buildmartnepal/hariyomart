@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "8.3.2",
+  "version": "8.3.3",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -14,14 +14,14 @@
     "dev:api:legacy": "npm --workspace apps/api run dev",
     "dev:mobile": "npm --workspace apps/mobile run start",
     "build": "npm --workspace apps/web run build",
-    "build:cloudflare": "npm run typecheck:services && npm --workspace apps/web run cf:build",
+    "build:cloudflare": "npm --workspace apps/web run cf:build",
     "preview:cloudflare": "npm --workspace apps/web run cf:preview",
     "cloudflare:types": "npm --workspace apps/web run cf:types && wrangler types --config infra/cloudflare/services/wrangler.jsonc --env-interface CloudflareServicesEnv infra/cloudflare/services/cloudflare-env.generated.d.ts",
     "cloudflare:types:check": "npm --workspace apps/web run cf:types:check && wrangler types --config infra/cloudflare/services/wrangler.jsonc --env-interface CloudflareServicesEnv infra/cloudflare/services/cloudflare-env.generated.d.ts --check",
     "cloudflare:config:check": "node scripts/check-cloudflare-config.mjs",
     "deploy:cloudflare:services": "npm run typecheck:services && wrangler deploy --config infra/cloudflare/services/wrangler.jsonc",
     "deploy:cloudflare:web": "npm --workspace apps/web run cf:deploy",
-    "deploy:cloudflare": "npm run cloudflare:config:check && npm run cloudflare:types:check && npm run deploy:cloudflare:services && npm run deploy:cloudflare:web",
+    "deploy:cloudflare": "npm run cloudflare:config:check && npm --workspace apps/web run cf:deploy",
     "finish:cloudflare": "node scripts/finish-cloudflare-deploy.mjs",
     "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "cloudflare:db:local": "npm --workspace apps/web run cf:db:local",
@@ -48,9 +48,11 @@
     "cloudflare:deploy:dry-run": "npm run build:cloudflare && wrangler deploy --config apps/web/wrangler.jsonc --dry-run",
     "typecheck:services": "tsc -p infra/cloudflare/services/tsconfig.json",
     "v8.3.1:doctor": "node scripts/v8-doctor.mjs",
-    "deploy:cloudflare:first": "npm run typecheck:services && npm run deploy:cloudflare:services && npm run build:cloudflare && npm run deploy:cloudflare:web",
+    "deploy:cloudflare:first": "npm run deploy:cloudflare",
     "cloudflare:bootstrap:services": "node scripts/bootstrap-cloudflare-services.mjs",
-    "v8.3.2:doctor": "node scripts/v8-doctor.mjs"
+    "v8.3.2:doctor": "node scripts/v8-doctor.mjs",
+    "deploy:cloudflare:full": "npm run cloudflare:bootstrap:services && npm run cloudflare:config:check && npm --workspace apps/web run cf:deploy",
+    "v8.3.3:doctor": "node scripts/v8-doctor.mjs"
   },
   "engines": {
     "node": ">=22.13.0"

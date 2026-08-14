@@ -1,8 +1,8 @@
-# Hariyo Mart Nepal v8.3 — Cloudflare-Native Commerce + Farmer SaaS Business Center
+# Hariyo Mart Nepal v8.3.3 — Standalone Cloudflare Commerce + Farmer SaaS
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.3 keeps the v8.2 commerce control plane, fixes the strict TypeScript errors reported by the Cloudflare Next.js 16 production build, and adds a farmer-facing SaaS Business Center on web and mobile with plan usage, subscription health, revenue/procurement pulse, recurring produce boxes and tenant capacity.
+v8.3.3 keeps the v8.3 commerce and Farmer SaaS features while making the public OpenNext Worker independently deployable. D1-backed fallbacks cover checkout, inventory coordination, rate limiting and tenant numbering when the optional private coordination Worker is not enabled.
 
 ## Production stack
 
@@ -19,10 +19,11 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
  business DB   media/cache    config/cache
        |
        v
-  private `hariyo-mart-services` Worker
-       +-- Durable Objects
-       +-- Queues + DLQ
-       +-- Workflows
+  optional `hariyo-mart-services` Worker
+       +-- Durable Objects / stronger coordination
+       +-- Queues + DLQ consumers
+       +-- Workflows / realtime
+       (not required for first web deployment)
        +-- Analytics Engine
 ```
 
@@ -78,9 +79,9 @@ npm run dev:web
 1. Replace `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `apps/web/wrangler.jsonc`.
 2. Set `JWT_SECRET`, `JWT_REFRESH_SECRET` and `TURNSTILE_SECRET_KEY` as Wrangler secrets.
 3. Export/backup the production D1 database.
-4. Apply migration `0005` through the normal D1 migration command.
-5. Deploy the private services Worker first.
-6. Deploy the OpenNext web Worker.
-7. Verify `/api/health`, `/api/system/readiness` and `/api/system/supply-stack`.
+4. Apply migrations through `0006_standalone_web_runtime.sql` with the normal D1 migration command.
+5. Deploy the OpenNext web Worker `hariyo-mart-nepal`. The private services Worker is optional in v8.3.3.
+6. Verify `/api/health`, `/api/system/readiness` and `/api/system/supply-stack`.
+7. Optionally deploy `hariyo-mart-services` later for Durable Object/Workflow coordination, then add its service binding only after the target Worker exists.
 
-See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.
+See `docs/V8_3_3_STANDALONE_DEPLOY.md` for the current deployment topology and `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the broader Windows/PowerShell operations procedure.

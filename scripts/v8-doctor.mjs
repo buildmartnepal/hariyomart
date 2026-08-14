@@ -60,15 +60,17 @@ for (const marker of ['INVENTORY_COORDINATOR','TENANT_REALTIME','analytics_engin
 }
 
 const webConfig = JSON.parse(fs.readFileSync('apps/web/wrangler.jsonc', 'utf8'));
-if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.3.2 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
+if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.3.3 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
 if (webConfig.services?.find((item) => item.binding === 'WORKER_SELF_REFERENCE')?.service !== webConfig.name)
   throw new Error('WORKER_SELF_REFERENCE does not match Worker name');
-for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS','HARIYO_SERVICES']) {
+if (webConfig.services?.some((item) => item.binding === 'HARIYO_SERVICES'))
+  throw new Error('Default web deploy must not hard-bind HARIYO_SERVICES before the target Worker exists');
+for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS']) {
   if (!JSON.stringify(webConfig).includes(`"${marker}"`)) throw new Error(`Web Wrangler missing ${marker}`);
 }
 
 const platform = fs.readFileSync('apps/web/server/cloudflare/platform.ts', 'utf8');
-for (const marker of ['requireTenantAccess','tenant_members','verifyTurnstile','TURNSTILE_ENFORCEMENT_MODE','coordinateInventory']) {
+for (const marker of ['requireTenantAccess','tenant_members','verifyTurnstile','TURNSTILE_ENFORCEMENT_MODE','coordinateInventory','coordinateInventoryWithD1','enforceRateLimitWithD1','api_rate_limit_windows']) {
   if (!platform.includes(marker)) throw new Error(`Platform security missing ${marker}`);
 }
 
@@ -121,7 +123,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.3.2') throw new Error(`Expected v8.3.2 package, got ${pkg.version}`);
+if (pkg.version !== '8.3.3') throw new Error(`Expected v8.3.3 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [
