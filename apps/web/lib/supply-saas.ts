@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export const farmerSupplySections = [
+  'business-center',
   'supply-planning',
   'procurement',
   'lots-quality',
@@ -45,6 +46,11 @@ export const adminSupplySections = [
 export type SupplySection = (typeof farmerSupplySections)[number] | (typeof adminSupplySections)[number];
 
 export const supplyModuleCopy: Record<SupplySection, { title: string; description: string; bullets: string[] }> = {
+  'business-center': {
+    title: 'Farmer SaaS Business Center',
+    description: 'Run the farm as a digital business with plan usage, sales, procurement, subscriptions and team capacity in one tenant-safe cockpit.',
+    bullets: ['Current SaaS plan and subscription health', 'Member, product and warehouse usage vs plan limits', '30-day revenue and procurement pulse', 'Recurring produce-box and customer growth visibility'],
+  },
   'supply-planning': {
     title: 'Harvest & supply planning',
     description: 'Plan incoming volume before produce reaches the collection center.',

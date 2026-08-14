@@ -48,6 +48,7 @@ import {
   platformPlansApi,
   platformTenantsApi,
   tenantTeamApi,
+  tenantSaasProfileApi,
   warehousesApi,
 } from './supply-api';
 import {
@@ -1599,6 +1600,7 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (route === 'supply/subscriptions' && ['GET', 'POST'].includes(method)) return await subscriptionsApi(req);
     if (route === 'supply/team' && method === 'GET') return await tenantTeamApi(req);
     if (route === 'supply/reports' && method === 'GET') return await supplyReportsApi(req);
+    if (route === 'supply/saas-profile' && method === 'GET') return await tenantSaasProfileApi(req);
     if (route === 'supply/platform/tenants' && method === 'GET') return await platformTenantsApi(req);
     if (route === 'supply/platform/plans' && method === 'GET') return await platformPlansApi(req);
     if (route === 'supply/platform/network' && method === 'GET') return await platformNetworkApi(req);

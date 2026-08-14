@@ -7763,3 +7763,67 @@ body {
   .commerce-kpis { grid-template-columns: 1fr; }
   .commerce-coupon-row .btn { width: 100%; }
 }
+
+
+/* v8.3 Farmer SaaS plans */
+.seller-saas-section {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+.seller-saas-heading {
+  margin-bottom: 28px;
+}
+.seller-saas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.seller-saas-plan {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.seller-saas-plan.featured {
+  border-color: var(--primary-strong);
+  box-shadow: 0 18px 55px rgba(24, 83, 55, 0.14);
+  transform: translateY(-6px);
+}
+.seller-saas-plan > span {
+  color: var(--primary-strong);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.seller-saas-plan h3 {
+  margin: 9px 0 4px;
+  font-size: clamp(28px, 3vw, 40px);
+}
+.seller-saas-plan h3 small {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.seller-saas-plan > small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.seller-saas-plan ul {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 26px;
+  padding-left: 18px;
+  color: var(--ink);
+}
+.seller-saas-plan .btn {
+  margin-top: auto;
+}
+@media (max-width: 900px) {
+  .seller-saas-grid { grid-template-columns: 1fr; }
+  .seller-saas-plan.featured { transform: none; }
+}

@@ -20,6 +20,7 @@ import { supplyCapabilities, supplyModuleCopy, type SupplySection } from '@/lib/
 
  
 const liveEndpointBySection: Partial<Record<SupplySection, string>> = {
+  'business-center': '/api/supply/saas-profile',
   'supply-planning': '/api/supply/harvest-plans',
   procurement: '/api/supply/purchase-orders',
   'lots-quality': '/api/supply/lots',
@@ -37,12 +38,46 @@ const liveEndpointBySection: Partial<Record<SupplySection, string>> = {
   'data-platform': '/api/system/supply-stack',
 };
 
-function summarizePayload(payload: unknown) {
-  if (!payload || typeof payload !== 'object') return [] as Array<[string, unknown]>;
+function summarizePayload(payload: unknown): Array<[string, unknown]> {
+  if (!payload || typeof payload !== 'object') return [];
   const record = payload as Record<string, unknown>;
   const arrayEntry = Object.entries(record).find(([, value]) => Array.isArray(value));
-  if (arrayEntry) return (arrayEntry[1] as unknown[]).slice(0, 8).map((value, index) => [String(index + 1), value]);
-  return Object.entries(record).filter(([key]) => !['timestamp'].includes(key)).slice(0, 10);
+  if (arrayEntry) {
+    return (arrayEntry[1] as unknown[])
+      .slice(0, 8)
+      .map((value, index): [string, unknown] => [String(index + 1), value]);
+  }
+  return Object.entries(record)
+    .filter(([key]) => key !== 'timestamp')
+    .slice(0, 10);
+}
+
+
+type FarmerSaaSProfile = {
+  tenant?: { name?: string; status?: string; province?: string | null; district?: string | null };
+  subscription?: { planCode?: string; planName?: string; status?: string; monthlyPriceNpr?: number; trialEndsAt?: string | null };
+  usage?: {
+    members?: { used?: number; limit?: number; percent?: number };
+    products?: { used?: number; limit?: number; percent?: number };
+    warehouses?: { used?: number; limit?: number; percent?: number };
+    stockUnits?: number;
+  };
+  performance30d?: {
+    salesOrders?: number;
+    revenueNpr?: number;
+    purchaseOrders?: number;
+    procurementNpr?: number;
+    activeProduceSubscriptions?: number;
+    activeBusinessCustomers?: number;
+  };
+};
+
+function asFarmerSaaSProfile(value: unknown): FarmerSaaSProfile | null {
+  return value && typeof value === 'object' ? (value as FarmerSaaSProfile) : null;
+}
+
+function npr(value: unknown) {
+  return `NPR ${new Intl.NumberFormat('en-NP', { maximumFractionDigits: 0 }).format(Number(value || 0))}`;
 }
 
 type PlatformStatus = {
@@ -72,7 +107,7 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
     setLiveError('');
     try {
       const response = await fetch(liveEndpoint, { cache: 'no-store', credentials: 'include' });
-      const payload = await response.json().catch(() => null);
+      const payload: unknown = await response.json().catch(() => null);
       if (!response.ok) throw new Error((payload as { error?: string } | null)?.error || 'Unable to load module data');
       setLiveData(payload);
     } catch (error) {
@@ -86,7 +121,10 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
   useEffect(() => {
     let active = true;
     fetch('/api/system/supply-stack', { cache: 'no-store', credentials: 'include' })
-      .then(async (response) => (response.ok ? response.json() : null))
+      .then(async (response): Promise<PlatformStatus | null> => {
+        if (!response.ok) return null;
+        return (await response.json()) as PlatformStatus;
+      })
       .then((payload) => {
         if (active) setStatus(payload);
       })
@@ -101,6 +139,7 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
   }, [refreshLiveData]);
 
   const liveRows = summarizePayload(liveData);
+  const farmerSaaS = section === 'business-center' ? asFarmerSaaSProfile(liveData) : null;
 
   return (
     <div className="supply-saas-workbench">
@@ -143,6 +182,52 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
         </div>
       </section>
 
+
+      {section === 'business-center' && farmerSaaS && (
+        <>
+          <div className="supply-status-grid">
+            <StatusCard
+              icon={<BadgeCheck />}
+              label="SaaS plan"
+              value={`${farmerSaaS.subscription?.planName || 'Starter'} · ${farmerSaaS.subscription?.status || 'trialing'}`}
+              note={`${npr(farmerSaaS.subscription?.monthlyPriceNpr)} / month · tenant ${farmerSaaS.tenant?.status || 'active'}`}
+            />
+            <StatusCard
+              icon={<Database />}
+              label="30-day revenue"
+              value={npr(farmerSaaS.performance30d?.revenueNpr)}
+              note={`${farmerSaaS.performance30d?.salesOrders || 0} sales orders · ${farmerSaaS.performance30d?.activeBusinessCustomers || 0} B2B customers`}
+            />
+            <StatusCard
+              icon={<Workflow />}
+              label="Procurement"
+              value={npr(farmerSaaS.performance30d?.procurementNpr)}
+              note={`${farmerSaaS.performance30d?.purchaseOrders || 0} purchase orders in the last 30 days`}
+            />
+            <StatusCard
+              icon={<Radio />}
+              label="Recurring boxes"
+              value={String(farmerSaaS.performance30d?.activeProduceSubscriptions || 0)}
+              note={`${farmerSaaS.usage?.stockUnits || 0} units currently represented in tenant product stock`}
+            />
+          </div>
+          <section className="supply-module-card">
+            <div className="supply-section-heading">
+              <div>
+                <span className="eyebrow">PLAN USAGE</span>
+                <h3>Grow without losing control of limits</h3>
+              </div>
+              <Layers3 />
+            </div>
+            <div className="supply-bullet-grid">
+              <div><CheckCircle2 size={18} /><span>Team: {farmerSaaS.usage?.members?.used || 0} / {farmerSaaS.usage?.members?.limit || 0} ({farmerSaaS.usage?.members?.percent || 0}%)</span></div>
+              <div><CheckCircle2 size={18} /><span>Products: {farmerSaaS.usage?.products?.used || 0} / {farmerSaaS.usage?.products?.limit || 0} ({farmerSaaS.usage?.products?.percent || 0}%)</span></div>
+              <div><CheckCircle2 size={18} /><span>Warehouses: {farmerSaaS.usage?.warehouses?.used || 0} / {farmerSaaS.usage?.warehouses?.limit || 0} ({farmerSaaS.usage?.warehouses?.percent || 0}%)</span></div>
+              <div><CheckCircle2 size={18} /><span>Workspace: {farmerSaaS.tenant?.name || 'Farmer business'} · {farmerSaaS.tenant?.district || farmerSaaS.tenant?.province || 'Nepal'}</span></div>
+            </div>
+          </section>
+        </>
+      )}
 
       {liveEndpoint && (
         <section className="supply-module-card supply-live-card">

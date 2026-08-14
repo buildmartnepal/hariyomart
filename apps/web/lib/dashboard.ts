@@ -42,6 +42,7 @@ export const adminSections = [
 ] as const;
 export const farmerSections = [
   'overview',
+  'business-center',
   'list-harvest',
   'products',
   'orders',

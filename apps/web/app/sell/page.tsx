@@ -53,6 +53,37 @@ export default function SellPage() {
           </div>
         </div>
       </section>
+      <section className="section seller-saas-section">
+        <div className="container">
+          <div className="section-heading seller-saas-heading">
+            <div>
+              <span className="eyebrow">FARMER SAAS</span>
+              <h2>Start free. Grow into a complete produce operating system.</h2>
+              <p className="section-copy">
+                Every farmer store is a secure tenant workspace. Upgrade when you need more team seats,
+                products, warehouses, subscriptions and advanced reporting.
+              </p>
+            </div>
+          </div>
+          <div className="seller-saas-grid">
+            <article className="seller-saas-plan">
+              <span>Starter</span><h3>NPR 0</h3><small>For an individual farmer starting online</small>
+              <ul><li>Up to 150 products</li><li>3 team members</li><li>1 warehouse / collection point</li><li>Procurement, lots and delivery tools</li></ul>
+              <a className="btn btn-secondary" href="#join">Start free</a>
+            </article>
+            <article className="seller-saas-plan featured">
+              <span>Growth</span><h3>NPR 2,499 <small>/ month</small></h3><small>For growing farms and cooperatives</small>
+              <ul><li>Up to 2,000 products</li><li>15 team members</li><li>5 warehouses</li><li>Produce subscriptions + advanced reports</li></ul>
+              <a className="btn btn-primary" href="#join">Open Growth workspace</a>
+            </article>
+            <article className="seller-saas-plan">
+              <span>Enterprise</span><h3>NPR 9,999 <small>/ month</small></h3><small>For large cooperatives and supply networks</small>
+              <ul><li>Up to 100,000 products</li><li>100 team members</li><li>50 warehouses</li><li>Custom domain + isolated data-tier entitlement</li></ul>
+              <a className="btn btn-secondary" href="/contact">Talk to Hariyo</a>
+            </article>
+          </div>
+        </div>
+      </section>
       <section className="section" id="join">
         <div className="container">
           <SellOnHariyo />

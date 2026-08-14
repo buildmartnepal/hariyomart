@@ -1,8 +1,8 @@
-# Hariyo Mart Nepal v8.2 — Cloudflare-Native Produce Commerce & Tenant SaaS
+# Hariyo Mart Nepal v8.3 — Cloudflare-Native Commerce + Farmer SaaS Business Center
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.2 keeps the v8.1 theme/auth/product hardening and adds a production commerce control plane: D1-synchronized carts, coupons, delivery-slot capacity, RMA returns, inventory alerts, product price history and seller/admin commerce operations.
+v8.3 keeps the v8.2 commerce control plane, fixes the strict TypeScript errors reported by the Cloudflare Next.js 16 production build, and adds a farmer-facing SaaS Business Center on web and mobile with plan usage, subscription health, revenue/procurement pulse, recurring produce boxes and tenant capacity.
 
 ## Production stack
 
@@ -26,8 +26,13 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
        +-- Analytics Engine
 ```
 
-## v8.2 highlights
+## v8.3 highlights
 
+- strict Next.js TypeScript build fixes without disabling type checking
+- `/farmer/business-center` tenant SaaS cockpit
+- tenant-safe `GET /api/supply/saas-profile`
+- Starter / Growth / Enterprise SaaS plan presentation on the farmer onboarding page
+- Expo Farmer Studio plan/usage/revenue snapshot
 - production Worker name/url aligned to `hariyomart` / `hariyomart.nishrutesh.workers.dev`
 - complete D1, R2, KV, Queue and service bindings retained in Wrangler
 - OpenNext self-reference matches Worker identity
@@ -49,7 +54,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
 
 ```powershell
 npm ci
-npm run v8.2:doctor
+npm run v8.3:doctor
 npm run validate
 npm run smoke
 npm run cloudflare:types

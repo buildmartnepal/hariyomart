@@ -58,8 +58,11 @@ export default function Checkout() {
   useEffect(() => {
     let active = true;
     fetch(`${api}/commerce/delivery-slots`, { cache: 'no-store', credentials: 'include' })
-      .then(async (response) => (response.ok ? response.json() : { data: [] }))
-      .then((payload: { data?: DeliverySlot[] }) => {
+      .then(async (response) => {
+        if (!response.ok) return { data: [] as DeliverySlot[] };
+        return (await response.json()) as { data?: DeliverySlot[] };
+      })
+      .then((payload) => {
         if (active) setDeliverySlots(Array.isArray(payload.data) ? payload.data : []);
       })
       .catch(() => undefined);

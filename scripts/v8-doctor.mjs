@@ -19,10 +19,10 @@ const required = [
   'docs/V8_SYSTEM_ARCHITECTURE.md',
   'docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md',
   'docs/V8_2_IMPLEMENTATION_STATUS.md',
-  'RELEASE_NOTES_V8.2.md',
+  'RELEASE_NOTES_V8.3.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
-if (missing.length) throw new Error(`V8.2 required files missing: ${missing.join(', ')}`);
+if (missing.length) throw new Error(`V8.3 required files missing: ${missing.join(', ')}`);
 
 const supplyMigration = fs.readFileSync('apps/web/migrations/0004_cloudflare_native_supply_saas.sql', 'utf8');
 for (const table of [
@@ -40,10 +40,10 @@ for (const table of [
   'delivery_slots','return_requests','return_items','product_price_history','inventory_alert_rules','commerce_events',
 ]) {
   if (!commerceMigration.includes(`CREATE TABLE IF NOT EXISTS ${table}`))
-    throw new Error(`V8.2 commerce migration missing ${table}`);
+    throw new Error(`V8.3 commerce migration missing ${table}`);
 }
 for (const marker of ['discount_npr','delivery_slot_id','redemption_count'])
-  if (!commerceMigration.includes(marker)) throw new Error(`V8.2 commerce migration missing ${marker}`);
+  if (!commerceMigration.includes(marker)) throw new Error(`V8.3 commerce migration missing ${marker}`);
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
 for (const marker of [
@@ -60,7 +60,7 @@ for (const marker of ['INVENTORY_COORDINATOR','TENANT_REALTIME','analytics_engin
 }
 
 const webConfig = JSON.parse(fs.readFileSync('apps/web/wrangler.jsonc', 'utf8'));
-if (webConfig.name !== 'hariyomart') throw new Error('V8.2 web Worker must be named hariyomart');
+if (webConfig.name !== 'hariyomart') throw new Error('V8.3 web Worker must be named hariyomart');
 if (webConfig.services?.find((item) => item.binding === 'WORKER_SELF_REFERENCE')?.service !== webConfig.name)
   throw new Error('WORKER_SELF_REFERENCE does not match Worker name');
 for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS','HARIYO_SERVICES']) {
@@ -81,7 +81,7 @@ for (const marker of [
   'commerce/cart','commerce/coupons/validate','commerce/delivery-slots','commerce/returns',
   'commerce/summary','commerce/inventory-alerts','product_price_history',
 ]) {
-  if (!api.includes(marker)) throw new Error(`V8.2 API dispatcher missing ${marker}`);
+  if (!api.includes(marker)) throw new Error(`V8.3 API dispatcher missing ${marker}`);
 }
 
 const commerce = fs.readFileSync('apps/web/server/cloudflare/checkout.ts', 'utf8');
@@ -89,18 +89,18 @@ for (const marker of [
   'reserveCoupon','reserveDeliverySlot','coupon_user_counters','coupon_redemptions','discount_npr',
   'delivery_slot_id','rollbackCommerce','integration_outbox','order.created',
 ]) {
-  if (!commerce.includes(marker)) throw new Error(`V8.2 checkout missing ${marker}`);
+  if (!commerce.includes(marker)) throw new Error(`V8.3 checkout missing ${marker}`);
 }
 
 const cart = fs.readFileSync('apps/web/components/CartProvider.tsx', 'utf8');
 for (const marker of ['commerce/cart','cloudSynced','mergeCart','localStorage'])
-  if (!cart.includes(marker)) throw new Error(`V8.2 cart synchronization missing ${marker}`);
+  if (!cart.includes(marker)) throw new Error(`V8.3 cart synchronization missing ${marker}`);
 const control = fs.readFileSync('apps/web/components/CommerceControlPanel.tsx', 'utf8');
 for (const marker of ['commerce/summary','commerce/tenant/returns','commerce/inventory-alerts','commerce/returns'])
-  if (!control.includes(marker)) throw new Error(`V8.2 commerce control UI missing ${marker}`);
+  if (!control.includes(marker)) throw new Error(`V8.3 commerce control UI missing ${marker}`);
 const checkoutPage = fs.readFileSync('apps/web/app/checkout/page.tsx', 'utf8');
 for (const marker of ['commerce/delivery-slots','commerce/coupons/validate','couponCode','deliverySlotId'])
-  if (!checkoutPage.includes(marker)) throw new Error(`V8.2 checkout UI missing ${marker}`);
+  if (!checkoutPage.includes(marker)) throw new Error(`V8.3 checkout UI missing ${marker}`);
 
 const runtimeDirs = ['apps', 'infra', 'scripts'];
 const ignored = new Set(['v8-doctor.mjs']);
@@ -121,7 +121,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.2.0') throw new Error(`Expected v8.2.0 package, got ${pkg.version}`);
+if (pkg.version !== '8.3.0') throw new Error(`Expected v8.3.0 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

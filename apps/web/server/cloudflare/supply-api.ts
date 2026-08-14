@@ -193,8 +193,11 @@ export async function purchaseOrdersApi(req: NextRequest) {
   const products = await env.HARIYO_DB.prepare(`SELECT id FROM products WHERE tenant_id=? AND id IN (${placeholders})`).bind(access.tenantId, ...productIds).all<{ id: string }>();
   if ((products.results || []).length !== productIds.length) throw new CloudflareApiError(400, 'Purchase order contains a product from another tenant');
   const id = crypto.randomUUID(); const poNumber = await nextNumber(access.tenantId, 'purchase_order', 'PO');
-  const subtotal = input.items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0); const total = subtotal + input.taxNpr; const now = new Date().toISOString();
-  const statements = [env.HARIYO_DB.prepare(`INSERT INTO purchase_orders (id,tenant_id,po_number,supplier_id,warehouse_id,order_date,expected_date,subtotal_npr,tax_npr,total_npr,notes,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id, access.tenantId, poNumber, input.supplierId, input.warehouseId || null, input.orderDate, input.expectedDate || null, subtotal, input.taxNpr, total, input.notes || null, access.user.id, now, now),
+  const subtotal = input.items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
+  const taxNpr = input.taxNpr ?? 0;
+  const total = subtotal + taxNpr;
+  const now = new Date().toISOString();
+  const statements = [env.HARIYO_DB.prepare(`INSERT INTO purchase_orders (id,tenant_id,po_number,supplier_id,warehouse_id,order_date,expected_date,subtotal_npr,tax_npr,total_npr,notes,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id, access.tenantId, poNumber, input.supplierId, input.warehouseId || null, input.orderDate, input.expectedDate || null, subtotal, taxNpr, total, input.notes || null, access.user.id, now, now),
     ...input.items.map((item) => env.HARIYO_DB.prepare(`INSERT INTO purchase_order_items (id,purchase_order_id,tenant_id,product_id,variant_id,ordered_quantity,unit,unit_cost,line_total) VALUES (?,?,?,?,?,?,?,?,?)`).bind(crypto.randomUUID(), id, access.tenantId, item.productId, item.variantId || null, item.quantity, item.unit, item.unitCost, item.quantity * item.unitCost))];
   await env.HARIYO_DB.batch(statements); await audit(req, access.user, 'supply.purchase_order_created', 'purchase_order', id, { poNumber, totalNpr: total }); return apiJson({ id, poNumber, subtotalNpr: subtotal, totalNpr: total }, 201);
 }
@@ -269,6 +272,77 @@ export async function supplyReportsApi(req: NextRequest) {
   ]);
   const one = (result: { results?: unknown[] }) => (result.results?.[0] || {}) as Record<string, unknown>;
   return apiJson({ tenantId: access.tenantId, period: 'last_30_days', sales: one(sales), procurement: one(purchase), waste: one(waste), expiringSoon: one(expiring), suppliers: one(suppliers), deliveries: one(deliveries) });
+}
+
+export async function tenantSaasProfileApi(req: NextRequest) {
+  const access = await requireTenantAccess(req);
+  const env = cloudflareEnv();
+  const [tenantResult, membersResult, productsResult, warehousesResult, salesResult, procurementResult, recurringResult, customersResult] = await env.HARIYO_DB.batch([
+    env.HARIYO_DB.prepare(`SELECT t.id,t.slug,t.name,t.type,t.status,t.plan,t.province,t.district,
+      COALESCE(s.plan_code,'starter') plan_code,COALESCE(s.status,'trialing') subscription_status,
+      s.trial_ends_at,s.current_period_starts_at,s.current_period_ends_at,
+      COALESCE(p.name,'Starter') plan_name,COALESCE(p.monthly_price_npr,0) monthly_price_npr,
+      COALESCE(p.max_members,3) max_members,COALESCE(p.max_warehouses,1) max_warehouses,
+      COALESCE(p.max_products,150) max_products,COALESCE(p.features_json,'{}') features_json
+      FROM tenants t
+      LEFT JOIN tenant_subscriptions s ON s.tenant_id=t.id
+      LEFT JOIN plan_catalog p ON p.code=COALESCE(s.plan_code,'starter')
+      WHERE t.id=? LIMIT 1`).bind(access.tenantId),
+    env.HARIYO_DB.prepare("SELECT COUNT(*) count FROM tenant_members WHERE tenant_id=? AND status='active'").bind(access.tenantId),
+    env.HARIYO_DB.prepare("SELECT COUNT(*) count,COALESCE(SUM(stock),0) stock FROM products WHERE tenant_id=? AND status!='archived'").bind(access.tenantId),
+    env.HARIYO_DB.prepare('SELECT COUNT(*) count FROM warehouses WHERE tenant_id=? AND active=1').bind(access.tenantId),
+    env.HARIYO_DB.prepare("SELECT COUNT(*) orders,COALESCE(SUM(total_npr),0) revenue FROM sales_orders WHERE tenant_id=? AND status!='cancelled' AND order_date>=date('now','-30 days')").bind(access.tenantId),
+    env.HARIYO_DB.prepare("SELECT COUNT(*) orders,COALESCE(SUM(total_npr),0) value FROM purchase_orders WHERE tenant_id=? AND status!='cancelled' AND order_date>=date('now','-30 days')").bind(access.tenantId),
+    env.HARIYO_DB.prepare("SELECT COUNT(*) count FROM produce_subscriptions WHERE tenant_id=? AND status='active'").bind(access.tenantId),
+    env.HARIYO_DB.prepare('SELECT COUNT(*) count FROM business_customers WHERE tenant_id=? AND active=1').bind(access.tenantId),
+  ]);
+  const row = (result: { results?: unknown[] }) => (result.results?.[0] || {}) as Record<string, unknown>;
+  const tenant = row(tenantResult);
+  if (!tenant.id) throw new CloudflareApiError(404, 'Tenant workspace not found');
+  const members = Number(row(membersResult).count || 0);
+  const products = Number(row(productsResult).count || 0);
+  const warehouses = Number(row(warehousesResult).count || 0);
+  const maxMembers = Number(tenant.max_members || 3);
+  const maxProducts = Number(tenant.max_products || 150);
+  const maxWarehouses = Number(tenant.max_warehouses || 1);
+  return apiJson({
+    tenant: {
+      id: String(tenant.id),
+      slug: String(tenant.slug || ''),
+      name: String(tenant.name || ''),
+      type: String(tenant.type || ''),
+      status: String(tenant.status || ''),
+      province: tenant.province || null,
+      district: tenant.district || null,
+    },
+    subscription: {
+      planCode: String(tenant.plan_code || 'starter'),
+      planName: String(tenant.plan_name || 'Starter'),
+      status: String(tenant.subscription_status || 'trialing'),
+      monthlyPriceNpr: Number(tenant.monthly_price_npr || 0),
+      trialEndsAt: tenant.trial_ends_at || null,
+      currentPeriodStartsAt: tenant.current_period_starts_at || null,
+      currentPeriodEndsAt: tenant.current_period_ends_at || null,
+    },
+    usage: {
+      members: { used: members, limit: maxMembers, percent: maxMembers ? Math.min(100, Math.round((members / maxMembers) * 100)) : 0 },
+      products: { used: products, limit: maxProducts, percent: maxProducts ? Math.min(100, Math.round((products / maxProducts) * 100)) : 0 },
+      warehouses: { used: warehouses, limit: maxWarehouses, percent: maxWarehouses ? Math.min(100, Math.round((warehouses / maxWarehouses) * 100)) : 0 },
+      stockUnits: Number(row(productsResult).stock || 0),
+    },
+    performance30d: {
+      salesOrders: Number(row(salesResult).orders || 0),
+      revenueNpr: Number(row(salesResult).revenue || 0),
+      purchaseOrders: Number(row(procurementResult).orders || 0),
+      procurementNpr: Number(row(procurementResult).value || 0),
+      activeProduceSubscriptions: Number(row(recurringResult).count || 0),
+      activeBusinessCustomers: Number(row(customersResult).count || 0),
+    },
+    features: (() => {
+      try { return JSON.parse(String(tenant.features_json || '{}')) as Record<string, unknown>; }
+      catch { return {}; }
+    })(),
+  });
 }
 
 export async function platformTenantsApi(req: NextRequest) {

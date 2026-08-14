@@ -15,8 +15,8 @@ async function probeV8Schema() {
       env.HARIYO_DB.prepare('SELECT id FROM inventory_alert_rules LIMIT 1'),
     ]);
     return {
-      schemaReady: checks.every((result) => result.success !== false),
-      detail: 'Cloudflare D1 v8.2 produce + commerce tables are available.',
+      schemaReady: checks.length === 9,
+      detail: 'Cloudflare D1 v8.3 farmer SaaS + commerce tables are available.',
     };
   } catch {
     return {
@@ -63,7 +63,7 @@ export async function supplyStackStatus() {
   const [d1, services] = await Promise.all([probeV8Schema(), probeServices()]);
   return apiJson({
     service: 'hariyo-mart-cloudflare-native-produce-saas',
-    version: '8.2.0',
+    version: '8.3.0',
     mode: 'cloudflare-native',
     sourceOfTruth: 'cloudflare-d1-with-durable-object-coordination',
     d1,

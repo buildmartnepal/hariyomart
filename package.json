@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "8.2.0",
+  "version": "8.3.0",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -44,6 +44,7 @@
     "v8:doctor": "node scripts/v8-doctor.mjs",
     "v8.1:doctor": "node scripts/v8-doctor.mjs",
     "v8.2:doctor": "node scripts/v8-doctor.mjs",
+    "v8.3:doctor": "node scripts/v8-doctor.mjs",
     "cloudflare:deploy:dry-run": "npm run build:cloudflare && wrangler deploy --config apps/web/wrangler.jsonc --dry-run"
   },
   "engines": {

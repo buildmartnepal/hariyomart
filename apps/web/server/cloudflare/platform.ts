@@ -159,7 +159,7 @@ export async function verifyTurnstile(
 ) {
   const env = cloudflareEnv();
   const secret = env.TURNSTILE_SECRET_KEY;
-  const mode = env.TURNSTILE_ENFORCEMENT_MODE || 'web';
+  const mode = String(env.TURNSTILE_ENFORCEMENT_MODE || 'web');
   if (!secret || mode === 'off') return { configured: Boolean(secret), success: true, skipped: true };
   const isMobile = req.headers.get('x-client-platform')?.toLowerCase() === 'mobile';
   if (mode === 'web' && isMobile)

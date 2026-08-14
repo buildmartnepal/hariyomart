@@ -25,20 +25,30 @@ export default function Sell() {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [dash, setDash] = useState<any>(null);
+  const [saas, setSaas] = useState<any>(null);
   useEffect(() => {
     SecureStore.getItemAsync('hariyo-farmer-token').then(setToken);
   }, []);
   useEffect(() => {
     if (!token) {
       setDash(null);
+      setSaas(null);
       return;
     }
-    fetch(`${api}/dashboard/farmer`, {
-      headers: { authorization: `Bearer ${token}`, ...mobileHeaders },
-    })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error())))
-      .then(setDash)
-      .catch(() => setDash(null));
+    const headers = { authorization: `Bearer ${token}`, ...mobileHeaders };
+    void Promise.allSettled([
+      fetch(`${api}/dashboard/farmer`, { headers }).then(async (r) => {
+        if (!r.ok) throw new Error('Farmer dashboard unavailable');
+        return (await r.json()) as any;
+      }),
+      fetch(`${api}/supply/saas-profile`, { headers }).then(async (r) => {
+        if (!r.ok) throw new Error('Farmer SaaS profile unavailable');
+        return (await r.json()) as any;
+      }),
+    ]).then(([dashboardResult, saasResult]) => {
+      setDash(dashboardResult.status === 'fulfilled' ? dashboardResult.value : null);
+      setSaas(saasResult.status === 'fulfilled' ? saasResult.value : null);
+    });
   }, [token]);
   async function persist(data: any) {
     await SecureStore.setItemAsync('hariyo-farmer-token', data.accessToken);
@@ -304,6 +314,23 @@ export default function Sell() {
               label="Pending payout"
               value={`NPR ${Math.round(Number(dash?.metrics?.pendingPayout || 0))}`}
             />
+          </View>
+          <View style={card}>
+            <Text style={{ fontSize: 12, fontWeight: '900', color: colors.green, letterSpacing: 1.2 }}>
+              FARMER SAAS BUSINESS CENTER
+            </Text>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.dark, marginTop: 6 }}>
+              {saas?.subscription?.planName || 'Starter'} · {saas?.subscription?.status || 'trialing'}
+            </Text>
+            <Text style={{ color: colors.muted, lineHeight: 20, marginTop: 4 }}>
+              30-day revenue NPR {Math.round(Number(saas?.performance30d?.revenueNpr || 0))} · {saas?.performance30d?.activeProduceSubscriptions || 0} recurring produce boxes
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 14 }}>
+              <Metric label="Plan products" value={`${saas?.usage?.products?.used || 0}/${saas?.usage?.products?.limit || 0}`} />
+              <Metric label="Team seats" value={`${saas?.usage?.members?.used || 0}/${saas?.usage?.members?.limit || 0}`} />
+              <Metric label="Warehouses" value={`${saas?.usage?.warehouses?.used || 0}/${saas?.usage?.warehouses?.limit || 0}`} />
+              <Metric label="B2B buyers" value={String(saas?.performance30d?.activeBusinessCustomers || 0)} />
+            </View>
           </View>
           <View style={card}>
             <Text style={{ fontSize: 20, fontWeight: '900', color: colors.dark }}>
