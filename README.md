@@ -5,7 +5,7 @@ Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for f
 v8.3 keeps the v8.2 commerce control plane, fixes the strict TypeScript errors reported by the Cloudflare Next.js 16 production build, and adds a farmer-facing SaaS Business Center on web and mobile with plan usage, subscription health, revenue/procurement pulse, recurring produce boxes and tenant capacity.
 
 ## Production stack
-
+..
 ```text
 Cloudflare Edge / DNS / CDN / WAF / Turnstile
                     |
