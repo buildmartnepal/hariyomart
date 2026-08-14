@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "8.3.1",
+  "version": "8.3.2",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -47,7 +47,10 @@
     "v8.3:doctor": "node scripts/v8-doctor.mjs",
     "cloudflare:deploy:dry-run": "npm run build:cloudflare && wrangler deploy --config apps/web/wrangler.jsonc --dry-run",
     "typecheck:services": "tsc -p infra/cloudflare/services/tsconfig.json",
-    "v8.3.1:doctor": "node scripts/v8-doctor.mjs"
+    "v8.3.1:doctor": "node scripts/v8-doctor.mjs",
+    "deploy:cloudflare:first": "npm run typecheck:services && npm run deploy:cloudflare:services && npm run build:cloudflare && npm run deploy:cloudflare:web",
+    "cloudflare:bootstrap:services": "node scripts/bootstrap-cloudflare-services.mjs",
+    "v8.3.2:doctor": "node scripts/v8-doctor.mjs"
   },
   "engines": {
     "node": ">=22.13.0"

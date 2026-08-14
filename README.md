@@ -10,7 +10,7 @@ v8.3 keeps the v8.2 commerce control plane, fixes the strict TypeScript errors r
 Cloudflare Edge / DNS / CDN / WAF / Turnstile
                     |
                     v
-     Next.js + OpenNext on Worker `hariyomart`
+     Next.js + OpenNext on Worker `hariyo-mart-nepal`
                     |
        +------------+-------------+
        |            |             |
