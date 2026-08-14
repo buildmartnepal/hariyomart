@@ -121,7 +121,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.3.0') throw new Error(`Expected v8.3.0 package, got ${pkg.version}`);
+if (pkg.version !== '8.3.1') throw new Error(`Expected v8.3.1 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

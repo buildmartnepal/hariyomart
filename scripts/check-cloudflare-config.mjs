@@ -24,7 +24,7 @@ if (!web.observability?.enabled) fail(`${webPath} observability must be enabled`
 const vars = web.vars || {};
 if (vars.APP_ENV !== 'production' || vars.DATA_PLATFORM !== 'cloudflare-native')
   fail(`${webPath} must declare the Cloudflare-native production platform`);
-if (vars.RELEASE_VERSION !== '8.3.0') fail(`${webPath} RELEASE_VERSION must be 8.3.0`);
+if (vars.RELEASE_VERSION !== '8.3.1') fail(`${webPath} RELEASE_VERSION must be 8.3.1`);
 if (vars.NEXT_PUBLIC_SITE_URL !== 'https://hariyomart.nishrutesh.workers.dev')
   fail(`${webPath} NEXT_PUBLIC_SITE_URL does not match the production Worker URL`);
 if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);

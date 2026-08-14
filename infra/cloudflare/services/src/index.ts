@@ -558,14 +558,35 @@ type OrderWorkflowParams = {
   total: number;
 };
 
+type WorkflowOrderRow = {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string;
+  total: number;
+  created_at: string;
+};
+
+type DueSubscriptionRow = {
+  id: string;
+  tenant_id: string;
+  customer_id: string | null;
+  buyer_user_id: string | null;
+  name: string;
+  cadence: string;
+  next_delivery_date: string;
+  preferences_json: string | null;
+  delivery_address_json: string | null;
+};
+
 export class OrderFulfillmentWorkflow extends WorkflowEntrypoint<Env, OrderWorkflowParams> {
   async run(event: WorkflowEvent<OrderWorkflowParams>, step: WorkflowStep) {
-    const order = await step.do('load-order', async () => {
+    const order = await step.do<WorkflowOrderRow | null>('load-order', async (_ctx) => {
       return this.env.HARIYO_DB.prepare(
         'SELECT id,order_number,status,payment_status,total,created_at FROM orders WHERE id=?',
       )
         .bind(event.payload.orderId)
-        .first<Record<string, unknown>>();
+        .first<WorkflowOrderRow>();
     });
     if (!order) return { skipped: true, reason: 'order-not-found' };
 
@@ -619,7 +640,7 @@ function advanceSubscriptionDate(value: string, cadence: 'weekly' | 'biweekly' |
 
 export class SubscriptionGenerationWorkflow extends WorkflowEntrypoint<Env, Record<string, never>> {
   async run(_event: WorkflowEvent<Record<string, never>>, step: WorkflowStep) {
-    const due = await step.do('load-due-subscriptions', async () => {
+    const due = await step.do<DueSubscriptionRow[]>('load-due-subscriptions', async (_ctx) => {
       const today = new Date().toISOString().slice(0, 10);
       const result = await this.env.HARIYO_DB.prepare(
         `SELECT id,tenant_id,customer_id,buyer_user_id,name,cadence,next_delivery_date,preferences_json,delivery_address_json
@@ -628,8 +649,8 @@ export class SubscriptionGenerationWorkflow extends WorkflowEntrypoint<Env, Reco
          ORDER BY next_delivery_date LIMIT 500`,
       )
         .bind(today)
-        .all<Record<string, unknown>>();
-      return result.results || [];
+        .all<DueSubscriptionRow>();
+      return result.results ?? [];
     });
 
     const generated = await step.do('generate-subscription-sales-orders', async () => {
