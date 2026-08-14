@@ -4,7 +4,7 @@ type Product = (typeof catalog.products)[number];
 type Line = { product: Product; quantity: number };
 type CartContextValue = {
   lines: Line[];
-  add: (product: Product) => void;
+  add: (product: Product, quantity?: number) => void;
   update: (slug: string, quantity: number) => void;
   clear: () => void;
   count: number;
@@ -13,16 +13,16 @@ type CartContextValue = {
 const C = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<Line[]>([]);
-  const add = (product: Product) =>
+  const add = (product: Product, quantity = 1) =>
     setLines((p) => {
       const f = p.find((x) => x.product.slug === product.slug);
       return f
         ? p.map((x) =>
             x.product.slug === product.slug
-              ? { ...x, quantity: Math.min(x.quantity + 1, product.stock) }
+              ? { ...x, quantity: Math.min(x.quantity + quantity, product.stock) }
               : x,
           )
-        : [...p, { product, quantity: 1 }];
+        : [...p, { product, quantity: Math.min(Math.max(quantity, 1), product.stock) }];
     });
   const update = (slug: string, quantity: number) =>
     setLines((current) =>

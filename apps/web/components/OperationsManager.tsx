@@ -17,6 +17,7 @@ import {
   Save,
   Settings2,
   ShieldAlert,
+  KeyRound,
   Star,
   UsersRound,
 } from 'lucide-react';
@@ -129,9 +130,84 @@ export function OperationsManager({ section }: Props) {
       {section === 'promotions' && <PromotionManager items={items} mutate={mutate} />}
       {section === 'support' && <SupportManager items={items} mutate={mutate} />}
       {section === 'reviews' && <ReviewManager items={items} mutate={mutate} />}
-      {section === 'settings' && <SettingsManager items={items} mutate={mutate} />}
+      {section === 'settings' && (
+        <>
+          <SettingsManager items={items} mutate={mutate} />
+          <AdminPasswordManager auth={auth} />
+        </>
+      )}
       {section === 'analytics' && <OperationsOverview summary={summary} refresh={load} />}
     </div>
+  );
+}
+
+function AdminPasswordManager({ auth }: { auth: ReturnType<typeof useAuth> }) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const currentPassword = String(data.get('currentPassword') || '');
+    const newPassword = String(data.get('newPassword') || '');
+    const confirmation = String(data.get('confirmation') || '');
+    if (newPassword !== confirmation) return setMessage('The new passwords do not match.');
+    setBusy(true);
+    setMessage('');
+    try {
+      await auth.apiRequest('/account/password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      form.reset();
+      setMessage('Password changed. Signing out all sessions…');
+      await auth.logout();
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : 'Unable to change password');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <OperationsPanel
+      icon={<KeyRound />}
+      title="Owner password & sessions"
+      copy="Change the admin password after verifying the current one. All existing sessions are revoked automatically."
+    >
+      <form className="operations-form" onSubmit={submit}>
+        <label>
+          Current password
+          <input name="currentPassword" type="password" autoComplete="current-password" required />
+        </label>
+        <div className="form-grid">
+          <label>
+            New strong password
+            <input
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              minLength={14}
+              required
+            />
+          </label>
+          <label>
+            Confirm new password
+            <input
+              name="confirmation"
+              type="password"
+              autoComplete="new-password"
+              minLength={14}
+              required
+            />
+          </label>
+        </div>
+        <small>Use 14+ characters with uppercase, lowercase, a number and a symbol.</small>
+        {message && <div className="operations-notice">{message}</div>}
+        <button className="btn btn-primary" disabled={busy} type="submit">
+          <KeyRound size={16} /> {busy ? 'Securing account…' : 'Change password & revoke sessions'}
+        </button>
+      </form>
+    </OperationsPanel>
   );
 }
 

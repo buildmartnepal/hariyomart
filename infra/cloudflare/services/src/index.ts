@@ -1,10 +1,49 @@
 import { DurableObject } from 'cloudflare:workers';
+import { z } from 'zod';
 import {
   checkoutCore,
   type CheckoutPayload,
 } from '../../../../apps/web/server/cloudflare/checkout';
 
 type Env = CloudflareServicesEnv;
+
+const checkoutPayloadInput = z.object({
+  lines: z
+    .array(
+      z.object({
+        productSlug: z.string().min(2).max(120),
+        quantity: z.number().positive().max(1_000_000),
+      }),
+    )
+    .min(1)
+    .max(50),
+  paymentMethod: z.enum(['cod', 'esewa', 'khalti', 'fonepay', 'card']),
+  deliveryAddress: z.object({
+    province: z.string().min(1).max(100),
+    district: z.string().min(1).max(100),
+    municipality: z.string().min(1).max(100),
+    ward: z.string().min(1).max(20),
+    street: z.string().min(1).max(240),
+    phone: z.string().min(7).max(30),
+    lat: z.number().min(-90).max(90).optional(),
+    lng: z.number().min(-180).max(180).optional(),
+  }),
+  guestCustomer: z
+    .object({
+      name: z.string().min(2).max(100),
+      phone: z.string().min(7).max(30),
+      email: z.string().email().optional(),
+    })
+    .optional(),
+  buyerId: z.string().min(1).max(100).optional(),
+  idempotencyKey: z.string().min(8).max(200),
+}) satisfies z.ZodType<CheckoutPayload>;
+
+const rateLimitInput = z.object({
+  key: z.string().min(1).max(500).optional(),
+  limit: z.number().int().min(1).max(100_000).optional(),
+  windowSeconds: z.number().int().min(1).max(86_400).optional(),
+});
 
 const reply = (data: unknown, status = 200) =>
   Response.json(data, { status, headers: { 'cache-control': 'no-store' } });
@@ -13,7 +52,9 @@ export class CheckoutCoordinator extends DurableObject<Env> {
   async fetch(request: Request) {
     try {
       if (request.method !== 'POST') return reply({ error: 'Method not allowed' }, 405);
-      return reply(await checkoutCore(this.env, (await request.json()) as CheckoutPayload));
+      const parsed = checkoutPayloadInput.safeParse(await request.json());
+      if (!parsed.success) return reply({ error: 'Invalid checkout payload' }, 400);
+      return reply(await checkoutCore(this.env, parsed.data));
     } catch (error) {
       return reply({ error: error instanceof Error ? error.message : 'Checkout failed' }, 400);
     }
@@ -22,7 +63,9 @@ export class CheckoutCoordinator extends DurableObject<Env> {
 
 export class RateLimiter extends DurableObject<Env> {
   async fetch(request: Request) {
-    const input = (await request.json()) as { limit?: number; windowSeconds?: number };
+    const parsed = rateLimitInput.safeParse(await request.json());
+    if (!parsed.success) return reply({ error: 'Invalid rate-limit payload' }, 400);
+    const input = parsed.data;
     const now = Date.now();
     const windowMs = Math.max(1, Number(input.windowSeconds || 60)) * 1000;
     const stored = (await this.ctx.storage.get<{ count: number; resetsAt: number }>('counter')) || {
@@ -46,11 +89,18 @@ export default {
     const url = new URL(request.url);
     if (request.method !== 'POST') return reply({ error: 'Method not allowed' }, 405);
     if (url.pathname === '/checkout') {
-      const stub = env.CHECKOUT_COORDINATOR.getByName('global-checkout');
+      const parsed = checkoutPayloadInput.safeParse(await request.clone().json());
+      if (!parsed.success) return reply({ error: 'Invalid checkout payload' }, 400);
+      const checkoutKey = request.headers.get('x-checkout-coordination-key');
+      if (!checkoutKey || !/^[a-f0-9]{64}$/.test(checkoutKey))
+        return reply({ error: 'Missing checkout coordination key' }, 400);
+      const stub = env.CHECKOUT_COORDINATOR.getByName(checkoutKey);
       return stub.fetch(request);
     }
     if (url.pathname === '/rate-limit') {
-      const input = (await request.clone().json()) as { key?: string };
+      const parsed = rateLimitInput.safeParse(await request.clone().json());
+      if (!parsed.success) return reply({ error: 'Invalid rate-limit payload' }, 400);
+      const input = parsed.data;
       const keyBytes = new TextEncoder().encode(String(input.key || 'anonymous'));
       const digest = await crypto.subtle.digest('SHA-256', keyBytes);
       const key = [...new Uint8Array(digest)]

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { SellOnHariyo } from '@/components/SellOnHariyo';
 export const metadata: Metadata = {
@@ -34,23 +35,21 @@ export default function SellPage() {
               </Link>
             </div>
           </div>
-          <div className="seller-phone">
-            <div className="phone-notch" />
-            <span className="micro">FARMER MODE</span>
-            <h3>Today at your farm</h3>
-            <div className="phone-stat">
-              <b>NPR 18,420</b>
-              <span>sales this week</span>
+          <div className="seller-campaign-visual">
+            <Image
+              src="/campaigns/sell-from-home.webp"
+              alt="Hariyo Mart helps farms and home-based suppliers list products, reach nearby customers and grow"
+              width={1000}
+              height={1000}
+              priority
+              sizes="(max-width: 800px) 100vw, 46vw"
+            />
+            <div className="seller-live-proof">
+              <span>
+                <i /> Seller system live
+              </span>
+              <b>Store · Stock · Orders · Payouts</b>
             </div>
-            <div className="phone-card">
-              <span>🌶️ Akabare chilli</span>
-              <b>18 kg live</b>
-            </div>
-            <div className="phone-card">
-              <span>🥬 Saag</span>
-              <b>12 orders</b>
-            </div>
-            <button>+ List today’s harvest</button>
           </div>
         </div>
       </section>

@@ -38,6 +38,15 @@ function askHidden(question) {
   });
 }
 
+function passwordIssue(value) {
+  if (value.length < 14) return 'Use at least 14 characters.';
+  if (!/[a-z]/.test(value)) return 'Add a lowercase letter.';
+  if (!/[A-Z]/.test(value)) return 'Add an uppercase letter.';
+  if (!/\d/.test(value)) return 'Add a number.';
+  if (!/[^A-Za-z0-9]/.test(value)) return 'Add a symbol.';
+  return '';
+}
+
 const rawUrl = process.env.NEXT_PUBLIC_SITE_URL || (await ask('Production site URL'));
 if (!URL.canParse(rawUrl) || new URL(rawUrl).protocol !== 'https:') {
   throw new Error('Enter the deployed HTTPS Worker URL.');
@@ -46,11 +55,14 @@ const siteUrl = rawUrl.replace(/\/$/, '');
 const name = process.env.HARIYO_ADMIN_NAME || (await ask('Admin name', 'Hariyo Mart Admin'));
 const email = process.env.HARIYO_ADMIN_EMAIL || (await ask('Admin email', 'greenmandux@gmail.com'));
 const bootstrapKey = process.env.ADMIN_BOOTSTRAP_KEY || (await askHidden('One-time bootstrap key'));
-const password = process.env.HARIYO_ADMIN_PASSWORD || (await askHidden('Admin password'));
+const password = await askHidden('Create admin password');
+const confirmation = await askHidden('Confirm admin password');
 
 if (bootstrapKey.length < 24)
   throw new Error('The one-time bootstrap key is missing or too short.');
-if (password.length < 12) throw new Error('Admin password must contain at least 12 characters.');
+if (password !== confirmation) throw new Error('The admin passwords do not match.');
+const passwordProblem = passwordIssue(password);
+if (passwordProblem) throw new Error(`Admin password is not strong enough. ${passwordProblem}`);
 
 const response = await fetch(`${siteUrl}/api/auth/bootstrap-admin`, {
   method: 'POST',
@@ -60,5 +72,24 @@ const response = await fetch(`${siteUrl}/api/auth/bootstrap-admin`, {
 const body = await response.json();
 if (!response.ok) throw new Error(body.error || `Admin creation failed (${response.status})`);
 
-console.log(`Admin created for ${body.user.email}. Sign in at ${siteUrl}/login`);
-console.log('Now rotate or delete ADMIN_BOOTSTRAP_KEY in Cloudflare.');
+const loginResponse = await fetch(`${siteUrl}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', 'x-client-platform': 'mobile' },
+  body: JSON.stringify({ email, password }),
+});
+const loginBody = await loginResponse.json();
+if (!loginResponse.ok || loginBody.user?.role !== 'admin') {
+  throw new Error('Admin was created, but the verification sign-in failed.');
+}
+if (loginBody.refreshToken) {
+  await fetch(`${siteUrl}/api/auth/logout`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-client-platform': 'mobile' },
+    body: JSON.stringify({ refreshToken: loginBody.refreshToken }),
+  });
+}
+console.log(`Admin created and sign-in verified for ${body.user.email}.`);
+console.log(`Open ${siteUrl}/login and use the password you just created.`);
+console.log(
+  'The bootstrap endpoint is permanently locked because an admin now exists. You may also rotate the key for defence in depth; the production finisher does this automatically.',
+);

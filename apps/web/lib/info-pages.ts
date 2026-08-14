@@ -93,6 +93,12 @@ export const infoPages = [
     title: 'Accessibility',
     summary: 'Commitment to inclusive content, keyboard use, contrast and readable interfaces.',
   },
+  {
+    slug: 'mobile-app',
+    title: 'Hariyo Mart Mobile Apps',
+    summary:
+      'A shared marketplace experience for Android, iOS and mobile web with nearby discovery, ordering and seller tools.',
+  },
 ] as const;
 
 export type InfoSection = { heading: string; paragraphs: string[] };
@@ -395,6 +401,29 @@ const details: Record<string, { sections: InfoSection[]; highlights: string[] }>
       },
     ],
     highlights: ['Cash on delivery', 'Integration-ready wallets', 'Reconciliation controls'],
+  },
+  'mobile-app': {
+    sections: [
+      {
+        heading: 'Shop and sell from one mobile experience',
+        paragraphs: [
+          'The Hariyo Mart Expo application shares the same marketplace catalogue and authenticated API as the website. Buyers can search products, browse nearby harvests, maintain a basket, place orders and review order status.',
+          'Farmer journeys provide mobile access to seller onboarding, inventory and marketplace activity while sensitive administration remains protected by server-side roles.',
+        ],
+      },
+      {
+        heading: 'Install it on your own infrastructure',
+        paragraphs: [
+          'The source package includes Android, iOS and web export configuration. Connect the production API and web URLs through the documented Expo environment variables before creating signed store builds.',
+          'Until official store listings are published, use the responsive website or create internal test builds. Hariyo Mart does not present inactive app-store badges as live downloads.',
+        ],
+      },
+    ],
+    highlights: [
+      'Android and iOS source',
+      'Shared live marketplace API',
+      'Dark mode and mobile navigation',
+    ],
   },
   accessibility: {
     sections: [

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, Text, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
 import { Screen, Header, colors, s } from '@/components/ui';
+import sellCampaign from '../../assets/campaigns/sell-from-home.jpg';
 const api = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 const mobileHeaders = { 'x-client-platform': 'mobile' };
 export default function Sell() {
@@ -196,6 +197,12 @@ export default function Sell() {
       />
       {!token ? (
         <>
+          <Image
+            source={sellCampaign}
+            resizeMode="cover"
+            accessibilityLabel="Hariyo Mart seller campaign for farms and home-based fresh suppliers"
+            style={{ width: '100%', aspectRatio: 1, borderRadius: 24, marginBottom: 16 }}
+          />
           <View
             style={{
               backgroundColor: colors.dark,

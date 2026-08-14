@@ -1,5 +1,6 @@
 'use client';
 import { FormEvent, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -49,6 +50,14 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   return (
     <div className="auth-shell">
       <section className="auth-story">
+        <Image
+          className="auth-premium-mark"
+          src="/campaigns/premium-logo.webp"
+          alt="Hariyo Mart Nepal Premium"
+          width={1600}
+          height={854}
+          sizes="(max-width: 950px) 280px, 420px"
+        />
         <span className="eyebrow">One identity across Hariyo</span>
         <h1>
           {mode === 'login'
@@ -59,6 +68,15 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           Buy from nearby farms, track deliveries and manage repeat baskets. Farmer accounts use the
           dedicated seller onboarding so every farm receives its own tenant workspace.
         </p>
+        {mode === 'login' && (
+          <div className="admin-owner-hint">
+            <ShieldCheck size={16} />
+            <span>
+              <b>Owner access</b> greenmandux@gmail.com · password is created securely during
+              deployment
+            </span>
+          </div>
+        )}
         <div className="auth-benefits">
           <div>
             <MapPin />

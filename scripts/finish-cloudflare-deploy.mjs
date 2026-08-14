@@ -14,7 +14,7 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: root,
     encoding: 'utf8',
-    env: process.env,
+    env: { ...process.env, ...(options.env || {}) },
     stdio: options.capture ? ['inherit', 'pipe', 'pipe'] : 'inherit',
   });
 
@@ -54,7 +54,7 @@ wrangler([
   '--config',
   'infra/cloudflare/services/wrangler.jsonc',
   '--message',
-  'Hariyo Mart v6.2 services production release',
+  'Hariyo Mart v6.4 premium commerce, footer and mobile product release',
 ]);
 
 console.log('\n4/8 Deploying the public Worker to resolve its workers.dev URL');
@@ -133,13 +133,50 @@ console.log(
   ),
 );
 
-if (adminBootstrapKey) {
-  console.log('\nSAVE THIS ONE-TIME ADMIN BOOTSTRAP KEY IN A PASSWORD MANAGER:');
-  console.log(adminBootstrapKey);
-  console.log('Delete or rotate ADMIN_BOOTSTRAP_KEY after creating the first admin.');
-  console.log(
-    'Run `npm run bootstrap:admin` to create the owner account with a hidden password prompt.',
-  );
+let readinessResponse = await fetch(`${siteUrl}/api/system/readiness`);
+let readiness = readinessResponse.ok ? await readinessResponse.json() : null;
+if (!readiness?.adminConfigured) {
+  console.log('\nOwner setup is required. Create the password in the hidden prompt.');
+  if (!adminBootstrapKey) {
+    adminBootstrapKey = randomSecret();
+    const bootstrapSecretFile = path.join(
+      os.tmpdir(),
+      `hariyo-admin-bootstrap-${process.pid}.json`,
+    );
+    fs.writeFileSync(
+      bootstrapSecretFile,
+      JSON.stringify({ ADMIN_BOOTSTRAP_KEY: adminBootstrapKey }),
+      { mode: 0o600 },
+    );
+    try {
+      wrangler(['secret', 'bulk', bootstrapSecretFile, '--config', 'apps/web/wrangler.jsonc']);
+    } finally {
+      fs.rmSync(bootstrapSecretFile, { force: true });
+    }
+  }
+  run(npm, ['run', 'bootstrap:admin'], {
+    env: {
+      NEXT_PUBLIC_SITE_URL: siteUrl,
+      ADMIN_BOOTSTRAP_KEY: adminBootstrapKey,
+      HARIYO_ADMIN_EMAIL: process.env.HARIYO_ADMIN_EMAIL || 'greenmandux@gmail.com',
+    },
+  });
+
+  const lockSecretFile = path.join(os.tmpdir(), `hariyo-admin-lock-${process.pid}.json`);
+  fs.writeFileSync(lockSecretFile, JSON.stringify({ ADMIN_BOOTSTRAP_KEY: randomSecret() }), {
+    mode: 0o600,
+  });
+  try {
+    wrangler(['secret', 'bulk', lockSecretFile, '--config', 'apps/web/wrangler.jsonc']);
+  } finally {
+    fs.rmSync(lockSecretFile, { force: true });
+  }
+  readinessResponse = await fetch(`${siteUrl}/api/system/readiness`);
+  readiness = readinessResponse.ok ? await readinessResponse.json() : null;
+  if (!readiness?.adminConfigured) throw new Error('Owner account verification did not complete.');
+} else {
+  console.log('\nOwner admin already exists; secure password setup was skipped.');
 }
 
 console.log(`\nHariyo Mart is live: ${siteUrl}`);
+console.log(`Owner sign-in: ${siteUrl}/login · greenmandux@gmail.com`);

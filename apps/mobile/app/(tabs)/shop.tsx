@@ -31,6 +31,9 @@ export default function Shop() {
   const palette = useMobileColors();
   const [q, setQ] = useState('');
   const [category, setCategory] = useState(params.category || 'all');
+  const [organicOnly, setOrganicOnly] = useState(false);
+  const [stockOnly, setStockOnly] = useState(true);
+  const [sort, setSort] = useState<'featured' | 'rating' | 'price'>('featured');
   const [live, setLive] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -52,15 +55,20 @@ export default function Shop() {
     };
   }, []);
   const source = live ?? catalog.products;
-  const products = useMemo(
-    () =>
-      source.filter(
-        (p: any) =>
-          (category === 'all' || p.category === category) &&
-          `${p.name} ${p.shortDescription || ''}`.toLowerCase().includes(q.toLowerCase()),
-      ),
-    [category, q, source],
-  );
+  const products = useMemo(() => {
+    const filtered = source.filter(
+      (p: any) =>
+        (category === 'all' || p.category === category) &&
+        (!organicOnly || p.organic) &&
+        (!stockOnly || p.stock > 0) &&
+        `${p.name} ${p.shortDescription || ''}`.toLowerCase().includes(q.toLowerCase()),
+    );
+    return [...filtered].sort((a: any, b: any) => {
+      if (sort === 'rating') return b.rating - a.rating;
+      if (sort === 'price') return a.price - b.price;
+      return Number(b.featured) - Number(a.featured);
+    });
+  }, [category, organicOnly, q, sort, source, stockOnly]);
   return (
     <Screen>
       <Header
@@ -112,6 +120,75 @@ export default function Shop() {
           );
         })}
       </ScrollView>
+      <View
+        style={{
+          backgroundColor: palette.card,
+          borderColor: palette.line,
+          borderWidth: 1,
+          borderRadius: 16,
+          padding: 12,
+          marginBottom: 18,
+        }}
+      >
+        <Text style={{ color: palette.muted, fontSize: 11, fontWeight: '900', marginBottom: 9 }}>
+          REFINE YOUR MARKET
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {[
+            { key: 'featured', label: '✦ Hariyo picks' },
+            { key: 'rating', label: '★ Top rated' },
+            { key: 'price', label: '₨ Best price' },
+          ].map((item) => (
+            <Pressable
+              key={item.key}
+              onPress={() => setSort(item.key as 'featured' | 'rating' | 'price')}
+              style={{
+                paddingHorizontal: 11,
+                paddingVertical: 9,
+                borderRadius: 10,
+                marginRight: 7,
+                backgroundColor: sort === item.key ? palette.green : palette.bg,
+              }}
+              accessibilityState={{ selected: sort === item.key }}
+            >
+              <Text
+                style={{ color: sort === item.key ? '#062D22' : palette.dark, fontWeight: '800' }}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+          <Pressable
+            onPress={() => setOrganicOnly((current) => !current)}
+            style={{
+              paddingHorizontal: 11,
+              paddingVertical: 9,
+              borderRadius: 10,
+              marginRight: 7,
+              backgroundColor: organicOnly ? palette.green : palette.bg,
+            }}
+            accessibilityState={{ checked: organicOnly }}
+          >
+            <Text style={{ color: organicOnly ? '#062D22' : palette.dark, fontWeight: '800' }}>
+              🌱 Organic
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setStockOnly((current) => !current)}
+            style={{
+              paddingHorizontal: 11,
+              paddingVertical: 9,
+              borderRadius: 10,
+              backgroundColor: stockOnly ? palette.green : palette.bg,
+            }}
+            accessibilityState={{ checked: stockOnly }}
+          >
+            <Text style={{ color: stockOnly ? '#062D22' : palette.dark, fontWeight: '800' }}>
+              ✓ In stock
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </View>
       <ProductGrid products={products as any} />
       {!products.length && !loading && (
         <View style={{ padding: 18, borderRadius: 18, backgroundColor: palette.card }}>

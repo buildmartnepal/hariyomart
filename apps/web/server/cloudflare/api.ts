@@ -70,6 +70,18 @@ const farmerRegistration = z.object({
   lng: z.coerce.number().min(-180).max(180).optional(),
 });
 const loginInput = z.object({ email: z.string().email(), password: z.string().min(1) });
+const strongPassword = z
+  .string()
+  .min(14)
+  .max(200)
+  .refine((value) => /[a-z]/.test(value), 'Add a lowercase letter')
+  .refine((value) => /[A-Z]/.test(value), 'Add an uppercase letter')
+  .refine((value) => /\d/.test(value), 'Add a number')
+  .refine((value) => /[^A-Za-z0-9]/.test(value), 'Add a symbol');
+const passwordChangeInput = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: strongPassword,
+});
 const productInput = z.object({
   name: z.string().min(2).max(160),
   slug: z.string().min(2).max(100).optional(),
@@ -186,6 +198,12 @@ type TenantRow = Record<string, unknown> & {
 };
 
 const provinces = new Map(catalog.provinces.map((province) => [province.slug, province.name]));
+
+async function checkoutCoordinationKey(lines: Array<{ productSlug: string }>) {
+  const inventorySet = [...new Set(lines.map((line) => line.productSlug))].sort().join('|');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inventorySet));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 function validation<T>(schema: z.ZodSchema<T>, value: unknown) {
   const parsed = schema.safeParse(value);
@@ -406,7 +424,7 @@ async function bootstrapAdmin(req: NextRequest) {
   if (Number(existing?.count || 0) > 0)
     throw new CloudflareApiError(409, 'An admin account already exists');
   const input = validation(
-    z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().min(12) }),
+    z.object({ name: z.string().min(2), email: z.string().email(), password: strongPassword }),
     await requestBody(req),
   );
   const id = crypto.randomUUID();
@@ -419,7 +437,30 @@ async function bootstrapAdmin(req: NextRequest) {
     .bind(id)
     .first<CloudflareUserRow>();
   await audit(req, user!, 'auth.admin_bootstrapped', 'user', id);
-  return apiJson({ user: publicUser(user!) }, 201);
+  return apiJson({ user: publicUser(user!), bootstrapLocked: true }, 201);
+}
+
+async function changePassword(req: NextRequest) {
+  const env = cloudflareEnv();
+  const user = await requireAuth(req);
+  const input = validation(passwordChangeInput, await requestBody(req));
+  if (!(await verifyPassword(input.currentPassword, user.password_hash)))
+    throw new CloudflareApiError(401, 'Current password is incorrect');
+  if (await verifyPassword(input.newPassword, user.password_hash))
+    throw new CloudflareApiError(409, 'Choose a password you have not already used');
+  const now = new Date().toISOString();
+  await env.HARIYO_DB.batch([
+    env.HARIYO_DB.prepare('UPDATE users SET password_hash=?,updated_at=? WHERE id=?').bind(
+      await hashPassword(input.newPassword),
+      now,
+      user.id,
+    ),
+    env.HARIYO_DB.prepare(
+      'UPDATE sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL',
+    ).bind(now, user.id),
+  ]);
+  await audit(req, user, 'account.password_changed', 'user', user.id);
+  return clearSessionCookies(apiJson({ ok: true, signInAgain: true }));
 }
 
 async function listProducts(req: NextRequest) {
@@ -720,7 +761,10 @@ async function placeOrder(req: NextRequest, guest: boolean) {
     try {
       const serviceResponse = await env.HARIYO_SERVICES.fetch('https://hariyo-services/checkout', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          'x-checkout-coordination-key': await checkoutCoordinationKey(input.lines),
+        },
         body: JSON.stringify(payload),
       });
       responseData = await serviceResponse.json();
@@ -794,8 +838,14 @@ async function orderDocuments(where: string, bindings: unknown[] = [], limit = 1
     _id: order.id,
     orderNumber: order.order_number,
     buyerId: order.buyer_id,
-    guestCustomer: parseJson(order.guest_customer, null),
-    deliveryAddress: parseJson(order.delivery_address, {}),
+    guestCustomer: parseJson<{ name?: string; phone?: string; email?: string } | null>(
+      order.guest_customer,
+      null,
+    ),
+    deliveryAddress: parseJson<{ phone?: string; [key: string]: unknown }>(
+      order.delivery_address,
+      {},
+    ),
     paymentMethod: order.payment_method,
     paymentStatus: order.payment_status,
     deliveryFee: Number(order.delivery_fee),
@@ -817,8 +867,7 @@ async function trackGuestOrder(req: NextRequest) {
   if (!orderNumber || !phone)
     throw new CloudflareApiError(400, 'Order number and phone are required');
   const orders = await orderDocuments('order_number=?', [orderNumber], 1);
-  const order = orders[0] as unknown as
-    { guestCustomer?: { phone?: string }; deliveryAddress?: { phone?: string } } | undefined;
+  const order = orders[0];
   if (!order || (order.guestCustomer?.phone !== phone && order.deliveryAddress?.phone !== phone))
     throw new CloudflareApiError(404, 'Order not found');
   return apiJson({ order });
@@ -1256,8 +1305,24 @@ async function media(req: NextRequest, key: string) {
 async function readiness() {
   const env = cloudflareEnv();
   let database = 'connected';
+  let adminConfigured = false;
+  let seed = { tenants: 0, products: 0, orders: 0 };
   try {
     await env.HARIYO_DB.prepare('SELECT 1 AS ok').first();
+    const [admin, tenantCount, productCount, orderCount] = await Promise.all([
+      env.HARIYO_DB.prepare("SELECT COUNT(*) AS count FROM users WHERE role='admin'").first<{
+        count: number;
+      }>(),
+      env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM tenants').first<{ count: number }>(),
+      env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM products').first<{ count: number }>(),
+      env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM orders').first<{ count: number }>(),
+    ]);
+    adminConfigured = Number(admin?.count || 0) > 0;
+    seed = {
+      tenants: Number(tenantCount?.count || 0),
+      products: Number(productCount?.count || 0),
+      orders: Number(orderCount?.count || 0),
+    };
   } catch {
     database = 'error';
   }
@@ -1272,11 +1337,13 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '6.2.0',
-    status: Object.values(required).every(Boolean) ? 'ready' : 'degraded',
+    version: '6.4.0',
+    status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues',
     database,
     required,
+    adminConfigured,
+    seed,
     timestamp: new Date().toISOString(),
   });
 }
@@ -1308,6 +1375,7 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (route === 'auth/logout' && method === 'POST') return await logout(req);
     if (route === 'auth/me' && method === 'GET') return await me(req);
     if (route === 'auth/bootstrap-admin' && method === 'POST') return await bootstrapAdmin(req);
+    if (route === 'account/password' && method === 'POST') return await changePassword(req);
     if (route === 'products' && method === 'GET') return await listProducts(req);
     if (route === 'products' && method === 'POST') return await createProduct(req);
     if (route === 'products/seller/mine' && method === 'GET') return await sellerProducts(req);

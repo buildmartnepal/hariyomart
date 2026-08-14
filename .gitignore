@@ -2,6 +2,8 @@ node_modules
 .next
 .open-next
 .wrangler
+.wrangler-config
+.npm-cache
 .expo
 dist
 .env

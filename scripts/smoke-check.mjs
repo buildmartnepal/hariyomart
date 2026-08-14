@@ -8,6 +8,7 @@ const must = [
   'apps/web/server/cloudflare/checkout.ts',
   'apps/web/migrations/0001_hariyo_platform.sql',
   'apps/web/migrations/0002_operations_content.sql',
+  'apps/web/migrations/0003_control_plane.sql',
   'apps/web/seed/cloudflare.sql',
   'apps/web/wrangler.jsonc',
   'apps/web/open-next.config.ts',
@@ -20,6 +21,9 @@ const must = [
   'apps/web/components/OperationsManager.tsx',
   'apps/web/components/HarvestPublisher.tsx',
   'apps/web/components/OrderTracker.tsx',
+  'apps/web/app/campaigns/page.tsx',
+  'apps/web/public/campaigns/trusted-marketplace.webp',
+  'apps/mobile/assets/campaigns/sell-from-home.jpg',
   'apps/web/app/track/page.tsx',
   'apps/web/app/global-error.tsx',
   'apps/mobile/context/AuthContext.tsx',
@@ -28,11 +32,17 @@ const must = [
   'package-lock.json',
   '.env.production.example',
   'docs/CLOUDFLARE_PRODUCTION_V6.md',
+  'docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.4.md',
+  'docs/PASSWORD_AND_OWNER_SETUP.md',
 ];
 const missing = must.filter((x) => !fs.existsSync(x));
 if (missing.length) {
   console.error('Missing Cloudflare v6 production files:', missing);
   process.exit(1);
+}
+for (const asset of must.filter((path) => /\.(webp|jpg|png)$/.test(path))) {
+  if (fs.statSync(asset).size < 1024)
+    throw new Error(`Campaign asset is empty or invalid: ${asset}`);
 }
 
 const api = fs.readFileSync('apps/web/server/cloudflare/api.ts', 'utf8');
@@ -44,6 +54,7 @@ for (const route of [
   'auth/logout',
   'auth/me',
   'auth/bootstrap-admin',
+  'account/password',
   'marketplace/nearby',
   'marketplace/delivery-quote',
   'orders/guest',
@@ -162,5 +173,25 @@ const finishDeploy = fs.readFileSync('scripts/finish-cloudflare-deploy.mjs', 'ut
 if (!finishDeploy.includes("['run', 'cloudflare:db:remote']")) {
   throw new Error('One-command deployment must apply remote D1 migrations');
 }
+if (
+  !finishDeploy.includes("['run', 'bootstrap:admin']") ||
+  !finishDeploy.includes('adminConfigured')
+) {
+  throw new Error('One-command deployment must enforce secure first-owner setup');
+}
 
-console.log('Hariyo Mart Nepal Cloudflare v6.2 production smoke check PASS');
+const seed = fs.readFileSync('apps/web/seed/cloudflare.sql', 'utf8');
+for (const marker of [
+  'seed-order-001',
+  'seed-inventory-koshi',
+  'seed-review-1',
+  'seed-ticket-1',
+  'seed-blog-seasonal',
+]) {
+  if (!seed.includes(marker)) throw new Error(`Operational seed missing ${marker}`);
+}
+if (!seed.includes('!seed-account-login-disabled!')) {
+  throw new Error('Operational seed identities must remain login-disabled');
+}
+
+console.log('Hariyo Mart Nepal Cloudflare v6.4 production smoke check PASS');

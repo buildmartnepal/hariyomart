@@ -2,7 +2,17 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { BadgeCheck, MapPin, PackageCheck, Store, Truck } from 'lucide-react';
+import {
+  BadgeCheck,
+  Clock3,
+  Leaf,
+  MapPin,
+  PackageCheck,
+  ShieldCheck,
+  Star,
+  Store,
+  Truck,
+} from 'lucide-react';
 import { catalog, type Product } from '@/lib/catalog';
 import { farmForProduct } from '@/lib/marketplace';
 import { AddToCart } from '@/components/AddToCart';
@@ -90,6 +100,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const p = await getProduct(slug);
   if (!p) notFound();
   const farm = farmForProduct(p);
+  const category = catalog.categories.find((item) => item.slug === p.category);
+  const discount =
+    p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
   const related = catalog.products
     .filter((x) => x.category === p.category && x.slug !== p.slug)
     .slice(0, 4);
@@ -119,18 +132,39 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
       <section className="section" style={{ paddingTop: 25 }}>
-        <div className="container detail">
-          <div className="detail-image">
-            <Image
-              src={p.image}
-              alt={p.name}
-              width={900}
-              height={700}
-              sizes="(max-width: 860px) 100vw, 50vw"
-              priority
-            />
+        <div className="container detail premium-product-detail">
+          <div className="detail-gallery">
+            <div className="detail-image">
+              <Image
+                src={p.image}
+                alt={p.name}
+                width={900}
+                height={700}
+                sizes="(max-width: 860px) 100vw, 50vw"
+                priority
+              />
+              <div className="detail-image-badges">
+                {p.organic && (
+                  <span>
+                    <Leaf size={14} /> Organic
+                  </span>
+                )}
+                {discount > 0 && <span className="detail-saving">Save {discount}%</span>}
+              </div>
+            </div>
+            <div className="detail-gallery-caption">
+              <span>
+                <ShieldCheck size={17} /> Quality workflow checked
+              </span>
+              <span>
+                <MapPin size={17} /> Origin visible before checkout
+              </span>
+            </div>
           </div>
           <div className="detail-card">
+            <Link className="product-category-link" href={`/categories/${p.category}`}>
+              {category?.emoji || '🌱'} {category?.name || p.category.replaceAll('-', ' ')}
+            </Link>
             <div className="product-origin-line">
               <span className="pill">{p.organic ? '✓ Organic' : 'Quality checked'}</span>
               <span>
@@ -139,14 +173,32 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </span>
             </div>
             <h1>{p.name}</h1>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="product-detail-rating">
+              <span>
+                <Star size={15} fill="currentColor" /> {p.rating} / 5
+              </span>
+              <span>Verified marketplace listing</span>
+              <span>{p.stock > 0 ? 'Available now' : 'Restocking'}</span>
+            </div>
+            <div className="product-detail-price">
               <span className="price">NPR {p.price}</span>
-              <span style={{ color: 'var(--muted)' }}>
-                ★ {p.rating} · {p.stock} in stock · {p.unit}
+              <span>/ {p.unit}</span>
+              {discount > 0 && (
+                <>
+                  <del>NPR {p.oldPrice}</del>
+                  <b>You save NPR {p.oldPrice - p.price}</b>
+                </>
+              )}
+            </div>
+            <div className="product-detail-stockline">
+              <span className={p.stock < 10 ? 'is-low' : ''} />
+              <b>{p.stock > 0 ? `${p.stock} units in seller stock` : 'Currently unavailable'}</b>
+              <span>
+                <Clock3 size={14} /> Updated by seller
               </span>
             </div>
             {p.harvestWindow && <div className="pill">{p.harvestWindow}</div>}
-            <p>{p.shortDescription}</p>
+            <p className="product-detail-summary">{p.shortDescription}</p>
             <AddToCart product={p} />
             <div className="feature-list">
               {p.benefits.map((b) => (
@@ -154,6 +206,29 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   ✓ <span>{b}</span>
                 </div>
               ))}
+            </div>
+            <div className="product-assurance-grid">
+              <div>
+                <Leaf />
+                <span>
+                  <b>Farm origin</b>
+                  {p.district}, Nepal
+                </span>
+              </div>
+              <div>
+                <Truck />
+                <span>
+                  <b>Flexible fulfilment</b>
+                  Delivery or pickup
+                </span>
+              </div>
+              <div>
+                <ShieldCheck />
+                <span>
+                  <b>Order support</b>
+                  Track every fulfilment
+                </span>
+              </div>
             </div>
             <Link href={`/farmers/${farm.slug}`} className="product-farmer">
               <div className="farm-mini-icon">

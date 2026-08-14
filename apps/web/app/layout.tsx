@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     description:
       'Location-matched harvests, verified farmer storefronts and multi-seller delivery across Nepal.',
     type: 'website',
+    images: ['/campaigns/trusted-marketplace.webp'],
   },
   icons: { icon: '/brand/icon.svg' },
 };

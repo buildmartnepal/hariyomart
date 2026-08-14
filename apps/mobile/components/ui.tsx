@@ -47,6 +47,9 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
 export function ProductCard({ p, compact = false }: { p: Product; compact?: boolean }) {
   const cart = useCart();
   const palette = useMobileColors();
+  const line = cart.lines.find((item) => item.product.slug === p.slug);
+  const discount =
+    p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
   return (
     <View
       style={[
@@ -55,15 +58,31 @@ export function ProductCard({ p, compact = false }: { p: Product; compact?: bool
         compact && s.cardCompact,
       ]}
     >
-      <Image
-        source={{ uri: `${process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000'}${p.image}` }}
-        style={s.image}
-      />
+      <Link href={`/product/${p.slug}`} asChild>
+        <Pressable style={s.mobileImageShell} accessibilityLabel={`View ${p.name}`}>
+          <Image
+            source={{
+              uri: `${process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000'}${p.image}`,
+            }}
+            style={s.image}
+          />
+          <View style={s.mobileImageBadges}>
+            {p.organic ? (
+              <Text style={s.mobileOrganic}>ORGANIC</Text>
+            ) : p.featured ? (
+              <Text style={s.mobileFeatured}>HARIYO PICK</Text>
+            ) : (
+              <View />
+            )}
+            {discount > 0 && <Text style={s.mobileDiscount}>-{discount}%</Text>}
+          </View>
+        </Pressable>
+      </Link>
       <View style={s.mobileProductBadges}>
         <Text style={[s.small, { color: palette.muted }]}>
-          {p.provinceName.replace(' Province', '')} · ★ {p.rating}
+          {p.provinceName.replace(' Province', '')}
         </Text>
-        {p.organic && <Text style={s.mobileOrganic}>Organic</Text>}
+        <Text style={s.mobileRating}>★ {p.rating}</Text>
       </View>
       <Link href={`/product/${p.slug}`} asChild>
         <Pressable>
@@ -72,12 +91,41 @@ export function ProductCard({ p, compact = false }: { p: Product; compact?: bool
           </Text>
         </Pressable>
       </Link>
-      <Text style={[s.small, { color: palette.muted }]}>{p.unit}</Text>
+      <Text numberOfLines={1} style={[s.small, { color: palette.muted }]}>
+        {p.district} · {p.unit}
+      </Text>
       <View style={s.row}>
-        <Text style={[s.price, { color: palette.dark }]}>NPR {p.price}</Text>
-        <Pressable style={s.add} onPress={() => cart.add(p)}>
-          <Text style={{ fontSize: 20, fontWeight: '900' }}>+</Text>
+        <View>
+          <Text style={[s.price, { color: palette.dark }]}>NPR {p.price}</Text>
+          {discount > 0 && <Text style={s.mobileOldPrice}>NPR {p.oldPrice}</Text>}
+        </View>
+        <Pressable
+          style={[s.add, line && s.addActive, p.stock <= 0 && s.addDisabled]}
+          onPress={() => cart.add(p)}
+          disabled={p.stock <= 0}
+          accessibilityRole="button"
+          accessibilityLabel={`Add ${p.name} to basket`}
+        >
+          <Text style={s.mobileAddText}>
+            {p.stock <= 0 ? 'SOLD' : line ? `${line.quantity} IN` : '+ ADD'}
+          </Text>
         </Pressable>
+      </View>
+      <View style={s.mobileStockRow}>
+        <View
+          style={[
+            s.mobileStockDot,
+            p.stock < 10 && { backgroundColor: '#E49D2E' },
+            p.stock <= 0 && { backgroundColor: '#B24C45' },
+          ]}
+        />
+        <Text style={[s.mobileStockText, { color: palette.muted }]}>
+          {p.stock <= 0
+            ? 'Restocking soon'
+            : p.stock < 10
+              ? `Only ${p.stock} left`
+              : 'Ready to order'}
+        </Text>
       </View>
     </View>
   );
@@ -103,9 +151,19 @@ export const s = StyleSheet.create({
     padding: 13,
     marginBottom: 14,
   },
-  cardCompact: { width: '48.5%', padding: 10, borderRadius: 17 },
+  cardCompact: { width: '48.5%', padding: 9, borderRadius: 18 },
   productGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  mobileImageShell: { position: 'relative', overflow: 'hidden', borderRadius: 14 },
   image: { width: '100%', aspectRatio: 1, borderRadius: 14, backgroundColor: '#EDF5E6' },
+  mobileImageBadges: {
+    position: 'absolute',
+    left: 7,
+    right: 7,
+    top: 7,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   mobileProductBadges: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -113,32 +171,68 @@ export const s = StyleSheet.create({
     gap: 5,
   },
   mobileOrganic: {
-    marginTop: 8,
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '900',
-    color: '#247447',
-    backgroundColor: '#E8F6E9',
+    color: '#FFFFFF',
+    backgroundColor: '#247447',
     paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 99,
   },
+  mobileFeatured: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#173E26',
+    backgroundColor: '#E6F6D9',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 99,
+  },
+  mobileDiscount: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    backgroundColor: '#C46D2D',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 99,
+  },
+  mobileRating: {
+    marginTop: 8,
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#C98218',
+  },
   small: { fontSize: 12, color: colors.muted, marginTop: 8 },
-  product: { fontSize: 17, fontWeight: '800', color: colors.dark, marginTop: 6 },
+  product: { fontSize: 16, lineHeight: 20, fontWeight: '900', color: colors.dark, marginTop: 6 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 12,
   },
-  price: { fontSize: 17, fontWeight: '900', color: colors.dark },
+  price: { fontSize: 16, fontWeight: '900', color: colors.dark },
+  mobileOldPrice: {
+    fontSize: 10,
+    color: colors.muted,
+    textDecorationLine: 'line-through',
+    marginTop: 2,
+  },
   add: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+    minWidth: 52,
+    height: 38,
+    paddingHorizontal: 9,
+    borderRadius: 12,
     backgroundColor: colors.green,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addActive: { backgroundColor: '#DDF5C6', borderWidth: 1, borderColor: '#88D92F' },
+  addDisabled: { opacity: 0.45 },
+  mobileAddText: { fontSize: 10, fontWeight: '900', color: colors.dark },
+  mobileStockRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+  mobileStockDot: { width: 6, height: 6, borderRadius: 99, backgroundColor: '#4B9B4D' },
+  mobileStockText: { fontSize: 10, fontWeight: '700', marginLeft: 3 },
   pill: {
     paddingHorizontal: 14,
     paddingVertical: 10,

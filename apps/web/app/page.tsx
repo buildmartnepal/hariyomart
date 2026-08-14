@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowRight,
-  BadgeCheck,
   Building2,
   ChefHat,
   CircleCheckBig,
@@ -26,110 +25,107 @@ export default function Home() {
   const featured = catalog.products.filter((p) => p.featured).slice(0, 8);
   return (
     <main>
-      <section className="hero-wrap">
+      <section className="campaign-stage">
         <div className="container">
-          <div className="hero hero-v2">
-            <div className="hero-grid">
-              <div className="hero-copy">
-                <div className="live-badge">
-                  <span /> Nepal’s location-first farmer marketplace
-                </div>
-                <h1>
-                  From the <span>nearest farm</span> to your table.
-                </h1>
-                <p>
-                  Hariyo Mart lets every farmer, cooperative and local producer open their own
-                  digital store, sell what they uniquely grow, and reach buyers based on real
-                  delivery location.
-                </p>
-                <div className="hero-actions">
-                  <Link className="btn btn-primary" href="/nearby">
-                    <LocateFixed size={18} /> Find food near me
-                  </Link>
-                  <Link className="btn btn-secondary" href="/sell">
-                    <Store size={18} /> Start selling
-                  </Link>
-                </div>
-                <div className="hero-proof">
-                  <div>
-                    <b>7</b>
-                    <span>provinces</span>
-                  </div>
-                  <div>
-                    <b>Multi-tenant</b>
-                    <span>farmer stores</span>
-                  </div>
-                  <div>
-                    <b>Retail + B2B</b>
-                    <span>buyer modes</span>
-                  </div>
-                </div>
+          <div className="campaign-hero">
+            <h1 className="sr-only">
+              Hariyo Mart Nepal — a trusted marketplace for fresh business
+            </h1>
+            <Image
+              className="campaign-hero-desktop"
+              src="/campaigns/trusted-marketplace.webp"
+              alt="Hariyo Mart Nepal connects customers with fresh products from local farms and home-based suppliers"
+              width={1672}
+              height={941}
+              priority
+              sizes="(max-width: 760px) 0px, 100vw"
+            />
+            <Image
+              className="campaign-hero-mobile"
+              src="/campaigns/fresh-every-corner.webp"
+              alt="Fresh products from local suppliers, farms and home-based sellers across Nepal"
+              width={1000}
+              height={1000}
+              priority
+              sizes="(max-width: 760px) 100vw, 0px"
+            />
+            <div className="campaign-action-dock">
+              <span>
+                <i /> Live across seven province markets
+              </span>
+              <div>
+                <Link className="btn btn-primary" href="/nearby">
+                  <LocateFixed size={18} /> Explore near me
+                </Link>
+                <Link className="btn campaign-ghost" href="/sell">
+                  <Store size={18} /> Become a supplier
+                </Link>
               </div>
-              <div className="hero-media">
+            </div>
+          </div>
+          <div className="campaign-trust-strip">
+            <span>
+              <LocateFixed /> Location matched <small>nearest supply first</small>
+            </span>
+            <span>
+              <CircleCheckBig /> Verified origin <small>traceable farmer stores</small>
+            </span>
+            <span>
+              <Truck /> Flexible delivery <small>pickup, local & intercity</small>
+            </span>
+            <span>
+              <PackageCheck /> Freshness aware <small>harvest and live stock</small>
+            </span>
+          </div>
+        </div>
+      </section>
+      <section className="section campaign-pathways">
+        <div className="container">
+          <div className="split-heading">
+            <div>
+              <span className="eyebrow">Fresh business for everyone</span>
+              <h2 className="section-title">Choose your place in the Hariyo network.</h2>
+            </div>
+            <Link href="/campaigns" className="text-link">
+              Explore the Hariyo story <ArrowRight size={17} />
+            </Link>
+          </div>
+          <div className="campaign-pathway-grid">
+            {[
+              [
+                '/campaigns/connect-suppliers.webp',
+                'For buyers',
+                'Connect suppliers to homes',
+                '/nearby',
+              ],
+              [
+                '/campaigns/grow-with-hariyo.webp',
+                'For farms',
+                'Grow with Hariyo Mart',
+                '/info/farmers',
+              ],
+              [
+                '/campaigns/sell-from-home.webp',
+                'For suppliers',
+                'Sell fresh products from home',
+                '/sell',
+              ],
+            ].map(([image, label, title, href]) => (
+              <Link className="campaign-pathway-card" href={href} key={title}>
                 <Image
-                  src="/marketing/hariyo-farmer-hero-v2.webp"
-                  alt="Nepali farmer holding a basket of fresh vegetables on a hillside farm"
-                  width={1693}
-                  height={929}
-                  priority
-                  sizes="(max-width: 820px) 100vw, 52vw"
+                  src={image}
+                  alt={title}
+                  width={1000}
+                  height={1000}
+                  sizes="(max-width: 760px) 100vw, 33vw"
                 />
-                <div className="floating-order">
-                  <span className="status-dot" />
-                  <div>
-                    <small>Matched nearby</small>
-                    <b>Kathmandu Valley Farm</b>
-                    <span>8.4 km · same-day</span>
-                  </div>
-                  <ArrowRight size={18} />
-                </div>
-                <div className="floating-farmer">
-                  <Tractor size={20} />
-                  <div>
-                    <b>Farmer mode</b>
-                    <span>List today’s harvest</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="benefits">
-              <div className="benefit">
-                <div className="benefit-icon">
-                  <LocateFixed size={20} />
-                </div>
-                <div>
-                  <strong>Location matched</strong>
-                  <span>Nearest stock appears first</span>
-                </div>
-              </div>
-              <div className="benefit">
-                <div className="benefit-icon">
-                  <BadgeCheck size={20} />
-                </div>
-                <div>
-                  <strong>Verified origin</strong>
-                  <span>Farm-level traceability</span>
-                </div>
-              </div>
-              <div className="benefit">
-                <div className="benefit-icon">
-                  <Truck size={20} />
-                </div>
-                <div>
-                  <strong>Flexible fulfillment</strong>
-                  <span>Pickup, local & intercity</span>
-                </div>
-              </div>
-              <div className="benefit">
-                <div className="benefit-icon">
-                  <PackageCheck size={20} />
-                </div>
-                <div>
-                  <strong>Freshness aware</strong>
-                  <span>Harvest & stock visibility</span>
-                </div>
-              </div>
-            </div>
+                <span>{label}</span>
+                <b>{title}</b>
+                <i>
+                  <ArrowRight />
+                </i>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

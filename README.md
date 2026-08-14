@@ -1,12 +1,16 @@
-# Hariyo Mart Nepal v6.2 — Next-level Cloudflare Marketplace SaaS
+# Hariyo Mart Nepal v6.4 — Premium Cloudflare Marketplace SaaS
 
 Hariyo Mart is a production-oriented marketplace connecting buyers with farmers, cooperatives and produce sellers across Nepal. The web SaaS, marketplace API, data, live inventory coordination, media and background events now run on Cloudflare. The Expo app uses the same API.
 
 ## Working product surface
 
 - 98 Nepal-focused starter products in 23 categories across all seven provinces
+- Seven optimized Hariyo premium campaign assets across responsive web and native mobile flows
 - Premium square-card Next.js 16 storefront with persistent location, radius, district, organic,
   stock and distance-aware discovery controls
+- Premium product cards with savings, ratings, seller distance, live stock cues and basket state
+- Responsive category rail, removable filter chips, layout controls and quantity-aware product pages
+- Conversion-focused mega footer with product, farmer, support, mobile and legal navigation
 - Guest cash-on-delivery orders with idempotency and phone-based tracking
 - Buyer accounts, rotating sessions, addresses, wishlist, rewards and order history
 - Farmer onboarding, tenant workspace, R2 harvest photos, inventory and fulfillment tools
@@ -17,6 +21,8 @@ Hariyo Mart is a production-oriented marketplace connecting buyers with farmers,
 - Expo Router app with SecureStore auth, OS-aware light/dark appearance, category discovery,
   square product cards, location discovery and shared marketplace checkout
 - Online payment providers safely disabled until merchant onboarding and webhook certification
+- Realistic D1 operations seed: safe non-login identities, orders, fulfilments, inventory events,
+  promotions, reviews, support tickets, CMS pages, editorial content and notifications
 
 ## Cloudflare architecture
 
@@ -68,21 +74,23 @@ For this provisioned release, authenticate Wrangler on a machine that permits Wo
 npm run finish:cloudflare
 ```
 
-The command is resumable, applies all pending D1 migrations (including the v6.2 control plane)
-and will not rotate production secrets that already exist.
+The command is resumable, applies all pending D1 migrations and rich operational seed, then forces
+first-owner setup if no admin exists. It will not rotate session secrets that already exist.
 
-Create the first owner after deployment. The command defaults to `greenmandux@gmail.com`, asks for
-the bootstrap key, and reads the password through a hidden prompt:
+The owner defaults to `greenmandux@gmail.com`. During `finish:cloudflare`, enter a new 14+ character
+password twice in the hidden prompt. The script creates the owner, verifies a real sign-in and then
+rotates the one-time bootstrap key. To run only the owner step against an existing deployment:
 
 ```bash
 npm run bootstrap:admin
 ```
 
-The submitted password is never stored in the repository or printed to the terminal. Use a new,
-unique password if any credential was previously shared in chat or another message.
+The submitted password is bcrypt-hashed, never stored in the repository and never printed. After
+sign-in, change it at **Admin → Settings → Owner password & sessions**; this revokes every old
+session. Use a new, unique password if any credential was previously shared in chat.
 
 The detailed R2, KV, D1, Queues, Durable Objects, mobile build, backup and rollback guide is in
-[`docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.2.md`](docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.2.md).
+[`docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.4.md`](docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.4.md).
 
 Real secrets, payment keys and merchant credentials are never stored in this repository. Cloudflare
 resource IDs are non-secret deployment identifiers; regenerate the config before targeting another

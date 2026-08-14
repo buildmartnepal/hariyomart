@@ -1,8 +1,8 @@
-import { ImageBackground, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { catalog } from '@/data/catalog';
 import { Header, ProductGrid, Screen, s, useMobileColors } from '@/components/ui';
-import farmerHero from '../../assets/hariyo-farmer-hero-v2.jpg';
+import trustedCampaign from '../../assets/campaigns/trusted-marketplace.jpg';
 export default function Home() {
   const palette = useMobileColors();
   return (
@@ -11,33 +11,49 @@ export default function Home() {
         title="From the nearest farm to your table."
         subtitle="One app for buyers and farmer sellers across Nepal."
       />
-      <ImageBackground
-        source={farmerHero}
-        resizeMode="cover"
-        imageStyle={{ borderRadius: 24 }}
-        style={s.hero}
-        accessibilityLabel="Nepali farmer carrying a basket of fresh produce"
+      <Link href="/(tabs)/nearby" asChild>
+        <Pressable accessibilityRole="button" accessibilityLabel="Explore fresh products near me">
+          <Image
+            source={trustedCampaign}
+            resizeMode="cover"
+            style={{ width: '100%', aspectRatio: 1672 / 941, borderRadius: 24, marginBottom: 12 }}
+            accessibilityLabel="Hariyo Mart trusted fresh marketplace connecting local suppliers and customers"
+          />
+        </Pressable>
+      </Link>
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 8,
+          marginBottom: 24,
+          backgroundColor: palette.card,
+          borderWidth: 1,
+          borderColor: palette.line,
+          borderRadius: 18,
+          padding: 8,
+        }}
       >
-        <View style={s.heroOverlay}>
-          <Text
-            style={{ fontSize: 11, color: palette.green, fontWeight: '900', letterSpacing: 1.3 }}
+        <Link href="/(tabs)/nearby" asChild>
+          <Pressable style={[s.button, { flex: 1, marginTop: 0 }]} accessibilityRole="button">
+            <Text style={s.buttonText}>◎ Explore nearby</Text>
+          </Pressable>
+        </Link>
+        <Link href="/(tabs)/sell" asChild>
+          <Pressable
+            style={{
+              flex: 1,
+              minHeight: 48,
+              borderRadius: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: palette.dark,
+            }}
+            accessibilityRole="button"
           >
-            LOCATION-FIRST MARKETPLACE
-          </Text>
-          <Text style={s.heroTitle}>
-            Fresh nearby. {'\n'}
-            <Text style={s.heroGreen}>Farmer direct.</Text>
-          </Text>
-          <Text style={{ color: '#E3EFE9', lineHeight: 22, marginTop: 12 }}>
-            Traceable harvests ranked by location, stock and delivery radius.
-          </Text>
-          <Link href="/(tabs)/nearby" asChild>
-            <Pressable style={s.button} accessibilityRole="button">
-              <Text style={s.buttonText}>◎ Find food near me</Text>
-            </Pressable>
-          </Link>
-        </View>
-      </ImageBackground>
+            <Text style={{ color: 'white', fontWeight: '900', fontSize: 12 }}>Sell fresh</Text>
+          </Pressable>
+        </Link>
+      </View>
       <Text style={{ fontSize: 22, fontWeight: '900', marginBottom: 12, color: palette.dark }}>
         Shop by category
       </Text>

@@ -1,5 +1,9 @@
 node_modules
 .next
+.open-next
+.wrangler
+.wrangler-config
+.npm-cache
 .expo
 dist
 coverage
@@ -9,6 +13,7 @@ apps/api/src/data/catalog.json
 apps/mobile/data/catalog.ts
 apps/web/lib/catalog.ts
 demo
+**/next-env.d.ts
 docs/*.yaml
 docs/*.csv
 **/cloudflare-env.generated.d.ts

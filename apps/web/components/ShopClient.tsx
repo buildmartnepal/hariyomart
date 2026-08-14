@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   Crosshair,
+  LayoutGrid,
   MapPin,
   RefreshCw,
+  Rows3,
   Search,
   SlidersHorizontal,
   Sprout,
+  X,
 } from 'lucide-react';
 import { catalog, type Product } from '@/lib/catalog';
 import { distanceKm, farmForProduct, locationPresets } from '@/lib/marketplace';
@@ -77,6 +80,8 @@ export function ShopClient() {
   const [live, setLive] = useState<MarketProduct[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [density, setDensity] = useState<'grid' | 'roomy'>('grid');
 
   useEffect(() => {
     let active = true;
@@ -131,6 +136,17 @@ export function ShopClient() {
         ),
       ).sort(),
     [province, source],
+  );
+
+  const categoryCounts = useMemo(
+    () =>
+      new Map(
+        catalog.categories.map((item) => [
+          item.slug,
+          source.filter((product) => product.category === item.slug).length,
+        ]),
+      ),
+    [source],
   );
 
   const items = useMemo(() => {
@@ -188,6 +204,14 @@ export function ShopClient() {
     market.setRadius(150);
   }
 
+  const activeFilterCount =
+    Number(category !== 'all') +
+    Number(province !== 'all') +
+    Number(district !== 'all') +
+    Number(organicOnly) +
+    Number(!stockOnly) +
+    Number(Boolean(q.trim()));
+
   return (
     <div className="marketplace-shell">
       <div className="market-location-toolbar">
@@ -229,13 +253,46 @@ export function ShopClient() {
         </div>
       </div>
 
+      <div className="market-category-rail" aria-label="Browse product categories">
+        <button
+          className={category === 'all' ? 'is-active' : ''}
+          onClick={() => setCategory('all')}
+          aria-pressed={category === 'all'}
+        >
+          <span>✦</span>
+          <b>All harvests</b>
+          <small>{source.length}</small>
+        </button>
+        {catalog.categories.map((item) => (
+          <button
+            className={category === item.slug ? 'is-active' : ''}
+            key={item.slug}
+            onClick={() => setCategory(item.slug)}
+            aria-pressed={category === item.slug}
+          >
+            <span>{item.emoji}</span>
+            <b>{item.name}</b>
+            <small>{categoryCounts.get(item.slug) || 0}</small>
+          </button>
+        ))}
+      </div>
+
       <div className="shop-layout advanced-shop-layout">
-        <aside className="filter marketplace-filter">
+        <aside className={`filter marketplace-filter${filtersOpen ? ' is-mobile-open' : ''}`}>
           <div className="filter-title-row">
             <h3>
               <SlidersHorizontal size={18} /> Filters
             </h3>
-            <button onClick={clearFilters}>Reset</button>
+            <span>
+              <button onClick={clearFilters}>Reset</button>
+              <button
+                className="filter-mobile-close"
+                onClick={() => setFiltersOpen(false)}
+                aria-label="Close filters"
+              >
+                <X size={18} />
+              </button>
+            </span>
           </div>
           <label htmlFor="market-q">Search marketplace</label>
           <div className="filter-search">
@@ -322,19 +379,92 @@ export function ShopClient() {
               <strong>{items.length} products</strong>
               <span>serviceable near {market.place.name}</span>
             </div>
-            <label>
-              Sort by
-              <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                <option value="nearest">Nearest first</option>
-                <option value="fresh">Fresh & featured</option>
-                <option value="rating">Top rated</option>
-                <option value="price-low">Price: low to high</option>
-                <option value="price-high">Price: high to low</option>
-              </select>
-            </label>
+            <div className="market-view-actions">
+              <button
+                className="mobile-filter-trigger"
+                onClick={() => setFiltersOpen(true)}
+                aria-expanded={filtersOpen}
+              >
+                <SlidersHorizontal size={16} /> Filters
+                {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+              </button>
+              <label>
+                <span className="sort-label">Sort by</span>
+                <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                  <option value="nearest">Nearest first</option>
+                  <option value="fresh">Fresh & featured</option>
+                  <option value="rating">Top rated</option>
+                  <option value="price-low">Price: low to high</option>
+                  <option value="price-high">Price: high to low</option>
+                </select>
+              </label>
+              <span className="density-switch" aria-label="Product layout">
+                <button
+                  onClick={() => setDensity('grid')}
+                  className={density === 'grid' ? 'is-active' : ''}
+                  aria-label="Compact product grid"
+                  aria-pressed={density === 'grid'}
+                >
+                  <LayoutGrid size={17} />
+                </button>
+                <button
+                  onClick={() => setDensity('roomy')}
+                  className={density === 'roomy' ? 'is-active' : ''}
+                  aria-label="Roomy product grid"
+                  aria-pressed={density === 'roomy'}
+                >
+                  <Rows3 size={17} />
+                </button>
+              </span>
+            </div>
           </div>
+          {activeFilterCount > 0 && (
+            <div className="active-filter-row" aria-label="Active filters">
+              <span>Active</span>
+              {q.trim() && (
+                <button onClick={() => setQ('')}>
+                  “{q.trim()}” <X size={13} />
+                </button>
+              )}
+              {category !== 'all' && (
+                <button onClick={() => setCategory('all')}>
+                  {catalog.categories.find((item) => item.slug === category)?.name || category}
+                  <X size={13} />
+                </button>
+              )}
+              {province !== 'all' && (
+                <button
+                  onClick={() => {
+                    setProvince('all');
+                    setDistrict('all');
+                  }}
+                >
+                  {catalog.provinces.find((item) => item.slug === province)?.name || province}
+                  <X size={13} />
+                </button>
+              )}
+              {district !== 'all' && (
+                <button onClick={() => setDistrict('all')}>
+                  {district} <X size={13} />
+                </button>
+              )}
+              {organicOnly && (
+                <button onClick={() => setOrganicOnly(false)}>
+                  Organic <X size={13} />
+                </button>
+              )}
+              {!stockOnly && (
+                <button onClick={() => setStockOnly(true)}>
+                  Include sold out <X size={13} />
+                </button>
+              )}
+              <button className="clear-all-filter" onClick={clearFilters}>
+                Clear all
+              </button>
+            </div>
+          )}
           {items.length ? (
-            <div className="grid product-grid square-product-grid">
+            <div className={`grid product-grid square-product-grid product-grid-${density}`}>
               {items.map((product) => (
                 <ProductCard key={product.slug} product={product} />
               ))}
