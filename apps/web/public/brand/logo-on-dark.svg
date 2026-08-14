@@ -1,0 +1,14 @@
+<svg width="260" height="64" viewBox="0 0 260 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#C4F86A"/>
+      <stop offset="1" stop-color="#70D34E"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="18" fill="#0D3D2F" stroke="#275846"/>
+  <path d="M13 43L30 20L39 31L46 23L58 43H13Z" fill="#F4FFF8" opacity=".98"/>
+  <path d="M37 45C37 33 44 24 55 20C55 34 50 44 37 45Z" fill="url(#g)"/>
+  <path d="M37 45C42 36 47 29 54 23" stroke="#0B3228" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="76" y="29" fill="#F3FFF8" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="800">HARIYO MART</text>
+  <text x="77" y="48" fill="#AED0C1" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="2">NEPAL</text>
+</svg>

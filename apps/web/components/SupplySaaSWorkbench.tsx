@@ -37,14 +37,11 @@ const liveEndpointBySection: Partial<Record<SupplySection, string>> = {
   'data-platform': '/api/system/supply-stack',
 };
 
-function summarizePayload(payload: unknown): Array<[string, unknown]> {
+function summarizePayload(payload: unknown) {
   if (!payload || typeof payload !== 'object') return [] as Array<[string, unknown]>;
   const record = payload as Record<string, unknown>;
   const arrayEntry = Object.entries(record).find(([, value]) => Array.isArray(value));
-  if (arrayEntry)
-    return (arrayEntry[1] as unknown[])
-      .slice(0, 8)
-      .map((value, index): [string, unknown] => [String(index + 1), value]);
+  if (arrayEntry) return (arrayEntry[1] as unknown[]).slice(0, 8).map((value, index) => [String(index + 1), value]);
   return Object.entries(record).filter(([key]) => !['timestamp'].includes(key)).slice(0, 10);
 }
 
@@ -89,9 +86,7 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
   useEffect(() => {
     let active = true;
     fetch('/api/system/supply-stack', { cache: 'no-store', credentials: 'include' })
-      .then(async (response): Promise<PlatformStatus | null> =>
-        response.ok ? ((await response.json()) as PlatformStatus) : null,
-      )
+      .then(async (response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (active) setStatus(payload);
       })

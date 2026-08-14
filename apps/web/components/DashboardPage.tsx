@@ -6,6 +6,8 @@ import { BadgeCheck, Plus, Store } from 'lucide-react';
 import { OperationsManager } from './OperationsManager';
 import { SupplySaaSWorkbench } from './SupplySaaSWorkbench';
 import { adminSupplySections, farmerSupplySections, type SupplySection } from '@/lib/supply-saas';
+import { TenantSwitcher } from './TenantSwitcher';
+import { CommerceControlPanel } from './CommerceControlPanel';
 const roleCopy = {
   Farmer: {
     kicker: 'SELLER WORKSPACE',
@@ -58,14 +60,10 @@ export function DashboardPage({
         <div className="container dashboard-shell">
           <aside className="dashboard-nav">
             <div className="tenant-card">
-              <div className="tenant-logo">
-                <Store />
-              </div>
-              <div>
-                <b>{role}</b>
-                <span>Secure workspace</span>
-              </div>
+              <div className="tenant-logo"><Store /></div>
+              <div><b>{role}</b><span>Secure workspace</span></div>
             </div>
+            <TenantSwitcher role={role} />
             {sections.map((s) => (
               <Link className={s === section ? 'active' : ''} href={`/${base}/${s}`} key={s}>
                 {s.replaceAll('-', ' ')}
@@ -91,7 +89,9 @@ export function DashboardPage({
                     </h2>
                   </div>
                 </div>
-                {(role === 'Admin' && adminSupplySections.some((item) => item === section)) ||
+                {section === 'commerce-control' || (role === 'Account' && section === 'returns') ? (
+                  <CommerceControlPanel role={role} />
+                ) : (role === 'Admin' && adminSupplySections.some((item) => item === section)) ||
                 (role === 'Farmer' && farmerSupplySections.some((item) => item === section)) ? (
                   <SupplySaaSWorkbench role={role as 'Admin' | 'Farmer'} section={section as SupplySection} />
                 ) : role === 'Admin' &&

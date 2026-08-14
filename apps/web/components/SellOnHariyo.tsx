@@ -148,9 +148,9 @@ export function SellOnHariyo() {
                 <input
                   name="password"
                   type="password"
-                  minLength={8}
+                  minLength={10}
                   required
-                  placeholder="At least 8 characters"
+                  placeholder="10+ chars: upper, lower & number"
                 />
               </label>
             </div>

@@ -159,26 +159,29 @@ export async function verifyTurnstile(
 ) {
   const env = cloudflareEnv();
   const secret = env.TURNSTILE_SECRET_KEY;
-  // Wrangler type generation narrows plain-text vars to their current literal
-  // value (for example "web"). Widen here because deployments may intentionally
-  // configure any supported enforcement mode without changing application code.
-  const mode = String(env.TURNSTILE_ENFORCEMENT_MODE || 'web') as 'web' | 'all' | 'off';
+  const mode = env.TURNSTILE_ENFORCEMENT_MODE || 'web';
   if (!secret || mode === 'off') return { configured: Boolean(secret), success: true, skipped: true };
   const isMobile = req.headers.get('x-client-platform')?.toLowerCase() === 'mobile';
   if (mode === 'web' && isMobile)
     return { configured: true, success: true, skipped: true, reason: 'mobile-rate-limit-mode' };
   if (!token) throw new CloudflareApiError(400, 'Security verification is required');
   const idempotencyKey = crypto.randomUUID();
-  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      secret,
-      response: token,
-      remoteip: clientIp(req) === 'unknown' ? undefined : clientIp(req),
-      idempotency_key: idempotencyKey,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        secret,
+        response: token,
+        remoteip: clientIp(req) === 'unknown' ? undefined : clientIp(req),
+        idempotency_key: idempotencyKey,
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+  } catch {
+    throw new CloudflareApiError(503, 'Security verification is temporarily unavailable');
+  }
   const result = (await response.json()) as {
     success?: boolean;
     action?: string;
@@ -189,6 +192,9 @@ export async function verifyTurnstile(
     throw new CloudflareApiError(403, 'Security verification failed');
   if (expectedAction && result.action && result.action !== expectedAction)
     throw new CloudflareApiError(403, 'Security verification action mismatch');
+  const expectedHostname = req.nextUrl.hostname;
+  if (env.APP_ENV === 'production' && result.hostname && result.hostname !== expectedHostname)
+    throw new CloudflareApiError(403, 'Security verification hostname mismatch');
   return { configured: true, success: true, hostname: result.hostname };
 }
 
@@ -231,20 +237,36 @@ export async function coordinateInventory(input: {
   }
 }
 
-export async function enforceRateLimit(req: NextRequest, limit = 180, windowSeconds = 60) {
+export async function enforceRateLimit(
+  req: NextRequest,
+  limit = 180,
+  windowSeconds = 60,
+  scope = 'api',
+) {
   const env = cloudflareEnv();
-  if (!env.HARIYO_SERVICES) return;
+  const authCritical = scope.startsWith('auth:');
+  if (!env.HARIYO_SERVICES) {
+    if (env.APP_ENV === 'production' && authCritical)
+      throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
+    return;
+  }
   try {
     const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/rate-limit', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ key: `api:${clientIp(req)}`, limit, windowSeconds }),
+      body: JSON.stringify({ key: `${scope}:${clientIp(req)}`, limit, windowSeconds }),
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      if (env.APP_ENV === 'production' && authCritical)
+        throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
+      return;
+    }
     const result = (await response.json()) as { allowed?: boolean };
     if (result.allowed === false) throw new CloudflareApiError(429, 'Too many requests');
   } catch (error) {
     if (error instanceof CloudflareApiError) throw error;
+    if (env.APP_ENV === 'production' && authCritical)
+      throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
   }
 }
 
@@ -365,7 +387,7 @@ export function attachSessionCookies(
   response: NextResponse,
   tokens: { accessToken: string; refreshToken: string },
 ) {
-  if (req.headers.get('x-client-platform') === 'mobile') return response;
+  if (req.headers.get('x-client-platform')?.toLowerCase() === 'mobile') return response;
   const secure = new URL(req.url).protocol === 'https:';
   response.cookies.set('hariyo_access', tokens.accessToken, {
     httpOnly: true,

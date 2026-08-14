@@ -342,15 +342,10 @@ INSERT OR IGNORE INTO newsletter_subscribers (id,email,source,status,subscribed_
 INSERT OR IGNORE INTO notifications (id,user_id,type,title,message,link,read_at,created_at) VALUES ('seed-notification-1','seed-user-buyer-anisha','order_update','Your Hariyo order is moving','A local seller updated the fulfillment timeline for your fresh order.','/account/orders',datetime('now','-1 day'),datetime('now','-1 days'));
 INSERT OR IGNORE INTO notifications (id,user_id,type,title,message,link,read_at,created_at) VALUES ('seed-notification-2','seed-user-buyer-dipen','order_update','Your Hariyo order is moving','A local seller updated the fulfillment timeline for your fresh order.','/account/orders',NULL,datetime('now','-2 days'));
 INSERT OR IGNORE INTO notifications (id,user_id,type,title,message,link,read_at,created_at) VALUES ('seed-notification-3','seed-user-buyer-samira','order_update','Your Hariyo order is moving','A local seller updated the fulfillment timeline for your fresh order.','/account/orders',NULL,datetime('now','-3 days'));
-INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);
-INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"6.4.0"',1);
-INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);
-
--- v8 Cloudflare-native tenant access backfill for seeded seller workspaces.
 UPDATE users SET active_tenant_id=tenant_id WHERE active_tenant_id IS NULL AND tenant_id IS NOT NULL;
-INSERT OR IGNORE INTO tenant_members(tenant_id,user_id,role,status,joined_at)
-SELECT tenant_id,id,'owner','active',created_at FROM users WHERE tenant_id IS NOT NULL;
-INSERT OR IGNORE INTO tenant_subscriptions(tenant_id,plan_code,status)
-SELECT id,CASE WHEN plan='enterprise' THEN 'enterprise' WHEN plan='growth' THEN 'growth' ELSE 'starter' END,'active' FROM tenants;
+INSERT OR IGNORE INTO tenant_members(tenant_id,user_id,role,status,joined_at) SELECT tenant_id,id,'owner','active',created_at FROM users WHERE tenant_id IS NOT NULL;
+INSERT OR IGNORE INTO tenant_subscriptions(tenant_id,plan_code,status) SELECT id,CASE WHEN plan='enterprise' THEN 'enterprise' WHEN plan='growth' THEN 'growth' ELSE 'starter' END,'active' FROM tenants;
 INSERT OR IGNORE INTO tenant_settings_v8(tenant_id) SELECT id FROM tenants;
-
+INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);
+INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.2.0"',1);
+INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);

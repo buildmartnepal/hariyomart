@@ -41,6 +41,8 @@ const checkoutPayloadInput = z.object({
     })
     .optional(),
   buyerId: z.string().min(1).max(100).optional(),
+  couponCode: z.string().trim().min(2).max(60).optional(),
+  deliverySlotId: z.string().min(1).max(120).optional(),
   idempotencyKey: z.string().min(8).max(200),
 }) satisfies z.ZodType<CheckoutPayload>;
 

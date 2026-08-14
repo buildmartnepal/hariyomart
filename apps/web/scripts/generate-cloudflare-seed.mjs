@@ -427,9 +427,17 @@ buyerSeeds.forEach(([id], index) =>
   ),
 );
 
+// Cloudflare-native tenant access and SaaS backfill for seeded seller identities.
+lines.push(
+  `UPDATE users SET active_tenant_id=tenant_id WHERE active_tenant_id IS NULL AND tenant_id IS NOT NULL;`,
+  `INSERT OR IGNORE INTO tenant_members(tenant_id,user_id,role,status,joined_at) SELECT tenant_id,id,'owner','active',created_at FROM users WHERE tenant_id IS NOT NULL;`,
+  `INSERT OR IGNORE INTO tenant_subscriptions(tenant_id,plan_code,status) SELECT id,CASE WHEN plan='enterprise' THEN 'enterprise' WHEN plan='growth' THEN 'growth' ELSE 'starter' END,'active' FROM tenants;`,
+  `INSERT OR IGNORE INTO tenant_settings_v8(tenant_id) SELECT id FROM tenants;`,
+);
+
 lines.push(
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);`,
-  `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"6.4.0"',1);`,
+  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.2.0"',1);`,
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);`,
 );
 

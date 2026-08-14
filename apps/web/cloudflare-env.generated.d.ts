@@ -9,7 +9,9 @@ interface __BaseEnv_CloudflareEnv {
 	HARIYO_EVENTS: Queue;
 	ASSETS: Fetcher;
 	APP_ENV: "production";
-	NEXT_PUBLIC_SITE_URL: "https://hariyo-mart-nepal.YOUR_SUBDOMAIN.workers.dev";
+	DATA_PLATFORM: "cloudflare-native";
+	RELEASE_VERSION: "8.2.0";
+	NEXT_PUBLIC_SITE_URL: "https://hariyomart.nishrutesh.workers.dev";
 	NEXT_PUBLIC_API_URL: "/api";
 	SESSION_COOKIE_NAME: "hariyo_session";
 	TURNSTILE_ENFORCEMENT_MODE: "web";
@@ -28,7 +30,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_ENV" | "NEXT_PUBLIC_SITE_URL" | "NEXT_PUBLIC_API_URL" | "SESSION_COOKIE_NAME" | "TURNSTILE_ENFORCEMENT_MODE" | "NEXT_PUBLIC_TURNSTILE_SITE_KEY">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_ENV" | "DATA_PLATFORM" | "RELEASE_VERSION" | "NEXT_PUBLIC_SITE_URL" | "NEXT_PUBLIC_API_URL" | "SESSION_COOKIE_NAME" | "TURNSTILE_ENFORCEMENT_MODE" | "NEXT_PUBLIC_TURNSTILE_SITE_KEY">> {}
 }
 
 // Begin runtime types

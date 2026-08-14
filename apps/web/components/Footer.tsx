@@ -57,7 +57,7 @@ export function Footer() {
           <div className="footer-brand-column">
             <Image
               className="footer-logo"
-              src="/brand/logo.svg"
+              src="/brand/logo-on-dark.svg"
               alt="Hariyo Mart Nepal"
               width={220}
               height={54}

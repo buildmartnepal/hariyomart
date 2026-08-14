@@ -9,6 +9,15 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const webConfig = path.join(root, 'apps/web/wrangler.jsonc');
+const webConfigJson = JSON.parse(fs.readFileSync(webConfig, 'utf8'));
+const siteUrl = webConfigJson.vars?.NEXT_PUBLIC_SITE_URL;
+
+if (!siteUrl || !URL.canParse(siteUrl) || new URL(siteUrl).protocol !== 'https:') {
+  throw new Error('apps/web/wrangler.jsonc must contain the final HTTPS NEXT_PUBLIC_SITE_URL.');
+}
+if (/REPLACE_WITH|PLACEHOLDER/i.test(String(webConfigJson.vars?.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''))) {
+  throw new Error('Replace NEXT_PUBLIC_TURNSTILE_SITE_KEY with the real production site key before deployment.');
+}
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -17,7 +26,6 @@ function run(command, args, options = {}) {
     env: { ...process.env, ...(options.env || {}) },
     stdio: options.capture ? ['inherit', 'pipe', 'pipe'] : 'inherit',
   });
-
   if (options.capture) {
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
@@ -32,128 +40,86 @@ function run(command, args, options = {}) {
 function wrangler(args, options) {
   return run(npx, ['wrangler', ...args], options);
 }
-
 function randomSecret() {
   return randomBytes(48).toString('base64url');
 }
-
-function findWorkersUrl(output) {
-  const urls = output.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/gi) || [];
-  return urls.find((url) => new URL(url).hostname.startsWith('hariyo-mart-nepal.')) || urls[0];
-}
-
-console.log('\n1/8 Checking Cloudflare login');
-wrangler(['whoami']);
-
-console.log('\n2/8 Applying D1 migrations and idempotent marketplace seed');
-run(npm, ['run', 'cloudflare:db:remote']);
-
-console.log('\n3/8 Deploying the private services Worker');
-wrangler([
-  'deploy',
-  '--config',
-  'infra/cloudflare/services/wrangler.jsonc',
-  '--message',
-  'Hariyo Mart v6.4 premium commerce, footer and mobile product release',
-]);
-
-console.log('\n4/8 Deploying the public Worker to resolve its workers.dev URL');
-const firstDeploy = run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy'], { capture: true });
-const deploymentOutput = `${firstDeploy.stdout || ''}\n${firstDeploy.stderr || ''}`;
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || findWorkersUrl(deploymentOutput);
-if (!siteUrl || !URL.canParse(siteUrl) || new URL(siteUrl).protocol !== 'https:') {
-  throw new Error(
-    'The Worker deployed, but its HTTPS URL could not be detected. Set NEXT_PUBLIC_SITE_URL and run this command again.',
-  );
-}
-
-console.log('\n5/8 Installing missing production secrets');
-const secretList = wrangler(['secret', 'list', '--config', 'apps/web/wrangler.jsonc'], {
-  capture: true,
-  allowFailure: true,
-});
-const currentSecrets = `${secretList.stdout || ''}\n${secretList.stderr || ''}`;
-const requiredSecrets = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'ADMIN_BOOTSTRAP_KEY'];
-const missingSecrets = requiredSecrets.filter((name) => !currentSecrets.includes(name));
-let adminBootstrapKey = null;
-
-if (missingSecrets.length) {
-  const values = Object.fromEntries(missingSecrets.map((name) => [name, randomSecret()]));
-  if (values.ADMIN_BOOTSTRAP_KEY) adminBootstrapKey = values.ADMIN_BOOTSTRAP_KEY;
-  const secretFile = path.join(os.tmpdir(), `hariyo-cloudflare-secrets-${process.pid}.json`);
+function bulkSecrets(values, prefix) {
+  const secretFile = path.join(os.tmpdir(), `${prefix}-${process.pid}.json`);
   fs.writeFileSync(secretFile, JSON.stringify(values), { mode: 0o600 });
   try {
     wrangler(['secret', 'bulk', secretFile, '--config', 'apps/web/wrangler.jsonc']);
   } finally {
     fs.rmSync(secretFile, { force: true });
   }
-} else {
-  console.log('All required secrets already exist; no secrets were rotated.');
 }
 
-console.log(`\n6/8 Configuring the production hostname: ${siteUrl}`);
-const config = fs.readFileSync(webConfig, 'utf8');
-const configured = config.replace(
-  /("NEXT_PUBLIC_SITE_URL"\s*:\s*")[^"]+("\s*,?)/,
-  `$1${siteUrl}$2`,
-);
-if (configured === config && !config.includes(siteUrl)) {
-  throw new Error('Unable to update NEXT_PUBLIC_SITE_URL in apps/web/wrangler.jsonc');
-}
-fs.writeFileSync(webConfig, configured);
-
-console.log('\n7/8 Rebuilding and publishing the final hostname-aware Worker');
+console.log('\n1/8 Validating local production configuration');
 run(npm, ['run', 'cloudflare:config:check']);
-run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy']);
 
-console.log('\n8/8 Verifying the live marketplace');
-const health = await fetch(`${siteUrl}/api/health`);
-const products = await fetch(`${siteUrl}/api/products?limit=2`);
-const serviceAreas = await fetch(`${siteUrl}/api/locations/service-areas`);
-if (!health.ok || !products.ok || !serviceAreas.ok) {
+console.log('\n2/8 Checking Cloudflare login and required secrets');
+wrangler(['whoami']);
+const secretList = wrangler(['secret', 'list', '--config', 'apps/web/wrangler.jsonc'], {
+  capture: true,
+  allowFailure: true,
+});
+const currentSecrets = `${secretList.stdout || ''}\n${secretList.stderr || ''}`;
+if (!currentSecrets.includes('TURNSTILE_SECRET_KEY')) {
   throw new Error(
-    `Live verification failed: health=${health.status}, products=${products.status}, serviceAreas=${serviceAreas.status}`,
+    'TURNSTILE_SECRET_KEY is missing. Set the real Turnstile secret first: npx wrangler secret put TURNSTILE_SECRET_KEY --config apps/web/wrangler.jsonc',
   );
 }
-const healthBody = await health.json();
-const productBody = await products.json();
-const serviceAreaBody = await serviceAreas.json();
-console.log(
-  JSON.stringify(
-    {
-      siteUrl,
-      health: healthBody,
-      productsReturned: Array.isArray(productBody?.data) ? productBody.data.length : null,
-      serviceAreasReturned: Array.isArray(serviceAreaBody?.data)
-        ? serviceAreaBody.data.length
-        : null,
-    },
-    null,
-    2,
-  ),
-);
+const missingJwt = ['JWT_SECRET', 'JWT_REFRESH_SECRET'].filter((name) => !currentSecrets.includes(name));
+if (missingJwt.length) {
+  bulkSecrets(Object.fromEntries(missingJwt.map((name) => [name, randomSecret()])), 'hariyo-jwt-secrets');
+  console.log(`Generated and stored missing session secret(s): ${missingJwt.join(', ')}`);
+} else {
+  console.log('JWT and Turnstile secrets are already configured.');
+}
 
-let readinessResponse = await fetch(`${siteUrl}/api/system/readiness`);
-let readiness = readinessResponse.ok ? await readinessResponse.json() : null;
+console.log('\n3/8 Backing up remote D1');
+const backup = path.join(root, `hariyo-pre-v8-2-${new Date().toISOString().slice(0, 10)}.sql`);
+wrangler([
+  'd1', 'export', 'hariyo-mart-production-apac', '--remote', '--output', backup,
+]);
+console.log(`D1 backup written to ${backup}`);
+
+console.log('\n4/8 Applying D1 migrations');
+run(npm, ['run', 'cloudflare:db:remote']);
+
+console.log('\n5/8 Deploying private coordination services');
+wrangler([
+  'deploy',
+  '--config',
+  'infra/cloudflare/services/wrangler.jsonc',
+  '--message',
+  'Hariyo Mart v8.2 Cloudflare commerce production release',
+]);
+
+console.log('\n6/8 Building and deploying the OpenNext web Worker');
+run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy']);
+
+console.log(`\n7/8 Verifying live endpoints at ${siteUrl}`);
+const checks = [
+  ['/api/health', 'health'],
+  ['/api/system/readiness', 'readiness'],
+  ['/api/system/supply-stack', 'supplyStack'],
+  ['/api/products?limit=2', 'products'],
+];
+const verification = {};
+for (const [pathname, key] of checks) {
+  const response = await fetch(`${siteUrl}${pathname}`, { headers: { accept: 'application/json' } });
+  if (!response.ok) throw new Error(`${pathname} returned HTTP ${response.status}`);
+  verification[key] = await response.json();
+}
+console.log(JSON.stringify({ siteUrl, verification }, null, 2));
+
+console.log('\n8/8 Verifying owner admin');
+let readiness = verification.readiness;
+let adminBootstrapKey = null;
 if (!readiness?.adminConfigured) {
-  console.log('\nOwner setup is required. Create the password in the hidden prompt.');
-  if (!adminBootstrapKey) {
-    adminBootstrapKey = randomSecret();
-    const bootstrapSecretFile = path.join(
-      os.tmpdir(),
-      `hariyo-admin-bootstrap-${process.pid}.json`,
-    );
-    fs.writeFileSync(
-      bootstrapSecretFile,
-      JSON.stringify({ ADMIN_BOOTSTRAP_KEY: adminBootstrapKey }),
-      { mode: 0o600 },
-    );
-    try {
-      wrangler(['secret', 'bulk', bootstrapSecretFile, '--config', 'apps/web/wrangler.jsonc']);
-    } finally {
-      fs.rmSync(bootstrapSecretFile, { force: true });
-    }
-  }
+  console.log('Owner setup is required. A one-time bootstrap secret will be created and rotated after use.');
+  adminBootstrapKey = randomSecret();
+  bulkSecrets({ ADMIN_BOOTSTRAP_KEY: adminBootstrapKey }, 'hariyo-admin-bootstrap');
   run(npm, ['run', 'bootstrap:admin'], {
     env: {
       NEXT_PUBLIC_SITE_URL: siteUrl,
@@ -161,22 +127,13 @@ if (!readiness?.adminConfigured) {
       HARIYO_ADMIN_EMAIL: process.env.HARIYO_ADMIN_EMAIL || 'greenmandux@gmail.com',
     },
   });
-
-  const lockSecretFile = path.join(os.tmpdir(), `hariyo-admin-lock-${process.pid}.json`);
-  fs.writeFileSync(lockSecretFile, JSON.stringify({ ADMIN_BOOTSTRAP_KEY: randomSecret() }), {
-    mode: 0o600,
-  });
-  try {
-    wrangler(['secret', 'bulk', lockSecretFile, '--config', 'apps/web/wrangler.jsonc']);
-  } finally {
-    fs.rmSync(lockSecretFile, { force: true });
-  }
-  readinessResponse = await fetch(`${siteUrl}/api/system/readiness`);
-  readiness = readinessResponse.ok ? await readinessResponse.json() : null;
+  bulkSecrets({ ADMIN_BOOTSTRAP_KEY: randomSecret() }, 'hariyo-admin-lock');
+  const response = await fetch(`${siteUrl}/api/system/readiness`);
+  readiness = response.ok ? await response.json() : null;
   if (!readiness?.adminConfigured) throw new Error('Owner account verification did not complete.');
 } else {
-  console.log('\nOwner admin already exists; secure password setup was skipped.');
+  console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart is live: ${siteUrl}`);
-console.log(`Owner sign-in: ${siteUrl}/login · greenmandux@gmail.com`);
+console.log(`\nHariyo Mart v8.2 is live: ${siteUrl}`);
+console.log(`Owner sign-in: ${siteUrl}/login`);

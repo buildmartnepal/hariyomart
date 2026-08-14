@@ -273,7 +273,7 @@ export function HarvestPublisher() {
               Or existing Hariyo R2 media path
               <input
                 name="imageUrl"
-                type="url"
+                type="text"
                 placeholder="/api/media/products/…"
                 defaultValue={photoUrl}
               />

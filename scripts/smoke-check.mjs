@@ -132,11 +132,13 @@ for (const key of [
   'JWT_SECRET=',
   'JWT_REFRESH_SECRET=',
   'ADMIN_BOOTSTRAP_KEY=',
-  'CLOUDFLARE_ACCOUNT_ID=',
-  'CLOUDFLARE_D1_DATABASE_ID=',
-  'CLOUDFLARE_KV_NAMESPACE_ID=',
+  'TURNSTILE_SECRET_KEY=',
+  'NEXT_PUBLIC_SITE_URL=https://hariyomart.nishrutesh.workers.dev',
 ]) {
   if (!env.includes(key)) throw new Error(`Production env template missing ${key}`);
+}
+for (const forbidden of ['CLOUDFLARE_API_TOKEN=', 'CLOUDFLARE_ACCOUNT_ID=', 'CLOUDFLARE_D1_DATABASE_ID=', 'CLOUDFLARE_KV_NAMESPACE_ID=']) {
+  if (env.includes(forbidden)) throw new Error(`Production app env must not carry Cloudflare deployment/provisioning field ${forbidden}`);
 }
 
 const catalog = JSON.parse(fs.readFileSync('apps/web/server/data/catalog.json', 'utf8'));

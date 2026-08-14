@@ -1,14 +1,19 @@
 'use client';
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   BadgeCheck,
+  Camera,
   Boxes,
   CheckCircle2,
   CircleDollarSign,
   ClipboardList,
   LoaderCircle,
   MapPinned,
+  Pencil,
+  Save,
+  X,
   PackageCheck,
   RefreshCw,
   ShieldAlert,
@@ -17,6 +22,7 @@ import {
   Truck,
   UsersRound,
 } from 'lucide-react';
+import { catalog } from '@/lib/catalog';
 import { useAuth } from './AuthProvider';
 
 type Props = { role: 'Farmer' | 'Admin' | 'Account'; section: string };
@@ -326,88 +332,35 @@ function FarmerView({ section, data, action, run, auth }: any) {
         </div>
       </>
     );
-  if (['products', 'inventory'].includes(section))
+  if (section === 'products')
+    return (
+      <>
+        <Metrics items={metrics} />
+        <ProductManager products={data.products} auth={auth} run={run} action={action} />
+      </>
+    );
+  if (section === 'inventory')
     return (
       <>
         <Metrics items={metrics} />
         <DataPanel
-          title={section === 'products' ? 'Seller catalogue' : 'Inventory control'}
-          subtitle="Every listing belongs to this tenant. Public activation requires marketplace approval."
+          title="Inventory control"
+          subtitle="Live stock is coordinated through the Cloudflare inventory service and written back to D1."
         >
           {data.products.length ? (
             <div className="workspace-table">
-              <div className="workspace-tr head">
-                <span>Product</span>
-                <span>Stock</span>
-                <span>Price</span>
-                <span>Status</span>
-                <span>Action</span>
-              </div>
+              <div className="workspace-tr head"><span>Product</span><span>Stock</span><span>Price</span><span>Status</span><span>Action</span></div>
               {data.products.map((p: any) => (
                 <div className="workspace-tr" key={p._id}>
-                  <span>
-                    <b>{p.name}</b>
-                    <small>
-                      {p.district} · {p.unit}
-                    </small>
-                  </span>
-                  <span>{p.stock}</span>
-                  <span>{money(p.price)}</span>
-                  <span>
-                    <Status value={p.status} />
-                  </span>
-                  <span>
-                    {p.status === 'active' ? (
-                      <button
-                        disabled={!!action}
-                        onClick={() =>
-                          run(`pause-${p._id}`, () =>
-                            auth.apiRequest(`/products/${p._id}`, {
-                              method: 'PATCH',
-                              body: JSON.stringify({ status: 'paused' }),
-                            }),
-                          )
-                        }
-                      >
-                        Pause
-                      </button>
-                    ) : p.status === 'paused' ? (
-                      <button
-                        disabled={!!action}
-                        onClick={() =>
-                          run(`review-${p._id}`, () =>
-                            auth.apiRequest(`/products/${p._id}`, {
-                              method: 'PATCH',
-                              body: JSON.stringify({ status: 'pending_review' }),
-                            }),
-                          )
-                        }
-                      >
-                        Submit review
-                      </button>
-                    ) : (
-                      <small>{p.status}</small>
-                    )}
-                  </span>
+                  <span><b>{p.name}</b><small>{p.district} · {p.unit}</small></span>
+                  <span>{p.stock}</span><span>{money(p.price)}</span><span><Status value={p.status} /></span>
+                  <span><Link href="/farmer/products">Edit product</Link></span>
                 </div>
               ))}
             </div>
-          ) : (
-            <Empty text="List your first harvest to create tenant inventory." />
-          )}
-          <Link className="btn btn-primary compact-action" href="/farmer/list-harvest">
-            + List harvest
-          </Link>
+          ) : <Empty text="List your first harvest to create tenant inventory." />}
         </DataPanel>
-        {section === 'inventory' && (
-          <InventoryManager
-            products={data.products}
-            events={data.inventoryEvents}
-            auth={auth}
-            run={run}
-            action={action}
-          />
-        )}
+        <InventoryManager products={data.products} events={data.inventoryEvents} auth={auth} run={run} action={action} />
       </>
     );
   if (section === 'orders')
@@ -961,6 +914,163 @@ function BuyerView({ section, data, auth, run, action }: any) {
         <ModuleGrid section={section} />
       </DataPanel>
     </>
+  );
+}
+
+
+function ProductManager({ products, auth, run, action }: any) {
+  const [editing, setEditing] = useState<any | null>(null);
+  const [message, setMessage] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageBusy, setImageBusy] = useState(false);
+  async function uploadProductImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setMessage('Use a JPEG, PNG or WebP product photo.');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setMessage('Product photos must be 8 MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+    setImageBusy(true);
+    setMessage('Uploading product photo…');
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const uploaded: any = await auth.apiRequest('/uploads', { method: 'POST', body });
+      if (!uploaded?.url) throw new Error('Cloudflare R2 image upload failed');
+      setImageUrl(String(uploaded.url));
+      setMessage('Product photo uploaded. Save the product to publish the change.');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Product photo upload failed.');
+    } finally {
+      setImageBusy(false);
+      event.target.value = '';
+    }
+  }
+  async function saveProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing) return;
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+    const payload = {
+      name: String(fd.get('name') || ''),
+      category: String(fd.get('category') || ''),
+      province: String(fd.get('province') || ''),
+      district: String(fd.get('district') || ''),
+      municipality: String(fd.get('municipality') || ''),
+      unit: String(fd.get('unit') || ''),
+      price: Number(fd.get('price') || 0),
+      stock: Number(fd.get('stock') || 0),
+      minimumOrder: Number(fd.get('minimumOrder') || 1),
+      grade: String(fd.get('grade') || ''),
+      harvestDate: String(fd.get('harvestDate') || '') || null,
+      harvestWindow: String(fd.get('harvestWindow') || ''),
+      shortDescription: String(fd.get('shortDescription') || ''),
+      uniqueStory: String(fd.get('uniqueStory') || ''),
+      description: String(fd.get('description') || ''),
+      ...(imageUrl ? { image: imageUrl } : {}),
+      deliveryRadiusKm: Number(fd.get('deliveryRadiusKm') || 35),
+      organic: fd.get('organic') === 'on',
+      wholesale: fd.get('wholesale') === 'on',
+      subscription: fd.get('subscription') === 'on',
+    };
+    setMessage('');
+    await run(`save-${editing._id}`, async () => {
+      const response = await auth.apiRequest(`/products/${editing._id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      setMessage(response?.status === 'pending_review' ? 'Saved and sent for marketplace review.' : 'Product saved successfully.');
+      setEditing(null);
+      setImageUrl('');
+      return response;
+    });
+  }
+  return (
+    <DataPanel title="Product selling studio" subtitle="Manage buyer-facing product information, live stock, pricing and marketplace publishing from one tenant-safe workspace.">
+      <div className="product-manager-shell">
+        <div className="product-manager-toolbar">
+          <div>
+            <span className="pill">{products.length} products</span>
+            <span className="pill">{products.filter((p: any) => p.status === 'active').length} live</span>
+            <span className="pill">{products.filter((p: any) => Number(p.stock) <= 10).length} low stock</span>
+          </div>
+          <Link className="btn btn-primary" href="/farmer/list-harvest">+ Add new product</Link>
+        </div>
+        {message && <div className="operations-notice">{message}</div>}
+        {editing && (
+          <form className="product-editor" onSubmit={saveProduct}>
+            <div className="product-editor-head">
+              <div><span className="eyebrow">EDIT PRODUCT</span><h3>{editing.name}</h3><p>Content changes to a live listing are automatically returned to review where appropriate.</p></div>
+              <button className="icon-btn" type="button" onClick={() => { setEditing(null); setImageUrl(''); }} aria-label="Close editor"><X size={17} /></button>
+            </div>
+            <div className="product-image-editor">
+              <Image src={imageUrl || editing.image || `/products/${editing.category}.svg`} alt={editing.name} width={150} height={150} />
+              <div>
+                <b>Buyer-facing product photo</b>
+                <p>Upload a clear square or landscape product photo. It is stored in Cloudflare R2 and attached only after you save.</p>
+                <label className="btn btn-soft product-photo-upload">
+                  <Camera size={16} /> {imageBusy ? 'Uploading…' : 'Replace photo'}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={imageBusy} onChange={uploadProductImage} />
+                </label>
+              </div>
+            </div>
+            <div className="product-edit-grid">
+              <label className="wide">Product name<input name="name" defaultValue={editing.name} required /></label>
+              <label>Category<select name="category" defaultValue={editing.category} required>{catalog.categories.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select></label>
+              <label>Unit<input name="unit" defaultValue={editing.unit} required /></label>
+              <label>Price (NPR)<input name="price" type="number" min="0" step="0.01" defaultValue={editing.price} required /></label>
+              <label>Stock<input name="stock" type="number" min="0" step="0.01" defaultValue={editing.stock} required /></label>
+              <label>Minimum order<input name="minimumOrder" type="number" min="0.01" step="0.01" defaultValue={editing.minimumOrder || 1} required /></label>
+              <label>Grade<input name="grade" defaultValue={editing.grade || ''} /></label>
+              <label>Province<select name="province" defaultValue={editing.province} required>{catalog.provinces.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select></label>
+              <label>District<input name="district" defaultValue={editing.district} required /></label>
+              <label>Municipality<input name="municipality" defaultValue={editing.municipality || ''} /></label>
+              <label>Delivery radius km<input name="deliveryRadiusKm" type="number" min="1" max="1000" defaultValue={editing.deliveryRadiusKm || 35} /></label>
+              <label>Harvest date<input name="harvestDate" type="date" defaultValue={editing.harvestDate ? String(editing.harvestDate).slice(0,10) : ''} /></label>
+              <label className="wide">Freshness note<input name="harvestWindow" defaultValue={editing.harvestWindow || ''} /></label>
+            </div>
+            <label>Short buyer description<textarea name="shortDescription" rows={3} defaultValue={editing.shortDescription || ''} /></label>
+            <label>Farm story / unique quality<textarea name="uniqueStory" rows={4} defaultValue={editing.uniqueStory || ''} /></label>
+            <label>Full product details<textarea name="description" rows={5} defaultValue={editing.description || ''} placeholder="Storage, preparation, pack details, origin and buyer guidance" /></label>
+            <div className="seller-toggles">
+              <label><input type="checkbox" name="organic" defaultChecked={Boolean(editing.organic)} /> Organic / natural</label>
+              <label><input type="checkbox" name="wholesale" defaultChecked={Boolean(editing.wholesale)} /> Wholesale enabled</label>
+              <label><input type="checkbox" name="subscription" defaultChecked={Boolean(editing.subscription)} /> Subscription enabled</label>
+            </div>
+            <div className="hero-actions">
+              <button className="btn btn-primary" disabled={!!action || imageBusy} type="submit"><Save size={16} /> Save product</button>
+              <button className="btn btn-soft" type="button" onClick={() => { setEditing(null); setImageUrl(''); }}>Cancel</button>
+            </div>
+          </form>
+        )}
+        {products.length ? (
+          <div className="product-manager-cards">
+            {products.map((product: any) => (
+              <article className="product-manage-card" key={product._id}>
+                <Image src={product.image || `/products/${product.category}.svg`} alt="" width={152} height={152} />
+                <div className="product-manage-copy">
+                  <b>{product.name}</b>
+                  <small>{product.district} · {money(product.price)} / {product.unit}</small>
+                  <div className="product-status-row"><Status value={product.status} /><small>{product.stock} in stock</small></div>
+                </div>
+                <div className="product-manage-actions">
+                  <button type="button" onClick={() => { setEditing(product); setImageUrl(''); setMessage(''); }}><Pencil size={13} /> Edit</button>
+                  {product.status === 'active' && <Link href={`/products/${product.slug}`}>View live</Link>}
+                  {product.status === 'active' ? (
+                    <button disabled={!!action} onClick={() => run(`pause-${product._id}`, () => auth.apiRequest(`/products/${product._id}`, { method: 'PATCH', body: JSON.stringify({ status: 'paused' }) }))}>Pause</button>
+                  ) : ['paused','rejected','draft'].includes(product.status) ? (
+                    <button disabled={!!action} onClick={() => run(`review-${product._id}`, () => auth.apiRequest(`/products/${product._id}`, { method: 'PATCH', body: JSON.stringify({ status: 'pending_review' }) }))}>Submit review</button>
+                  ) : <small>Awaiting review</small>}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : <div className="product-manager-empty">No products yet. Add the first harvest to begin selling.</div>}
+      </div>
+    </DataPanel>
   );
 }
 

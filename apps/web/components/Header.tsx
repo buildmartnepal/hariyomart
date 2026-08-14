@@ -62,9 +62,18 @@ export function Header() {
       <div className="container nav">
         <Link href="/" className="brand-link" onClick={() => setOpen(false)}>
           <Image
-            className="logo"
+            className="logo logo-light"
             src="/brand/logo.svg"
             alt="Hariyo Mart Nepal"
+            width={260}
+            height={64}
+            priority
+          />
+          <Image
+            className="logo logo-dark"
+            src="/brand/logo-on-dark.svg"
+            alt=""
+            aria-hidden="true"
             width={260}
             height={64}
             priority

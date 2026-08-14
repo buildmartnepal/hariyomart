@@ -107,7 +107,7 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           <Store /> I am a farmer or cooperative <span>Open seller onboarding →</span>
         </Link>
       </section>
-      <form className="auth-card" onSubmit={submit}>
+      <form className="auth-card" onSubmit={submit} aria-busy={busy}>
         <div className="auth-icon">{mode === 'login' ? <LockKeyhole /> : <UserRound />}</div>
         <h2>{mode === 'login' ? 'Sign in' : 'Join Hariyo Mart'}</h2>
         <p>
@@ -143,13 +143,16 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
             name="password"
             required
             type="password"
-            minLength={8}
+            minLength={mode === 'register' ? 10 : 1}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            placeholder="Minimum 8 characters"
+            placeholder={mode === 'register' ? '10+ chars with upper, lower & number' : 'Your password'}
           />
         </label>
+        {mode === 'register' && (
+          <div className="password-hint">Use 10+ characters with uppercase, lowercase and a number.</div>
+        )}
         <TurnstileWidget key={`${mode}-${challengeNonce}`} action={mode === 'login' ? 'login' : 'register'} onToken={setTurnstileToken} />
-        {message && <div className="auth-error">{message}</div>}
+        {message && <div className="auth-error" role="alert" aria-live="polite">{message}</div>}
         <button className="btn btn-primary btn-full" disabled={busy} type="submit">
           <Sprout size={17} />
           {busy ? 'Connecting…' : mode === 'login' ? 'Sign in securely' : 'Create buyer account'}
