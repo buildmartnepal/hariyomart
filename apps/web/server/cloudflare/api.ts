@@ -11,6 +11,7 @@ import {
   clearSessionCookies,
   cloudflareEnv,
   CloudflareApiError,
+  coordinateInventory,
   currentAuth,
   enforceRateLimit,
   hashPassword,
@@ -25,8 +26,29 @@ import {
   rotateSession,
   slugify,
   verifyPassword,
+  verifyTurnstile,
   type CloudflareUserRow,
 } from './platform';
+import { supplyStackStatus } from './supply-stack';
+import {
+  customersApi,
+  deliveryRoutesApi,
+  harvestPlansApi,
+  lotsApi,
+  purchaseOrdersApi,
+  priceListsApi,
+  qualityApi,
+  subscriptionsApi,
+  suppliersApi,
+  supplyOverview,
+  supplyReportsApi,
+  platformEventsApi,
+  platformNetworkApi,
+  platformPlansApi,
+  platformTenantsApi,
+  tenantTeamApi,
+  warehousesApi,
+} from './supply-api';
 import {
   adminAudit,
   adminBlog,
@@ -54,6 +76,7 @@ const buyerRegistration = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(200),
   phone: z.string().max(30).optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
 const farmerRegistration = z.object({
   farmName: z.string().min(2).max(120),
@@ -68,8 +91,13 @@ const farmerRegistration = z.object({
   specialties: z.string().min(2).max(1000),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
-const loginInput = z.object({ email: z.string().email(), password: z.string().min(1) });
+const loginInput = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+  turnstileToken: z.string().max(2048).optional(),
+});
 const strongPassword = z
   .string()
   .min(14)
@@ -293,6 +321,7 @@ const productSelect = `SELECT p.*,t.name AS farm_name,t.slug AS farm_slug,t.stat
 async function registerBuyer(req: NextRequest) {
   const env = cloudflareEnv();
   const input = validation(buyerRegistration, await requestBody(req));
+  await verifyTurnstile(req, input.turnstileToken, 'register');
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await env.HARIYO_DB.prepare(
@@ -320,6 +349,7 @@ async function registerBuyer(req: NextRequest) {
 async function registerFarmer(req: NextRequest) {
   const env = cloudflareEnv();
   const input = validation(farmerRegistration, await requestBody(req));
+  await verifyTurnstile(req, input.turnstileToken, 'register');
   const userId = crypto.randomUUID();
   const tenantId = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -349,10 +379,11 @@ async function registerFarmer(req: NextRequest) {
       now,
     ),
     env.HARIYO_DB.prepare(
-      `INSERT INTO users (id,tenant_id,name,email,phone,password_hash,role,is_verified,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,'farmer',0,?,?)`,
+      `INSERT INTO users (id,tenant_id,active_tenant_id,name,email,phone,password_hash,role,is_verified,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,'farmer',0,?,?)`,
     ).bind(
       userId,
+      tenantId,
       tenantId,
       input.ownerName,
       input.email.toLowerCase(),
@@ -361,6 +392,15 @@ async function registerFarmer(req: NextRequest) {
       now,
       now,
     ),
+    env.HARIYO_DB.prepare(
+      `INSERT INTO tenant_members (tenant_id,user_id,role,status,joined_at,created_at) VALUES (?,?,'owner','active',?,?)`,
+    ).bind(tenantId, userId, now, now),
+    env.HARIYO_DB.prepare(
+      `INSERT INTO tenant_subscriptions (tenant_id,plan_code,status,trial_ends_at,updated_at) VALUES (?,'starter','trialing',?,?)`,
+    ).bind(tenantId, new Date(Date.now() + 14 * 86400000).toISOString(), now),
+    env.HARIYO_DB.prepare(
+      `INSERT INTO tenant_settings_v8 (tenant_id,updated_at) VALUES (?,?)`,
+    ).bind(tenantId, now),
   ]);
   const user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE id=?')
     .bind(userId)
@@ -380,6 +420,7 @@ async function registerFarmer(req: NextRequest) {
 async function login(req: NextRequest) {
   const env = cloudflareEnv();
   const input = validation(loginInput, await requestBody(req));
+  await verifyTurnstile(req, input.turnstileToken, 'login');
   const user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
     .bind(input.email.toLowerCase())
     .first<CloudflareUserRow>();
@@ -605,37 +646,28 @@ async function patchProduct(req: NextRequest, id: string) {
   }
   const now = new Date().toISOString();
   const stockChanged = input.stock !== undefined && input.stock !== Number(product.stock || 0);
-  const updateStatement = env.HARIYO_DB.prepare(
-    `UPDATE products SET status=COALESCE(?,status),price=COALESCE(?,price),stock=COALESCE(?,stock),delivery_radius_km=COALESCE(?,delivery_radius_km),updated_at=? WHERE id=?`,
-  ).bind(
-    input.status || null,
-    input.price ?? null,
-    input.stock ?? null,
-    input.deliveryRadiusKm ?? null,
-    now,
-    product.id,
-  );
+  await env.HARIYO_DB.prepare(
+    `UPDATE products SET status=COALESCE(?,status),price=COALESCE(?,price),delivery_radius_km=COALESCE(?,delivery_radius_km),updated_at=? WHERE id=?`,
+  )
+    .bind(input.status || null, input.price ?? null, input.deliveryRadiusKm ?? null, now, product.id)
+    .run();
   if (stockChanged) {
-    await env.HARIYO_DB.batch([
-      updateStatement,
-      env.HARIYO_DB.prepare(
-        `INSERT INTO inventory_events (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason,reference_type,reference_id)
-         VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      ).bind(
-        crypto.randomUUID(),
-        product.id,
-        product.tenant_id,
-        user.id,
-        'adjustment',
-        Number(input.stock) - Number(product.stock || 0),
-        Number(input.stock),
-        'Stock updated from product workspace',
-        'product_update',
-        product.id,
-      ),
-    ]);
-  } else {
-    await updateStatement.run();
+    const coordinated = await coordinateInventory({
+      action: 'set',
+      productId: product.id,
+      stock: Number(input.stock),
+      actorId: user.id,
+      reason: 'Stock updated from product workspace',
+    });
+    if (!coordinated) {
+      await env.HARIYO_DB.batch([
+        env.HARIYO_DB.prepare('UPDATE products SET stock=?,updated_at=? WHERE id=?').bind(Number(input.stock), now, product.id),
+        env.HARIYO_DB.prepare(
+          `INSERT INTO inventory_events (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason,reference_type,reference_id)
+           VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        ).bind(crypto.randomUUID(), product.id, product.tenant_id, user.id, 'adjustment', Number(input.stock) - Number(product.stock || 0), Number(input.stock), 'Stock updated from product workspace (local fallback)', 'product_update', product.id),
+      ]);
+    }
   }
   await audit(req, user, 'product.updated', 'product', product.id, input);
   return apiJson({ ok: true, id: product.id, ...input });
@@ -775,9 +807,13 @@ async function placeOrder(req: NextRequest, guest: boolean) {
         );
     } catch (error) {
       if (error instanceof CloudflareApiError) throw error;
+      if (env.APP_ENV === 'production')
+        throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
       responseData = await checkoutCore(env, payload);
     }
   } else {
+    if (env.APP_ENV === 'production')
+      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
     responseData = await checkoutCore(env, payload);
   }
   await audit(req, user, 'order.placed', 'order', (responseData as { id?: string }).id, {
@@ -901,24 +937,44 @@ async function cancelMyOrder(req: NextRequest, id: string) {
   )
     .bind(order.id)
     .all<{ product_id: string; quantity: number }>();
+  const now = new Date().toISOString();
+  const cancellationPayload = {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    actorId: user.id,
+    items: items.results || [],
+  };
   await env.HARIYO_DB.batch([
-    env.HARIYO_DB.prepare("UPDATE orders SET status='cancelled',updated_at=? WHERE id=?").bind(
-      new Date().toISOString(),
-      order.id,
-    ),
+    env.HARIYO_DB.prepare("UPDATE orders SET status='cancelled',updated_at=? WHERE id=?").bind(now, order.id),
+    env.HARIYO_DB.prepare("UPDATE fulfillments SET status='cancelled',updated_at=? WHERE order_id=?").bind(now, order.id),
     env.HARIYO_DB.prepare(
-      "UPDATE fulfillments SET status='cancelled',updated_at=? WHERE order_id=?",
-    ).bind(new Date().toISOString(), order.id),
-    ...(items.results || []).map((item) =>
-      env.HARIYO_DB.prepare('UPDATE products SET stock=stock+?,updated_at=? WHERE id=?').bind(
-        item.quantity,
-        new Date().toISOString(),
-        item.product_id,
-      ),
-    ),
+      `INSERT OR IGNORE INTO integration_outbox (id,topic,aggregate_type,aggregate_id,payload_json,status,idempotency_key,available_at,created_at)
+       VALUES (?,'order.cancelled.inventory_restore','order',?,?,'pending',?,?,?)`,
+    ).bind(crypto.randomUUID(), order.id, JSON.stringify(cancellationPayload), `cancel:${order.id}`, now, now),
   ]);
-  await audit(req, user, 'order.cancelled', 'order', order.id);
-  return apiJson({ ok: true });
+  let inventoryRecovery: 'coordinated' | 'queued' = 'coordinated';
+  for (const item of items.results || []) {
+    try {
+      const coordinated = await coordinateInventory({
+        action: 'adjust',
+        productId: item.product_id,
+        quantityChange: Number(item.quantity),
+        actorId: user.id,
+        eventType: 'return',
+        reason: `Order ${order.order_number} cancelled`,
+        operationId: `cancel:${order.id}:${item.product_id}`,
+      });
+      if (!coordinated) {
+        await env.HARIYO_DB.prepare('UPDATE products SET stock=stock+?,updated_at=? WHERE id=?')
+          .bind(item.quantity, now, item.product_id)
+          .run();
+      }
+    } catch {
+      inventoryRecovery = 'queued';
+    }
+  }
+  await audit(req, user, 'order.cancelled', 'order', order.id, { inventoryRecovery });
+  return apiJson({ ok: true, inventoryRecovery });
 }
 
 async function updateFulfillment(req: NextRequest, orderId: string, fulfillmentId: string) {
@@ -1000,6 +1056,53 @@ async function tenantMine(req: NextRequest) {
     .first<TenantRow>();
   if (!row) throw new CloudflareApiError(404, 'Tenant not found');
   return apiJson({ tenant: tenantPublic(row) });
+}
+
+async function myTenantMemberships(req: NextRequest) {
+  const env = cloudflareEnv();
+  const user = await requireAuth(req);
+  if (user.role === 'admin') {
+    const result = await env.HARIYO_DB.prepare(
+      `SELECT t.id,t.slug,t.name,t.type,t.status,t.plan,'platform_admin' AS member_role
+       FROM tenants t ORDER BY t.name LIMIT 500`,
+    ).all<Record<string, unknown>>();
+    return apiJson({ activeTenantId: user.tenant_id, data: result.results || [] });
+  }
+  const result = await env.HARIYO_DB.prepare(
+    `SELECT t.id,t.slug,t.name,t.type,t.status,t.plan,m.role AS member_role,m.status AS member_status
+     FROM tenant_members m JOIN tenants t ON t.id=m.tenant_id
+     WHERE m.user_id=? AND m.status='active' ORDER BY t.name`,
+  )
+    .bind(user.id)
+    .all<Record<string, unknown>>();
+  return apiJson({ activeTenantId: user.tenant_id, data: result.results || [] });
+}
+
+async function switchTenant(req: NextRequest) {
+  const env = cloudflareEnv();
+  const user = await requireAuth(req);
+  const input = validation(z.object({ tenantId: z.string().min(1).max(120) }), await requestBody(req));
+  const tenant = await env.HARIYO_DB.prepare('SELECT id,status FROM tenants WHERE id=?')
+    .bind(input.tenantId)
+    .first<{ id: string; status: string }>();
+  if (!tenant) throw new CloudflareApiError(404, 'Tenant workspace not found');
+  if (user.role !== 'admin') {
+    const membership = await env.HARIYO_DB.prepare(
+      `SELECT role FROM tenant_members WHERE tenant_id=? AND user_id=? AND status='active'`,
+    )
+      .bind(input.tenantId, user.id)
+      .first<{ role: string }>();
+    if (!membership) throw new CloudflareApiError(403, 'You do not have access to this workspace');
+  }
+  await env.HARIYO_DB.prepare('UPDATE users SET active_tenant_id=?,updated_at=? WHERE id=?')
+    .bind(input.tenantId, new Date().toISOString(), user.id)
+    .run();
+  const updated = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE id=?')
+    .bind(user.id)
+    .first<CloudflareUserRow>();
+  const tokens = await issueSession(updated!);
+  await audit(req, { ...updated!, tenant_id: input.tenantId }, 'tenant.switched', 'tenant', input.tenantId);
+  return attachSessionCookies(req, apiJson({ user: publicUser(updated!), tenantId: input.tenantId, ...tokens }), tokens);
 }
 
 async function tenantList(req: NextRequest) {
@@ -1337,9 +1440,9 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '6.4.0',
+    version: '8.0.0',
     status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
-    architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues',
+    architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues + Workflows + Turnstile',
     database,
     required,
     adminConfigured,
@@ -1368,6 +1471,24 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     await enforceRateLimit(req);
     if ((route === 'health' || route === 'system/readiness') && method === 'GET')
       return await readiness();
+    if (route === 'system/supply-stack' && method === 'GET') return await supplyStackStatus();
+    if (route === 'supply/overview' && method === 'GET') return await supplyOverview(req);
+    if (route === 'supply/suppliers' && ['GET', 'POST'].includes(method)) return await suppliersApi(req);
+    if (route === 'supply/customers' && ['GET', 'POST'].includes(method)) return await customersApi(req);
+    if (route === 'supply/warehouses' && ['GET', 'POST'].includes(method)) return await warehousesApi(req);
+    if (route === 'supply/harvest-plans' && ['GET', 'POST'].includes(method)) return await harvestPlansApi(req);
+    if (route === 'supply/lots' && ['GET', 'POST'].includes(method)) return await lotsApi(req);
+    if (route === 'supply/quality' && ['GET', 'POST'].includes(method)) return await qualityApi(req);
+    if (route === 'supply/purchase-orders' && ['GET', 'POST'].includes(method)) return await purchaseOrdersApi(req);
+    if (route === 'supply/price-lists' && ['GET', 'POST'].includes(method)) return await priceListsApi(req);
+    if (route === 'supply/delivery-routes' && ['GET', 'POST'].includes(method)) return await deliveryRoutesApi(req);
+    if (route === 'supply/subscriptions' && ['GET', 'POST'].includes(method)) return await subscriptionsApi(req);
+    if (route === 'supply/team' && method === 'GET') return await tenantTeamApi(req);
+    if (route === 'supply/reports' && method === 'GET') return await supplyReportsApi(req);
+    if (route === 'supply/platform/tenants' && method === 'GET') return await platformTenantsApi(req);
+    if (route === 'supply/platform/plans' && method === 'GET') return await platformPlansApi(req);
+    if (route === 'supply/platform/network' && method === 'GET') return await platformNetworkApi(req);
+    if (route === 'supply/platform/events' && method === 'GET') return await platformEventsApi(req);
     if (route === 'auth/register' && method === 'POST') return await registerBuyer(req);
     if (route === 'auth/register-farmer' && method === 'POST') return await registerFarmer(req);
     if (route === 'auth/login' && method === 'POST') return await login(req);
@@ -1411,6 +1532,8 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     )
       return await updatePayout(req, segments[1], segments[3]);
     if (route === 'tenants/mine' && method === 'GET') return await tenantMine(req);
+    if (route === 'tenants/memberships' && method === 'GET') return await myTenantMemberships(req);
+    if (route === 'tenants/switch' && method === 'POST') return await switchTenant(req);
     if (route === 'tenants' && method === 'GET') return await tenantList(req);
     if (segments[0] === 'tenants' && segments[2] === 'verify' && method === 'PATCH')
       return await verifyTenant(req, segments[1]);

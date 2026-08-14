@@ -13,11 +13,14 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { TurnstileWidget } from './TurnstileWidget';
 export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   const auth = useAuth(),
     router = useRouter();
   const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState('');
+    [message, setMessage] = useState(''),
+    [turnstileToken, setTurnstileToken] = useState(''),
+    [challengeNonce, setChallengeNonce] = useState(0);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -26,12 +29,13 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
     try {
       const user =
         mode === 'login'
-          ? await auth.login(String(fd.get('email')), String(fd.get('password')))
+          ? await auth.login(String(fd.get('email')), String(fd.get('password')), turnstileToken || undefined)
           : await auth.registerBuyer({
               name: String(fd.get('name')),
               email: String(fd.get('email')),
               password: String(fd.get('password')),
               phone: String(fd.get('phone') || ''),
+              turnstileToken: turnstileToken || undefined,
             });
       router.push(
         user.role === 'admin'
@@ -42,6 +46,8 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
       );
       router.refresh();
     } catch (err) {
+      setTurnstileToken('');
+      setChallengeNonce((value) => value + 1);
       setMessage(err instanceof Error ? err.message : 'Unable to continue');
     } finally {
       setBusy(false);
@@ -142,6 +148,7 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
             placeholder="Minimum 8 characters"
           />
         </label>
+        <TurnstileWidget key={`${mode}-${challengeNonce}`} action={mode === 'login' ? 'login' : 'register'} onToken={setTurnstileToken} />
         {message && <div className="auth-error">{message}</div>}
         <button className="btn btn-primary btn-full" disabled={busy} type="submit">
           <Sprout size={17} />

@@ -5,6 +5,7 @@ import {
   audit,
   cloudflareEnv,
   CloudflareApiError,
+  coordinateInventory,
   currentAuth,
   parseJson,
   requestBody,
@@ -903,29 +904,29 @@ export async function inventoryEvents(req: NextRequest) {
   if (!product) throw new CloudflareApiError(404, 'Product not found');
   if (user.role !== 'admin' && product.tenant_id !== user.tenant_id)
     throw new CloudflareApiError(403, 'Product belongs to another seller');
-  const stockAfter = Number(product.stock) + input.quantityChange;
-  if (stockAfter < 0)
-    throw new CloudflareApiError(409, 'Inventory adjustment would make stock negative');
   const eventId = crypto.randomUUID();
-  await env.HARIYO_DB.batch([
-    env.HARIYO_DB.prepare('UPDATE products SET stock=?,updated_at=? WHERE id=?').bind(
-      stockAfter,
-      new Date().toISOString(),
-      product.id,
-    ),
-    env.HARIYO_DB.prepare(
-      `INSERT INTO inventory_events (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason) VALUES (?,?,?,?,?,?,?,?)`,
-    ).bind(
-      eventId,
-      product.id,
-      product.tenant_id,
-      user.id,
-      input.eventType,
-      input.quantityChange,
-      stockAfter,
-      input.reason,
-    ),
-  ]);
+  const coordinated = await coordinateInventory({
+    action: 'adjust',
+    productId: product.id,
+    quantityChange: input.quantityChange,
+    actorId: user.id,
+    eventType: input.eventType,
+    reason: input.reason,
+  });
+  let stockAfter: number;
+  if (coordinated) {
+    stockAfter = coordinated.stockAfter;
+  } else {
+    stockAfter = Number(product.stock) + input.quantityChange;
+    if (stockAfter < 0)
+      throw new CloudflareApiError(409, 'Inventory adjustment would make stock negative');
+    await env.HARIYO_DB.batch([
+      env.HARIYO_DB.prepare('UPDATE products SET stock=?,updated_at=? WHERE id=?').bind(stockAfter, new Date().toISOString(), product.id),
+      env.HARIYO_DB.prepare(
+        `INSERT INTO inventory_events (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason) VALUES (?,?,?,?,?,?,?,?)`,
+      ).bind(eventId, product.id, product.tenant_id, user.id, input.eventType, input.quantityChange, stockAfter, `${input.reason} (local fallback)`),
+    ]);
+  }
   await audit(req, user, 'inventory.adjusted', 'product', product.id, {
     eventId,
     ...input,

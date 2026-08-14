@@ -12,6 +12,8 @@ interface __BaseEnv_CloudflareEnv {
 	NEXT_PUBLIC_SITE_URL: "https://hariyo-mart-nepal.YOUR_SUBDOMAIN.workers.dev";
 	NEXT_PUBLIC_API_URL: "/api";
 	SESSION_COOKIE_NAME: "hariyo_session";
+	TURNSTILE_ENFORCEMENT_MODE: "web";
+	NEXT_PUBLIC_TURNSTILE_SITE_KEY: "REPLACE_WITH_TURNSTILE_SITE_KEY";
 	WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
 	HARIYO_SERVICES: Fetcher /* hariyo-mart-services */;
 }
@@ -26,7 +28,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_ENV" | "NEXT_PUBLIC_SITE_URL" | "NEXT_PUBLIC_API_URL" | "SESSION_COOKIE_NAME">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_ENV" | "NEXT_PUBLIC_SITE_URL" | "NEXT_PUBLIC_API_URL" | "SESSION_COOKIE_NAME" | "TURNSTILE_ENFORCEMENT_MODE" | "NEXT_PUBLIC_TURNSTILE_SITE_KEY">> {}
 }
 
 // Begin runtime types

@@ -14,12 +14,15 @@ import {
 } from 'lucide-react';
 import { catalog } from '@/lib/catalog';
 import { useAuth } from './AuthProvider';
+import { TurnstileWidget } from './TurnstileWidget';
 export function SellOnHariyo() {
   const auth = useAuth();
   const [sent, setSent] = useState(false);
   const [message, setMessage] = useState('');
   const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
   const [busy, setBusy] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [challengeNonce, setChallengeNonce] = useState(0);
   function locate() {
     navigator.geolocation?.getCurrentPosition(
       (p) => {
@@ -38,7 +41,7 @@ export function SellOnHariyo() {
     setBusy(true);
     setMessage('');
     const form = new FormData(e.currentTarget);
-    const payload = { ...Object.fromEntries(form.entries()), ...coords };
+    const payload = { ...Object.fromEntries(form.entries()), ...coords, turnstileToken: turnstileToken || undefined };
     const api = process.env.NEXT_PUBLIC_API_URL || '/api';
     try {
       const r = await fetch(`${api}/auth/register-farmer`, {
@@ -53,6 +56,8 @@ export function SellOnHariyo() {
       setSent(true);
       setMessage('Your farmer workspace is created and pending verification.');
     } catch (err) {
+      setTurnstileToken('');
+      setChallengeNonce((value) => value + 1);
       setMessage(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setBusy(false);
@@ -207,6 +212,7 @@ export function SellOnHariyo() {
                 I agree to provide truthful farm, origin and product information for verification.
               </span>
             </label>
+            <TurnstileWidget key={`farmer-${challengeNonce}`} action="register" onToken={setTurnstileToken} />
             {message && <div className="form-message">{message}</div>}
             <button className="btn btn-primary btn-full" type="submit" disabled={busy}>
               <Building2 size={18} />

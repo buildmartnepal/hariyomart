@@ -9,6 +9,10 @@ const must = [
   'apps/web/migrations/0001_hariyo_platform.sql',
   'apps/web/migrations/0002_operations_content.sql',
   'apps/web/migrations/0003_control_plane.sql',
+  'apps/web/migrations/0004_cloudflare_native_supply_saas.sql',
+  'apps/web/server/cloudflare/supply-api.ts',
+  'apps/web/server/cloudflare/supply-stack.ts',
+  'apps/web/components/TurnstileWidget.tsx',
   'apps/web/seed/cloudflare.sql',
   'apps/web/wrangler.jsonc',
   'apps/web/open-next.config.ts',
@@ -144,7 +148,7 @@ if (!Array.isArray(catalog.categories) || catalog.categories.length !== 23) {
 }
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
-for (const marker of ['CheckoutCoordinator', 'RateLimiter', 'checkoutCore', 'async queue']) {
+for (const marker of ['CheckoutCoordinator', 'RateLimiter', 'InventoryCoordinator', 'TenantRealtimeHub', 'OrderFulfillmentWorkflow', 'checkoutCore', 'async queue', 'async scheduled']) {
   if (!service.includes(marker)) throw new Error(`Cloudflare service worker missing ${marker}`);
 }
 const checkout = fs.readFileSync('apps/web/server/cloudflare/checkout.ts', 'utf8');
@@ -194,4 +198,4 @@ if (!seed.includes('!seed-account-login-disabled!')) {
   throw new Error('Operational seed identities must remain login-disabled');
 }
 
-console.log('Hariyo Mart Nepal Cloudflare v6.4 production smoke check PASS');
+console.log('Hariyo Mart Nepal v8 Cloudflare-native compatibility smoke check PASS');

@@ -4,6 +4,8 @@ import { HarvestPublisher } from './HarvestPublisher';
 import { WorkspaceLive } from './WorkspaceLive';
 import { BadgeCheck, Plus, Store } from 'lucide-react';
 import { OperationsManager } from './OperationsManager';
+import { SupplySaaSWorkbench } from './SupplySaaSWorkbench';
+import { adminSupplySections, farmerSupplySections, type SupplySection } from '@/lib/supply-saas';
 const roleCopy = {
   Farmer: {
     kicker: 'SELLER WORKSPACE',
@@ -89,20 +91,23 @@ export function DashboardPage({
                     </h2>
                   </div>
                 </div>
-                {role === 'Admin' &&
-                [
-                  'content',
-                  'categories',
-                  'pages',
-                  'media',
-                  'delivery-zones',
-                  'promotions',
-                  'support',
-                  'reviews',
-                  'settings',
-                  'analytics',
-                  'audit-log',
-                ].includes(section) ? (
+                {(role === 'Admin' && adminSupplySections.some((item) => item === section)) ||
+                (role === 'Farmer' && farmerSupplySections.some((item) => item === section)) ? (
+                  <SupplySaaSWorkbench role={role as 'Admin' | 'Farmer'} section={section as SupplySection} />
+                ) : role === 'Admin' &&
+                  [
+                    'content',
+                    'categories',
+                    'pages',
+                    'media',
+                    'delivery-zones',
+                    'promotions',
+                    'support',
+                    'reviews',
+                    'settings',
+                    'analytics',
+                    'audit-log',
+                  ].includes(section) ? (
                   <OperationsManager section={section} />
                 ) : (
                   <WorkspaceLive role={role} section={section} />

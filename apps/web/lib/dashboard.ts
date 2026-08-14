@@ -32,6 +32,11 @@ export const adminSections = [
   'support',
   'analytics',
   'audit-log',
+  'saas-tenants',
+  'plans-billing',
+  'supply-network',
+  'platform-events',
+  'data-platform',
   'settings',
 ] as const;
 export const farmerSections = [
@@ -47,4 +52,14 @@ export const farmerSections = [
   'certifications',
   'team',
   'store-profile',
+  'supply-planning',
+  'procurement',
+  'lots-quality',
+  'warehouses',
+  'pricing',
+  'wholesale',
+  'delivery-routes',
+  'subscriptions',
+  'reports',
+  'team-access',
 ] as const;

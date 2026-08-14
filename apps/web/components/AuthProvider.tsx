@@ -17,12 +17,13 @@ type AuthResponse = {
 type AuthContextValue = {
   user: HariyoUser | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<HariyoUser>;
+  login: (email: string, password: string, turnstileToken?: string) => Promise<HariyoUser>;
   registerBuyer: (payload: {
     name: string;
     email: string;
     password: string;
     phone?: string;
+    turnstileToken?: string;
   }) => Promise<HariyoUser>;
   logout: () => Promise<void>;
   refreshMe: () => Promise<HariyoUser | null>;
@@ -112,12 +113,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [api, logout, renew],
   );
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, turnstileToken?: string) => {
       const r = await fetch(`${api}/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken }),
       });
       const data = (await r.json()) as AuthResponse;
       if (!r.ok) throw new Error(data.error || 'Unable to sign in');
@@ -127,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [api],
   );
   const registerBuyer = useCallback(
-    async (payload: { name: string; email: string; password: string; phone?: string }) => {
+    async (payload: { name: string; email: string; password: string; phone?: string; turnstileToken?: string }) => {
       const r = await fetch(`${api}/auth/register`, {
         method: 'POST',
         credentials: 'include',

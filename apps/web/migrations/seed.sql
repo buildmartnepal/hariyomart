@@ -259,3 +259,12 @@ The listing includes storage guidance, suggested uses, batch traceability and de
 INSERT OR IGNORE INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,old_price,stock,minimum_order,organic,short_description,description,benefits,image_url,lat,lng,delivery_radius_km,status,rating,featured) VALUES ('seed-product-084','seed-tenant-sudurpashchim','sudurpashchim-forest-herb-tea','Forest Herb Tea','tea-coffee','sudurpashchim','Kailali','Dhangadhi','100 g',754,754,38,1,0,'Traceable forest herb tea sourced from verified farms in Sudurpashchim Province. Carefully graded, hygienically packed and delivered through a province-aware cold-chain network.','Forest Herb Tea from Sudurpashchim Province represents Hariyo Mart Nepal''s farm-to-home promise. The product is procured through registered growers and local aggregation partners, checked for freshness, and packed with clear origin information. It is suitable for households, restaurants and institutional buyers looking for consistent quality and transparent sourcing.
 
 The listing includes storage guidance, suggested uses, batch traceability and delivery availability by district. Customers can choose standard delivery, scheduled delivery or recurring subscription where supported. Because agricultural products naturally vary by season, colour and size may differ slightly while quality standards remain consistent.','["Traceable Nepal origin","Freshness and quality checks","Secure food-grade packaging"]','/products/tea-coffee.svg',28.695,80.5938,100,'active',4.6,0);
+
+-- v8 Cloudflare-native tenant access backfill for seeded seller workspaces.
+UPDATE users SET active_tenant_id=tenant_id WHERE active_tenant_id IS NULL AND tenant_id IS NOT NULL;
+INSERT OR IGNORE INTO tenant_members(tenant_id,user_id,role,status,joined_at)
+SELECT tenant_id,id,'owner','active',created_at FROM users WHERE tenant_id IS NOT NULL;
+INSERT OR IGNORE INTO tenant_subscriptions(tenant_id,plan_code,status)
+SELECT id,CASE WHEN plan='enterprise' THEN 'enterprise' WHEN plan='growth' THEN 'growth' ELSE 'starter' END,'active' FROM tenants;
+INSERT OR IGNORE INTO tenant_settings_v8(tenant_id) SELECT id FROM tenants;
+

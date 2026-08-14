@@ -1,0 +1,10 @@
+// Merge this block into apps/web/wrangler.jsonc AFTER creating the Hyperdrive configuration.
+// Use the Supabase DIRECT Postgres connection string when creating Hyperdrive; Hyperdrive does the pooling.
+{
+  "hyperdrive": [
+    {
+      "binding": "SUPABASE_DB",
+      "id": "REPLACE_WITH_CLOUDFLARE_HYPERDRIVE_ID"
+    }
+  ]
+}

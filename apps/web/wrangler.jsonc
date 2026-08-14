@@ -16,9 +16,12 @@
   },
   "vars": {
     "APP_ENV": "production",
+    "DATA_PLATFORM": "cloudflare-native",
     "NEXT_PUBLIC_SITE_URL": "https://hariyo-mart-nepal.YOUR_SUBDOMAIN.workers.dev",
     "NEXT_PUBLIC_API_URL": "/api",
     "SESSION_COOKIE_NAME": "hariyo_session",
+    "TURNSTILE_ENFORCEMENT_MODE": "web",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
   },
   "d1_databases": [
     {

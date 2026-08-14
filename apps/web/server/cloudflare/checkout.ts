@@ -31,7 +31,25 @@ export type CheckoutPayload = {
   idempotencyKey: string;
 };
 
-type CheckoutEnv = { HARIYO_DB: D1Database; HARIYO_EVENTS?: Queue };
+type InventoryReservationInput = {
+  productId: string;
+  reservationId: string;
+  quantity: number;
+  tenantId?: string;
+  ttlSeconds?: number;
+};
+type InventoryCoordinatorStub = {
+  reserve(input: InventoryReservationInput): Promise<unknown>;
+  commit(input: { productId: string; reservationId: string; actorId?: string; referenceType?: string; referenceId?: string }): Promise<unknown>;
+  release(input: { reservationId: string }): Promise<unknown>;
+  restore(input: { productId: string; reservationId: string; actorId?: string; referenceType?: string; referenceId?: string }): Promise<unknown>;
+};
+type InventoryCoordinatorNamespace = { getByName(name: string): InventoryCoordinatorStub };
+type CheckoutEnv = {
+  HARIYO_DB: D1Database;
+  HARIYO_EVENTS?: Queue;
+  INVENTORY_COORDINATOR?: InventoryCoordinatorNamespace;
+};
 
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -98,6 +116,12 @@ export async function checkoutCore(env: CheckoutEnv, payload: CheckoutPayload) {
   }
 
   const orderId = crypto.randomUUID();
+  const coordinatedReservations = payload.lines.map((line) => ({
+    product: bySlug.get(line.productSlug)!,
+    quantity: line.quantity,
+    reservationId: `checkout:${orderId}:${bySlug.get(line.productSlug)!.id}`,
+  }));
+  const committedReservations: typeof coordinatedReservations = [];
   const number = orderNumber();
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
@@ -168,10 +192,14 @@ export async function checkoutCore(env: CheckoutEnv, payload: CheckoutPayload) {
           line.quantity,
           lineTotal,
         ),
-        env.HARIYO_DB.prepare(
-          `UPDATE products SET stock=stock-?, updated_at=? WHERE id=? AND stock>=?`,
-        ).bind(line.quantity, now, line.product.id, line.quantity),
       );
+      if (!env.INVENTORY_COORDINATOR) {
+        statements.push(
+          env.HARIYO_DB.prepare(
+            `UPDATE products SET stock=stock-?, updated_at=? WHERE id=? AND stock>=?`,
+          ).bind(line.quantity, now, line.product.id, line.quantity),
+        );
+      }
     }
   }
 
@@ -198,11 +226,63 @@ export async function checkoutCore(env: CheckoutEnv, payload: CheckoutPayload) {
     ),
   );
 
+  if (env.INVENTORY_COORDINATOR) {
+    try {
+      for (const reservation of coordinatedReservations) {
+        await env.INVENTORY_COORDINATOR.getByName(reservation.product.id).reserve({
+          productId: reservation.product.id,
+          reservationId: reservation.reservationId,
+          quantity: reservation.quantity,
+          tenantId: reservation.product.tenant_id,
+          ttlSeconds: 180,
+        });
+      }
+      for (const reservation of coordinatedReservations) {
+        await env.INVENTORY_COORDINATOR.getByName(reservation.product.id).commit({
+          productId: reservation.product.id,
+          reservationId: reservation.reservationId,
+          referenceType: 'order',
+          referenceId: orderId,
+        });
+        committedReservations.push(reservation);
+      }
+    } catch (error) {
+      const committedIds = new Set(committedReservations.map((item) => item.reservationId));
+      await Promise.allSettled(
+        coordinatedReservations.map((reservation) =>
+          committedIds.has(reservation.reservationId)
+            ? env.INVENTORY_COORDINATOR!.getByName(reservation.product.id).restore({
+                productId: reservation.product.id,
+                reservationId: reservation.reservationId,
+                referenceType: 'checkout_rollback',
+                referenceId: orderId,
+              })
+            : env.INVENTORY_COORDINATOR!.getByName(reservation.product.id).release({
+                reservationId: reservation.reservationId,
+              }),
+        ),
+      );
+      throw error;
+    }
+  }
+
   try {
     await env.HARIYO_DB.batch(statements);
   } catch (error) {
     const raced = await existingOrder(env.HARIYO_DB, payload.idempotencyKey);
     if (raced) return { ...raced, idempotent: true };
+    if (env.INVENTORY_COORDINATOR && committedReservations.length) {
+      await Promise.allSettled(
+        committedReservations.map((reservation) =>
+          env.INVENTORY_COORDINATOR!.getByName(reservation.product.id).restore({
+            productId: reservation.product.id,
+            reservationId: reservation.reservationId,
+            referenceType: 'order_insert_rollback',
+            referenceId: orderId,
+          }),
+        ),
+      );
+    }
     throw error;
   }
 

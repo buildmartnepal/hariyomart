@@ -1,97 +1,85 @@
-# Hariyo Mart Nepal v6.4 — Premium Cloudflare Marketplace SaaS
+# Hariyo Mart Nepal v8.0.0
 
-Hariyo Mart is a production-oriented marketplace connecting buyers with farmers, cooperatives and produce sellers across Nepal. The web SaaS, marketplace API, data, live inventory coordination, media and background events now run on Cloudflare. The Expo app uses the same API.
+**Cloudflare-native multi-tenant marketplace + produce supply SaaS for vegetables, fruits, farms, cooperatives, wholesalers and delivery operations.**
 
-## Working product surface
+v8 removes Supabase from the production runtime. The production system is now designed around Cloudflare Workers/OpenNext, D1, Durable Objects, R2, KV, Queues, Workflows, Turnstile and Analytics Engine.
 
-- 98 Nepal-focused starter products in 23 categories across all seven provinces
-- Seven optimized Hariyo premium campaign assets across responsive web and native mobile flows
-- Premium square-card Next.js 16 storefront with persistent location, radius, district, organic,
-  stock and distance-aware discovery controls
-- Premium product cards with savings, ratings, seller distance, live stock cues and basket state
-- Responsive category rail, removable filter chips, layout controls and quantity-aware product pages
-- Conversion-focused mega footer with product, farmer, support, mobile and legal navigation
-- Guest cash-on-delivery orders with idempotency and phone-based tracking
-- Buyer accounts, rotating sessions, addresses, wishlist, rewards and order history
-- Farmer onboarding, tenant workspace, R2 harvest photos, inventory and fulfillment tools
-- Admin verification, listing moderation, orders, settlement views and audit history
-- D1 content publishing, category management, service zones, promotions, review moderation,
-  support desk, R2 media index, audit log, inventory history, notifications and platform settings
-- Hariyo Journal with eight useful buyer, farmer and regional food stories
-- Expo Router app with SecureStore auth, OS-aware light/dark appearance, category discovery,
-  square product cards, location discovery and shared marketplace checkout
-- Online payment providers safely disabled until merchant onboarding and webhook certification
-- Realistic D1 operations seed: safe non-login identities, orders, fulfilments, inventory events,
-  promotions, reviews, support tickets, CMS pages, editorial content and notifications
+## Architecture
 
-## Cloudflare architecture
-
-```mermaid
-flowchart TD
-  B["Buyer web / Expo app"] --> W["Next.js Worker via OpenNext"]
-  F["Farmer and admin SaaS"] --> W
-  W --> D[("D1 marketplace database")]
-  W --> R["R2 product media"]
-  W --> K["KV cache and config"]
-  W --> S["Private services Worker"]
-  S --> O["Durable Object checkout + rate limit"]
-  S --> Q["Queues audit events"]
-  O --> D
-  Q --> D
+```text
+Web + Expo Mobile
+      │
+Cloudflare DNS/CDN/WAF/Turnstile
+      │
+Next.js/OpenNext Worker
+      ├── D1: tenants, users/sessions, products, lots, procurement, orders, delivery, payments
+      ├── R2: product/quality/POD/doc media
+      ├── KV: cache/config only
+      ├── Queue: async events + dead-letter recovery
+      └── Service binding → hariyo-mart-services
+             ├── InventoryCoordinator Durable Object (per product)
+             ├── TenantSequence Durable Object (per tenant)
+             ├── TenantRealtimeHub Durable Object + WebSockets
+             ├── CheckoutCoordinator + RateLimiter
+             ├── Workflows: fulfillment + subscriptions
+             └── Analytics Engine
 ```
 
-`apps/web` is the public Worker and same-origin API. `infra/cloudflare/services` is a private Worker that serializes checkout and rate limiting through Durable Objects and consumes Queue events. `apps/mobile` is the Expo app. `apps/api` remains a legacy Node adapter for export/self-hosting compatibility; Cloudflare production does not use it.
+## Produce SaaS modules
 
-## Local Cloudflare development
+- Tenant SaaS plans, memberships, roles and active workspace switching
+- Farms, suppliers and wholesale/institutional customers
+- Harvest and supply forecasts
+- Purchase orders and receiving data model
+- Product grades, variants, weights and pack sizes
+- Lots/batches, harvest dates, expiry/best-before and quality checks
+- Warehouses, cold chain bins, stock transfers/counts and inventory movements
+- FEFO-ready traceability and waste/spoilage records
+- Retail, wholesale and contract price lists
+- Sales orders, reservations and fulfillment
+- Delivery routes/stops and proof-of-delivery-ready records
+- Payments and supplier settlements
+- Weekly/biweekly/monthly produce subscriptions
+- Tenant reports, platform network metrics, audit/outbox and async event processing
 
-Requirements: Node.js 22.13+ and npm.
+## Development
 
 ```bash
 npm ci
-cp apps/web/.dev.vars.example apps/web/.dev.vars
-# Replace all example secrets in apps/web/.dev.vars
-npm run cloudflare:db:local
+npm run v8:doctor
 npm run dev
 ```
 
-The web app and API run at `http://localhost:3000` and `http://localhost:3000/api`. Wrangler provides local D1, R2, KV, Queue and service bindings. Remove `apps/web/.dev.vars` before sharing the directory; it is already ignored by git.
-
-## Quality gate
+Cloudflare local database:
 
 ```bash
-npm run release:check
+npm run cloudflare:db:local
 ```
 
-The gate runs formatting, lint, all TypeScript projects, tests, security/content checks, dependency audit, Next.js/legacy/mobile builds, and the OpenNext Cloudflare build.
-
-## Production
-
-Provision the Cloudflare resources once, add Worker secrets, apply D1 migrations and deploy the private services Worker before the web Worker. Exact commands and GitHub Actions configuration are in [`docs/CLOUDFLARE_PRODUCTION_V6.md`](docs/CLOUDFLARE_PRODUCTION_V6.md).
-
-For this provisioned release, authenticate Wrangler on a machine that permits Worker uploads and run:
+## Production verification
 
 ```bash
-npm run finish:cloudflare
+npm run v8:doctor
+npm run validate
+npm run smoke
+npm run cloudflare:types
+npm run cloudflare:config:check
+npm run typecheck
+npm run build:cloudflare
 ```
 
-The command is resumable, applies all pending D1 migrations and rich operational seed, then forces
-first-owner setup if no admin exists. It will not rotate session secrets that already exist.
-
-The owner defaults to `greenmandux@gmail.com`. During `finish:cloudflare`, enter a new 14+ character
-password twice in the hidden prompt. The script creates the owner, verifies a real sign-in and then
-rotates the one-time bootstrap key. To run only the owner step against an existing deployment:
+Deploy Cloudflare service worker **before** web because production checkout depends on the inventory coordinator:
 
 ```bash
-npm run bootstrap:admin
+npm run deploy:cloudflare:services
+npm run deploy:cloudflare:web
 ```
 
-The submitted password is bcrypt-hashed, never stored in the repository and never printed. After
-sign-in, change it at **Admin → Settings → Owner password & sessions**; this revokes every old
-session. Use a new, unique password if any credential was previously shared in chat.
+## Documentation
 
-The detailed R2, KV, D1, Queues, Durable Objects, mobile build, backup and rollback guide is in
-[`docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.4.md`](docs/CLOUDFLARE_OPERATIONS_GUIDE_V6.4.md).
+- [`docs/V8_SYSTEM_ARCHITECTURE.md`](docs/V8_SYSTEM_ARCHITECTURE.md) — architecture and scale model
+- [`docs/CLOUDFLARE_NATIVE_V8_COMPLETE_GUIDE.md`](docs/CLOUDFLARE_NATIVE_V8_COMPLETE_GUIDE.md) — setup/deployment guide
+- [`docs/V8_IMPLEMENTATION_STATUS.md`](docs/V8_IMPLEMENTATION_STATUS.md) — coded vs cloud-account activation work
+- [`RELEASE_NOTES_V8.md`](RELEASE_NOTES_V8.md) — release changes
 
-Real secrets, payment keys and merchant credentials are never stored in this repository. Cloudflare
-resource IDs are non-secret deployment identifiers; regenerate the config before targeting another
-account.
+Legacy v7 Supabase migration material is retained only under `docs/legacy/` as historical documentation; it is not part of the v8 runtime.

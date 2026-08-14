@@ -12,8 +12,11 @@
       "binding": "HARIYO_DB",
       "database_name": "hariyo-mart-production-apac",
       "database_id": "4be4c98b-6637-4e18-a990-a789222925d4",
-      "migrations_dir": "../../../apps/web/migrations",
-    },
+      "migrations_dir": "../../../apps/web/migrations"
+    }
+  ],
+  "analytics_engine_datasets": [
+    { "binding": "HARIYO_ANALYTICS", "dataset": "hariyo_mart_events" }
   ],
   "queues": {
     "producers": [{ "binding": "HARIYO_EVENTS", "queue": "hariyo-mart-events" }],
@@ -23,20 +26,41 @@
         "max_batch_size": 10,
         "max_batch_timeout": 5,
         "max_retries": 5,
-        "dead_letter_queue": "hariyo-mart-events-dlq",
-      },
-    ],
+        "dead_letter_queue": "hariyo-mart-events-dlq"
+      }
+    ]
   },
   "durable_objects": {
     "bindings": [
       { "name": "CHECKOUT_COORDINATOR", "class_name": "CheckoutCoordinator" },
       { "name": "RATE_LIMITER", "class_name": "RateLimiter" },
-    ],
+      { "name": "INVENTORY_COORDINATOR", "class_name": "InventoryCoordinator" },
+      { "name": "TENANT_SEQUENCE", "class_name": "TenantSequence" },
+      { "name": "TENANT_REALTIME", "class_name": "TenantRealtimeHub" }
+    ]
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["CheckoutCoordinator", "RateLimiter"],
+      "new_sqlite_classes": ["CheckoutCoordinator", "RateLimiter"]
     },
+    {
+      "tag": "v2-cloudflare-native-supply",
+      "new_sqlite_classes": ["InventoryCoordinator", "TenantSequence", "TenantRealtimeHub"]
+    }
   ],
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "workflows": [
+    {
+      "binding": "ORDER_FULFILLMENT_WORKFLOW",
+      "name": "hariyo-order-fulfillment",
+      "class_name": "OrderFulfillmentWorkflow"
+    },
+    {
+      "binding": "SUBSCRIPTION_GENERATION_WORKFLOW",
+      "name": "hariyo-subscription-generation",
+      "class_name": "SubscriptionGenerationWorkflow",
+      "schedules": ["15 18 * * *"]
+    }
+  ]
 }

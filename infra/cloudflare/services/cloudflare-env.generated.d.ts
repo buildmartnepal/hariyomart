@@ -4,13 +4,19 @@
 interface __BaseEnv_CloudflareServicesEnv {
 	HARIYO_DB: D1Database;
 	HARIYO_EVENTS: Queue;
+	HARIYO_ANALYTICS: AnalyticsEngineDataset;
 	CHECKOUT_COORDINATOR: DurableObjectNamespace<import("./src/index").CheckoutCoordinator>;
 	RATE_LIMITER: DurableObjectNamespace<import("./src/index").RateLimiter>;
+	INVENTORY_COORDINATOR: DurableObjectNamespace<import("./src/index").InventoryCoordinator>;
+	TENANT_SEQUENCE: DurableObjectNamespace<import("./src/index").TenantSequence>;
+	TENANT_REALTIME: DurableObjectNamespace<import("./src/index").TenantRealtimeHub>;
+	ORDER_FULFILLMENT_WORKFLOW: Workflow<any>;
+	SUBSCRIPTION_GENERATION_WORKFLOW: Workflow<any>;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
 		mainModule: typeof import("./src/index");
-		durableNamespaces: "CheckoutCoordinator" | "RateLimiter";
+		durableNamespaces: "CheckoutCoordinator" | "RateLimiter" | "InventoryCoordinator" | "TenantSequence" | "TenantRealtimeHub";
 	}
 	interface Env extends __BaseEnv_CloudflareServicesEnv {}
 }

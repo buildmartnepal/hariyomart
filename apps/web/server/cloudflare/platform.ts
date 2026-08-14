@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export type CloudflareUserRow = {
   id: string;
   tenant_id: string | null;
+  active_tenant_id: string | null;
   name: string;
   email: string;
   phone: string | null;
@@ -19,6 +20,22 @@ export type CloudflareUserRow = {
   created_at: string;
   updated_at: string;
 };
+
+export type TenantMemberRole =
+  | 'owner'
+  | 'admin'
+  | 'manager'
+  | 'procurement'
+  | 'inventory'
+  | 'sales'
+  | 'delivery'
+  | 'accounting'
+  | 'farmer'
+  | 'viewer';
+
+export function effectiveTenantId(user: Pick<CloudflareUserRow, 'tenant_id' | 'active_tenant_id'>) {
+  return user.active_tenant_id || user.tenant_id || null;
+}
 
 type TokenPayload = {
   sub: string;
@@ -59,7 +76,7 @@ export function publicUser(user: CloudflareUserRow) {
     email: user.email,
     phone: user.phone || undefined,
     role: user.role,
-    tenantId: user.tenant_id || undefined,
+    tenantId: effectiveTenantId(user) || undefined,
     isVerified: Boolean(user.is_verified),
   };
 }
@@ -103,7 +120,7 @@ export function apiOptions(req: NextRequest) {
   response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
   response.headers.set(
     'Access-Control-Allow-Headers',
-    'Content-Type,Authorization,X-Bootstrap-Key,X-Client-Platform,X-Idempotency-Key',
+    'Content-Type,Authorization,X-Bootstrap-Key,X-Client-Platform,X-Idempotency-Key,X-Tenant-Id',
   );
   return response;
 }
@@ -132,6 +149,83 @@ export async function safeSecretEqual(actual: string | null, expected: string | 
     difference |= actualHash[index] ^ expectedHash[index];
   }
   return difference === 0;
+}
+
+
+export async function verifyTurnstile(
+  req: NextRequest,
+  token: string | undefined,
+  expectedAction?: string,
+) {
+  const env = cloudflareEnv();
+  const secret = env.TURNSTILE_SECRET_KEY;
+  const mode = env.TURNSTILE_ENFORCEMENT_MODE || 'web';
+  if (!secret || mode === 'off') return { configured: Boolean(secret), success: true, skipped: true };
+  const isMobile = req.headers.get('x-client-platform')?.toLowerCase() === 'mobile';
+  if (mode === 'web' && isMobile)
+    return { configured: true, success: true, skipped: true, reason: 'mobile-rate-limit-mode' };
+  if (!token) throw new CloudflareApiError(400, 'Security verification is required');
+  const idempotencyKey = crypto.randomUUID();
+  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      secret,
+      response: token,
+      remoteip: clientIp(req) === 'unknown' ? undefined : clientIp(req),
+      idempotency_key: idempotencyKey,
+    }),
+  });
+  const result = (await response.json()) as {
+    success?: boolean;
+    action?: string;
+    hostname?: string;
+    ['error-codes']?: string[];
+  };
+  if (!response.ok || !result.success)
+    throw new CloudflareApiError(403, 'Security verification failed');
+  if (expectedAction && result.action && result.action !== expectedAction)
+    throw new CloudflareApiError(403, 'Security verification action mismatch');
+  return { configured: true, success: true, hostname: result.hostname };
+}
+
+export async function coordinateInventory(input: {
+  action: 'adjust';
+  productId: string;
+  quantityChange: number;
+  actorId?: string;
+  reason: string;
+  eventType: 'harvest' | 'adjustment' | 'return' | 'spoilage';
+  operationId?: string;
+} | {
+  action: 'set';
+  productId: string;
+  stock: number;
+  actorId?: string;
+  reason: string;
+}) {
+  const env = cloudflareEnv();
+  if (!env.HARIYO_SERVICES) {
+    if (env.APP_ENV === 'production')
+      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
+    return null;
+  }
+  try {
+    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/inventory', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    const body = (await response.json()) as { error?: string; stockAfter?: number };
+    if (!response.ok)
+      throw new CloudflareApiError(response.status, body.error || 'Inventory operation failed');
+    return { stockAfter: Number(body.stockAfter || 0) };
+  } catch (error) {
+    if (error instanceof CloudflareApiError) throw error;
+    if (env.APP_ENV === 'production')
+      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
+    return null;
+  }
 }
 
 export async function enforceRateLimit(req: NextRequest, limit = 180, windowSeconds = 60) {
@@ -196,7 +290,7 @@ async function signToken(
   const payload: TokenPayload = {
     sub: user.id,
     role: user.role,
-    ...(user.tenant_id ? { tenantId: user.tenant_id } : {}),
+    ...(effectiveTenantId(user) ? { tenantId: effectiveTenantId(user)! } : {}),
     type,
     jti: crypto.randomUUID(),
     iat: now,
@@ -307,7 +401,9 @@ export async function currentAuth(req: NextRequest) {
     const user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE id=?')
       .bind(payload.sub)
       .first<CloudflareUserRow>();
-    return user || null;
+    if (!user) return null;
+    const activeTenantId = effectiveTenantId(user);
+    return activeTenantId ? { ...user, tenant_id: activeTenantId } : user;
   } catch {
     return null;
   }
@@ -318,6 +414,35 @@ export async function requireAuth(req: NextRequest, roles?: Array<CloudflareUser
   if (!user) throw new CloudflareApiError(401, 'Authentication required');
   if (roles && !roles.includes(user.role)) throw new CloudflareApiError(403, 'Permission denied');
   return user;
+}
+
+export async function requireTenantAccess(
+  req: NextRequest,
+  roles?: TenantMemberRole[],
+) {
+  const env = cloudflareEnv();
+  const user = await requireAuth(req);
+  const tenantId = req.headers.get('x-tenant-id')?.trim() || effectiveTenantId(user);
+  if (!tenantId) throw new CloudflareApiError(400, 'Select a tenant workspace first');
+
+  if (user.role === 'admin') {
+    const tenant = await env.HARIYO_DB.prepare('SELECT id,status FROM tenants WHERE id=?')
+      .bind(tenantId)
+      .first<{ id: string; status: string }>();
+    if (!tenant) throw new CloudflareApiError(404, 'Tenant workspace not found');
+    return { user, tenantId, tenantRole: 'admin' as const, platformAdmin: true };
+  }
+
+  const member = await env.HARIYO_DB.prepare(
+    `SELECT role,status FROM tenant_members WHERE tenant_id=? AND user_id=?`,
+  )
+    .bind(tenantId, user.id)
+    .first<{ role: TenantMemberRole; status: string }>();
+  if (!member || member.status !== 'active')
+    throw new CloudflareApiError(403, 'You do not have access to this tenant workspace');
+  if (roles && !roles.includes(member.role))
+    throw new CloudflareApiError(403, 'Your tenant role cannot perform this action');
+  return { user, tenantId, tenantRole: member.role, platformAdmin: false };
 }
 
 export function refreshFromRequest(req: NextRequest, input?: { refreshToken?: string }) {
@@ -368,7 +493,7 @@ export async function audit(
     await env.HARIYO_EVENTS.send({
       type: action,
       actorId: user?.id,
-      tenantId: user?.tenant_id,
+      tenantId: user ? effectiveTenantId(user) : undefined,
       entityType,
       entityId,
       ip: clientIp(req),

@@ -1,6 +1,6 @@
 {
   "name": "@hariyo/web",
-  "version": "6.4.0",
+  "version": "8.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,13 +11,14 @@
     "cf:types": "wrangler types --env-interface CloudflareEnv cloudflare-env.generated.d.ts",
     "cf:types:check": "wrangler types --env-interface CloudflareEnv cloudflare-env.generated.d.ts --check",
     "cf:db:local": "wrangler d1 migrations apply HARIYO_DB --local && wrangler d1 execute HARIYO_DB --local --file=seed/cloudflare.sql",
-    "cf:db:remote": "wrangler d1 migrations apply HARIYO_DB --remote && wrangler d1 execute HARIYO_DB --remote --file=seed/cloudflare.sql",
+    "cf:db:remote": "wrangler d1 migrations apply HARIYO_DB --remote",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:seed": "tsx scripts/seed.ts",
     "env:check": "tsx scripts/check-env.ts",
-    "secrets:generate": "node scripts/generate-secrets.mjs"
+    "secrets:generate": "node scripts/generate-secrets.mjs",
+    "cf:seed:remote": "wrangler d1 execute HARIYO_DB --remote --file=seed/cloudflare.sql"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",
