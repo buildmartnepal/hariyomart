@@ -1,15 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { BadgeCheck, KeyRound, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
 import { DEMO_PASSWORD, demoAccounts } from '@/lib/demo-accounts';
+import { getPublicRuntimeConfig } from '@/server/cloudflare/public-config';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Demo Accounts | Hariyo Mart Nepal',
-  description: 'Role-based Hariyo Mart demo workspaces for buyer, farmer, cooperative, operations and administration testing.',
+  description: 'Role-based Hariyo Mart demo workspaces for controlled staging environments.',
 };
 
 export default function DemoAccountsPage() {
-  const enabled = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || process.env.NODE_ENV !== 'production';
+  if (!getPublicRuntimeConfig().demoEnabled) notFound();
 
   return (
     <main>
@@ -18,54 +21,40 @@ export default function DemoAccountsPage() {
           <span className="eyebrow"><Sparkles size={15} /> Guided product demo</span>
           <h1>Test Hariyo Mart from every role.</h1>
           <p className="section-copy">
-            Demo identities exercise the same role-aware buyer, Farmer OS, cooperative, operations and platform-admin workspaces.
+            Demo identities are available only on a deployment explicitly configured for demo mode.
           </p>
         </div>
       </section>
-
       <section className="section">
         <div className="container demo-directory-shell">
-          {!enabled ? (
-            <div className="demo-disabled-card">
-              <ShieldCheck />
-              <div>
-                <h2>Demo access is disabled on this deployment.</h2>
-                <p>Set <code>NEXT_PUBLIC_DEMO_MODE=true</code> only on a staging or dedicated demo deployment, seed the demo users, and redeploy.</p>
-              </div>
+          <div className="demo-password-card">
+            <KeyRound />
+            <div>
+              <span>Shared demo password</span>
+              <strong>{DEMO_PASSWORD}</strong>
             </div>
-          ) : (
-            <>
-              <div className="demo-password-card">
-                <KeyRound />
+            <Link className="btn btn-primary" href="/login">Open sign in</Link>
+          </div>
+          <div className="demo-account-directory">
+            {demoAccounts.map((account) => (
+              <article key={account.email}>
+                <div className="demo-role-icon"><UsersRound /></div>
                 <div>
-                  <span>Shared demo password</span>
-                  <strong>{DEMO_PASSWORD}</strong>
+                  <span className="demo-role-label">{account.label}</span>
+                  <h3>{account.workspace}</h3>
+                  <code>{account.email}</code>
                 </div>
-                <Link className="btn btn-primary" href="/login">Open sign in</Link>
-              </div>
-
-              <div className="demo-account-directory">
-                {demoAccounts.map((account) => (
-                  <article key={account.email}>
-                    <div className="demo-role-icon"><UsersRound /></div>
-                    <div>
-                      <span className="demo-role-label">{account.label}</span>
-                      <h3>{account.workspace}</h3>
-                      <code>{account.email}</code>
-                    </div>
-                    <BadgeCheck className="demo-role-check" />
-                  </article>
-                ))}
-              </div>
-
-              <div className="security-note">
-                <ShieldCheck />
-                <p>
-                  <b>Demo-only identities:</b> remove them before a real launch with <code>npm run demo:remove:remote</code>. Your production owner/admin account remains separate.
-                </p>
-              </div>
-            </>
-          )}
+                <BadgeCheck className="demo-role-check" />
+              </article>
+            ))}
+          </div>
+          <div className="security-note">
+            <ShieldCheck />
+            <p>
+              <b>Demo-only identities:</b> remove them before a real launch with{' '}
+              <code>npm run production:demo:remove</code>.
+            </p>
+          </div>
         </div>
       </section>
     </main>

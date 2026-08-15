@@ -22,10 +22,9 @@ import {
 } from 'lucide-react';
 import { catalog } from '@/lib/catalog';
 import { blogPosts } from '@/lib/blog';
-import { ProductCard } from '@/components/ProductCard';
+import { LiveProductGrid } from '@/components/LiveProductGrid';
 import { LocationMarket } from '@/components/LocationMarket';
 export default function Home() {
-  const featured = catalog.products.filter((p) => p.featured).slice(0, 8);
   return (
     <main>
       <section className="campaign-stage">
@@ -407,11 +406,12 @@ export default function Home() {
         <div className="container">
           <span className="eyebrow">Fresh on the marketplace</span>
           <h2 className="section-title">Popular products from local sellers</h2>
-          <div className="grid product-grid" style={{ marginTop: 30 }}>
-            {featured.map((p) => (
-              <ProductCard key={p.slug} product={p} />
-            ))}
-          </div>
+          <LiveProductGrid
+            limit={8}
+            featuredOnly
+            emptyTitle="Marketplace listings are opening soon"
+            emptyCopy="Verified farmers and cooperatives can publish the first live harvests from Farmer Studio."
+          />
         </div>
       </section>
       <section className="section" style={{ paddingTop: 10 }}>

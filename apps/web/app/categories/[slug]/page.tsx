@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { catalog } from '@/lib/catalog';
-import { ProductCard } from '@/components/ProductCard';
+import { LiveProductGrid } from '@/components/LiveProductGrid';
 export function generateStaticParams() {
   return catalog.categories.map((c) => ({ slug: c.slug }));
 }
@@ -18,7 +18,6 @@ export default async function Category({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const c = catalog.categories.find((x) => x.slug === slug);
   if (!c) notFound();
-  const products = catalog.products.filter((p) => p.category === slug);
   return (
     <main>
       <section className="page-hero">
@@ -34,11 +33,7 @@ export default async function Category({ params }: { params: Promise<{ slug: str
       </section>
       <section className="section">
         <div className="container">
-          <div className="grid product-grid">
-            {products.map((p) => (
-              <ProductCard key={p.slug} product={p} />
-            ))}
-          </div>
+          <LiveProductGrid category={slug} limit={100} />
         </div>
       </section>
     </main>

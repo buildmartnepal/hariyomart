@@ -2,12 +2,17 @@
   "$schema": "../../../node_modules/wrangler/config-schema.json",
   "name": "hariyo-mart-services",
   "main": "src/index.ts",
-  "compatibility_date": "2026-08-14",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": false,
   "preview_urls": false,
   "upload_source_maps": true,
-  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
   "d1_databases": [
     {
       "binding": "HARIYO_DB",
@@ -17,10 +22,18 @@
     }
   ],
   "analytics_engine_datasets": [
-    { "binding": "HARIYO_ANALYTICS", "dataset": "hariyo_mart_events" }
+    {
+      "binding": "HARIYO_ANALYTICS",
+      "dataset": "hariyo_mart_events"
+    }
   ],
   "queues": {
-    "producers": [{ "binding": "HARIYO_EVENTS", "queue": "hariyo-mart-events" }],
+    "producers": [
+      {
+        "binding": "HARIYO_EVENTS",
+        "queue": "hariyo-mart-events"
+      }
+    ],
     "consumers": [
       {
         "queue": "hariyo-mart-events",
@@ -33,24 +46,50 @@
   },
   "durable_objects": {
     "bindings": [
-      { "name": "CHECKOUT_COORDINATOR", "class_name": "CheckoutCoordinator" },
-      { "name": "RATE_LIMITER", "class_name": "RateLimiter" },
-      { "name": "INVENTORY_COORDINATOR", "class_name": "InventoryCoordinator" },
-      { "name": "TENANT_SEQUENCE", "class_name": "TenantSequence" },
-      { "name": "TENANT_REALTIME", "class_name": "TenantRealtimeHub" }
+      {
+        "name": "CHECKOUT_COORDINATOR",
+        "class_name": "CheckoutCoordinator"
+      },
+      {
+        "name": "RATE_LIMITER",
+        "class_name": "RateLimiter"
+      },
+      {
+        "name": "INVENTORY_COORDINATOR",
+        "class_name": "InventoryCoordinator"
+      },
+      {
+        "name": "TENANT_SEQUENCE",
+        "class_name": "TenantSequence"
+      },
+      {
+        "name": "TENANT_REALTIME",
+        "class_name": "TenantRealtimeHub"
+      }
     ]
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["CheckoutCoordinator", "RateLimiter"]
+      "new_sqlite_classes": [
+        "CheckoutCoordinator",
+        "RateLimiter"
+      ]
     },
     {
       "tag": "v2-cloudflare-native-supply",
-      "new_sqlite_classes": ["InventoryCoordinator", "TenantSequence", "TenantRealtimeHub"]
+      "new_sqlite_classes": [
+        "InventoryCoordinator",
+        "TenantSequence",
+        "TenantRealtimeHub"
+      ]
     }
   ],
-  "triggers": { "crons": ["*/5 * * * *"] },
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
   "workflows": [
     {
       "binding": "ORDER_FULFILLMENT_WORKFLOW",
@@ -61,7 +100,9 @@
       "binding": "SUBSCRIPTION_GENERATION_WORKFLOW",
       "name": "hariyo-subscription-generation",
       "class_name": "SubscriptionGenerationWorkflow",
-      "schedules": ["15 18 * * *"]
+      "schedules": [
+        "15 18 * * *"
+      ]
     }
   ]
 }

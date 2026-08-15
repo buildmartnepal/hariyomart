@@ -13,10 +13,11 @@ import {
   Truck,
 } from 'lucide-react';
 import { catalog, type Product } from '@/lib/catalog';
-import { distanceKm, farms, locationPresets, nearbyProducts } from '@/lib/marketplace';
+import { distanceKm, farms, locationPresets, nearbyProducts, type Farm } from '@/lib/marketplace';
 import { ProductCard } from './ProductCard';
 import { useCart } from './CartProvider';
 import { useMarketLocation } from './LocationProvider';
+import { usePublicConfig } from './PublicConfigProvider';
 
 type ApiProduct = Partial<Product> & {
   _id?: string;
@@ -120,8 +121,10 @@ function LiveProductCard({ item }: { item: ApiProduct }) {
 }
 export function LocationMarket() {
   const { place, radius, locating, message, setRadius, choosePreset, locate } = useMarketLocation();
+  const { demoEnabled } = usePublicConfig();
   const [category, setCategory] = useState('all');
   const [liveItems, setLiveItems] = useState<ApiProduct[] | null>(null);
+  const [liveFarms, setLiveFarms] = useState<Farm[] | null>(null);
   const [loading, setLoading] = useState(false);
   const fallback = useMemo(
     () =>
@@ -132,15 +135,55 @@ export function LocationMarket() {
   );
   const nearFarms = useMemo(
     () =>
-      farms
+      (liveFarms ?? (demoEnabled ? farms : []))
         .map((f) => ({
           ...f,
           distanceKm: Math.round(distanceKm(place.lat, place.lng, f.lat, f.lng) * 10) / 10,
         }))
         .sort((a, b) => a.distanceKm - b.distanceKm)
         .slice(0, 4),
-    [place],
+    [place, liveFarms, demoEnabled],
   );
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    fetch(`${apiBase}/marketplace/farms`, { cache: 'no-store', signal: controller.signal })
+      .then((response) =>
+        response.ok
+          ? (response.json() as Promise<{ data?: Array<Record<string, any>> }>)
+          : Promise.reject(new Error('Farm directory unavailable')),
+      )
+      .then((payload) => {
+        if (!active) return;
+        const next = (payload.data || []).map((source): Farm => ({
+          slug: String(source.slug),
+          name: String(source.name),
+          owner: String(source.ownerName || 'Hariyo farmer'),
+          province: String(source.location?.province || 'bagmati'),
+          district: String(source.location?.district || 'Nepal'),
+          municipality: String(source.location?.municipality || source.location?.district || 'Nepal'),
+          lat: Number(source.location?.lat || 0),
+          lng: Number(source.location?.lng || 0),
+          verified: source.status === 'verified',
+          rating: Number(source.rating || 4.8),
+          story: String(source.story || `${source.name} sells through Hariyo Mart Nepal.`),
+          specialties: Array.isArray(source.specialties) ? source.specialties.map(String) : [],
+          deliveryRadiusKm: Number(source.delivery?.radiusKm || 35),
+          pickup: source.delivery?.pickup !== false,
+          sameDay: Boolean(source.delivery?.sameDay),
+          badge: 'Verified seller',
+        }));
+        setLiveFarms(next);
+      })
+      .catch((error) => {
+        if (active && !(error instanceof DOMException && error.name === 'AbortError')) setLiveFarms(null);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
+
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -175,7 +218,7 @@ export function LocationMarket() {
       controller.abort();
     };
   }, [place, radius, category]);
-  const items = liveItems ?? fallback;
+  const items = liveItems ?? (demoEnabled ? fallback : []);
   return (
     <div className="location-market">
       <div className="location-panel">
@@ -184,9 +227,11 @@ export function LocationMarket() {
           <h2>Buy from farmers closest to you.</h2>
           <p>
             {message}{' '}
-            {liveItems
+            {liveItems !== null
               ? 'Live farmer inventory is connected.'
-              : 'Seed marketplace is shown until the API is connected.'}
+              : demoEnabled
+                ? 'Demo marketplace fallback is enabled.'
+                : 'Connecting to live farmer inventory.'}
           </p>
         </div>
         <button className="btn btn-primary" onClick={locate}>

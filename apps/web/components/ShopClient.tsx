@@ -17,6 +17,7 @@ import { catalog, type Product } from '@/lib/catalog';
 import { distanceKm, farmForProduct, locationPresets } from '@/lib/marketplace';
 import { ProductCard } from './ProductCard';
 import { useMarketLocation } from './LocationProvider';
+import { usePublicConfig } from './PublicConfigProvider';
 
 const api = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -70,6 +71,7 @@ function normalize(p: Record<string, unknown>): MarketProduct {
 
 export function ShopClient() {
   const market = useMarketLocation();
+  const { demoEnabled } = usePublicConfig();
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
   const [province, setProvince] = useState('all');
@@ -80,6 +82,7 @@ export function ShopClient() {
   const [live, setLive] = useState<MarketProduct[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [density, setDensity] = useState<'grid' | 'roomy'>('grid');
 
@@ -102,12 +105,15 @@ export function ShopClient() {
           serverTime?: string;
         };
         if (active) {
-          setLive(Array.isArray(data.data) ? data.data.map(normalize) : null);
+          setLive(Array.isArray(data.data) ? data.data.map(normalize) : []);
           setLastSync(new Date(data.serverTime || Date.now()));
+          setLoadError(null);
         }
       } catch (error) {
-        if (active && !(error instanceof DOMException && error.name === 'AbortError'))
+        if (active && !(error instanceof DOMException && error.name === 'AbortError')) {
           setLive(null);
+          setLoadError('Live inventory could not be loaded.');
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -125,7 +131,7 @@ export function ShopClient() {
   }, []);
 
   const source: readonly MarketProduct[] =
-    live || (catalog.products as unknown as readonly MarketProduct[]);
+    live ?? (demoEnabled ? (catalog.products as unknown as readonly MarketProduct[]) : []);
   const districts = useMemo(
     () =>
       Array.from(
@@ -365,10 +371,10 @@ export function ShopClient() {
           <div className="live-inventory-note" aria-live="polite">
             <RefreshCw size={16} className={loading ? 'is-spinning' : ''} />
             <span>
-              <b>{live ? 'Live farmer inventory' : 'Marketplace preview'}</b>
+              <b>{live !== null ? 'Live farmer inventory' : demoEnabled ? 'Demo marketplace' : 'Live marketplace'}</b>
               {lastSync
                 ? `Synced ${lastSync.toLocaleTimeString()}`
-                : 'Cloudflare API fallback ready'}
+                : loadError || (loading ? 'Connecting to Cloudflare D1…' : 'Waiting for live inventory')}
             </span>
           </div>
         </aside>
@@ -461,6 +467,12 @@ export function ShopClient() {
               <button className="clear-all-filter" onClick={clearFilters}>
                 Clear all
               </button>
+            </div>
+          )}
+          {loadError && !demoEnabled && (
+            <div className="security-note" role="status">
+              <RefreshCw size={18} />
+              <p><b>Live inventory unavailable.</b> Sample products are intentionally not substituted in production.</p>
             </div>
           )}
           {items.length ? (

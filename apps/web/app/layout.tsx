@@ -7,8 +7,9 @@ import { CartProvider } from '@/components/CartProvider';
 import { CartDrawer } from '@/components/CartDrawer';
 import { AuthProvider } from '@/components/AuthProvider';
 import { LocationProvider } from '@/components/LocationProvider';
+import { PublicConfigProvider } from '@/components/PublicConfigProvider';
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hariyomart.example'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hariyo-mart-nepal.nishrutesh.workers.dev'),
   title: {
     default: 'Hariyo Mart Nepal | Buy Fresh From Farmers Near You',
     template: '%s | Hariyo Mart Nepal',
@@ -37,7 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AuthProvider>
+        <PublicConfigProvider>
+          <AuthProvider>
           <LocationProvider>
             <CartProvider>
               <Header />
@@ -46,7 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Footer />
             </CartProvider>
           </LocationProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </PublicConfigProvider>
       </body>
       <Script id="hariyo-theme" strategy="beforeInteractive">
         {`try{var m=localStorage.getItem('hariyo-theme')||'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m}catch(e){}`}

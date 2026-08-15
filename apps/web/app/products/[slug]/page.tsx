@@ -16,7 +16,8 @@ import {
 import { catalog, type Product } from '@/lib/catalog';
 import { farmForProduct } from '@/lib/marketplace';
 import { AddToCart } from '@/components/AddToCart';
-import { ProductCard } from '@/components/ProductCard';
+import { getPublicRuntimeConfig } from '@/server/cloudflare/public-config';
+import { LiveProductGrid } from '@/components/LiveProductGrid';
 type LiveProduct = Product & {
   farmName?: string;
   farmSlug?: string;
@@ -57,9 +58,8 @@ function normalize(p: any): LiveProduct {
   };
 }
 async function getProduct(slug: string): Promise<LiveProduct | null> {
-  const api =
-    process.env.NEXT_PUBLIC_API_URL ||
-    (process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/api` : '');
+  const config = getPublicRuntimeConfig();
+  const api = config.apiBase;
   if (api) {
     try {
       const response = await fetch(`${api}/products/${encodeURIComponent(slug)}`, {
@@ -67,13 +67,10 @@ async function getProduct(slug: string): Promise<LiveProduct | null> {
       });
       if (response.ok) return normalize(await response.json());
     } catch {
-      // The local seed keeps static builds and temporary API outages usable.
+      // Production never substitutes sample inventory for a failed live API request.
     }
   }
-  return catalog.products.find((product) => product.slug === slug) || null;
-}
-export function generateStaticParams() {
-  return catalog.products.map((p) => ({ slug: p.slug }));
+  return config.demoEnabled ? catalog.products.find((product) => product.slug === slug) || null : null;
 }
 export async function generateMetadata({
   params,
@@ -103,9 +100,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const category = catalog.categories.find((item) => item.slug === p.category);
   const discount =
     p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
-  const related = catalog.products
-    .filter((x) => x.category === p.category && x.slug !== p.slug)
-    .slice(0, 4);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -302,11 +296,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="section" style={{ paddingTop: 10 }}>
         <div className="container">
           <h2 className="section-title">You may also like</h2>
-          <div className="grid product-grid">
-            {related.map((x) => (
-              <ProductCard product={x} key={x.slug} />
-            ))}
-          </div>
+          <LiveProductGrid category={p.category} excludeSlug={p.slug} limit={4} />
         </div>
       </section>
     </main>

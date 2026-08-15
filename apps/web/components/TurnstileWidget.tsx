@@ -2,6 +2,7 @@
 
 import Script from 'next/script';
 import { useCallback, useEffect, useRef } from 'react';
+import { usePublicConfig } from './PublicConfigProvider';
 
 declare global {
   interface Window {
@@ -20,7 +21,7 @@ export function TurnstileWidget({
   action: 'login' | 'register';
   onToken: (token: string) => void;
 }) {
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const { turnstileSiteKey: siteKey } = usePublicConfig();
   const container = useRef<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
 

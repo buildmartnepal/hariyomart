@@ -59,8 +59,8 @@ run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'cloudflare:types'
 run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'typecheck:services']);
 
 console.log('\n4/5 Deploying private target Worker FIRST');
-wrangler(['deploy', '--config', serviceConfig, '--message', 'Hariyo Mart v8.4.2 services bootstrap']);
+wrangler(['deploy', '--config', serviceConfig, '--message', 'Hariyo Mart v8.4.3 services bootstrap']);
 
 console.log('\n5/5 Complete');
-console.log('hariyo-mart-services now exists. Retry the connected hariyo-mart-nepal web deployment.');
+console.log('hariyo-mart-services is ready; the connected deploy can now publish hariyo-mart-nepal.');
 console.log('For a full local deployment, run: npm run deploy:cloudflare:first');

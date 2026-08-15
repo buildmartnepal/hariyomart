@@ -1,5 +1,5 @@
 'use client';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,12 +14,16 @@ import {
   Store,
   UserRound,
 } from 'lucide-react';
-import { DEMO_PASSWORD, demoAccounts } from '@/lib/demo-accounts';
 import { useAuth } from './AuthProvider';
 import { TurnstileWidget } from './TurnstileWidget';
+import { usePublicConfig } from './PublicConfigProvider';
+
+type DemoAccount = { email: string; label: string; workspace: string };
+type DemoConfig = { password: string; accounts: DemoAccount[] };
 
 export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   const auth = useAuth();
+  const { demoEnabled, turnstileEnabled } = usePublicConfig();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -27,7 +31,22 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   const [challengeNonce, setChallengeNonce] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || process.env.NODE_ENV !== 'production';
+  const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
+
+  useEffect(() => {
+    if (!demoEnabled || mode !== 'login') {
+      setDemoConfig(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch('/api/demo-config', { cache: 'no-store', signal: controller.signal })
+      .then((response) =>
+        response.ok ? response.json() : Promise.reject(new Error('Demo configuration unavailable')),
+      )
+      .then((config: DemoConfig) => setDemoConfig(config))
+      .catch(() => setDemoConfig(null));
+    return () => controller.abort();
+  }, [demoEnabled, mode]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -63,8 +82,9 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   }
 
   function loadDemo(emailValue: string) {
+    if (!demoConfig) return;
     setEmail(emailValue);
-    setPassword(DEMO_PASSWORD);
+    setPassword(demoConfig.password);
     setMessage('Demo credentials loaded. Complete the security challenge if it is enabled, then sign in.');
   }
 
@@ -93,8 +113,8 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           <div className="admin-owner-hint">
             <ShieldCheck size={16} />
             <span>
-              <b>Production owner access</b> is created securely during deployment and is separate
-              from the removable demo identities below.
+              <b>Production owner access</b> is created securely during deployment and remains separate
+              from optional demo identities.
             </span>
           </div>
         )}
@@ -172,14 +192,14 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           <div className="password-hint">Use 10+ characters with uppercase, lowercase and a number.</div>
         )}
 
-        {mode === 'login' && demoEnabled && (
+        {mode === 'login' && demoEnabled && demoConfig && (
           <section className="demo-login-panel" aria-label="Demo accounts">
             <div className="demo-login-heading">
               <span><Sparkles size={16} /> Demo workspaces</span>
-              <small><KeyRound size={13} /> Shared password: <code>{DEMO_PASSWORD}</code></small>
+              <small><KeyRound size={13} /> Shared password: <code>{demoConfig.password}</code></small>
             </div>
             <div className="demo-login-grid">
-              {demoAccounts.map((account) => (
+              {demoConfig.accounts.map((account) => (
                 <button
                   type="button"
                   key={account.email}
@@ -200,7 +220,11 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           onToken={setTurnstileToken}
         />
         {message && <div className="auth-error" role="alert" aria-live="polite">{message}</div>}
-        <button className="btn btn-primary btn-full" disabled={busy} type="submit">
+        <button
+          className="btn btn-primary btn-full"
+          disabled={busy || (turnstileEnabled && !turnstileToken)}
+          type="submit"
+        >
           <Sprout size={17} />
           {busy ? 'Connecting…' : mode === 'login' ? 'Sign in securely' : 'Create buyer account'}
         </button>

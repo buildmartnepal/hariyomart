@@ -1534,26 +1534,34 @@ async function readiness() {
   const env = cloudflareEnv();
   let database = 'connected';
   let adminConfigured = false;
-  let seed = { tenants: 0, products: 0, orders: 0 };
+  let seed = { tenants: 0, products: 0, orders: 0, demoUsers: 0 };
   try {
     await env.HARIYO_DB.prepare('SELECT 1 AS ok').first();
-    const [admin, tenantCount, productCount, orderCount] = await Promise.all([
+    const [admin, tenantCount, productCount, orderCount, demoUserCount] = await Promise.all([
       env.HARIYO_DB.prepare("SELECT COUNT(*) AS count FROM users WHERE role='admin'").first<{
         count: number;
       }>(),
       env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM tenants').first<{ count: number }>(),
       env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM products').first<{ count: number }>(),
       env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM orders').first<{ count: number }>(),
+      env.HARIYO_DB.prepare("SELECT COUNT(*) AS count FROM users WHERE email LIKE '%@demo.hariyomart.local'").first<{ count: number }>(),
     ]);
     adminConfigured = Number(admin?.count || 0) > 0;
     seed = {
       tenants: Number(tenantCount?.count || 0),
       products: Number(productCount?.count || 0),
       orders: Number(orderCount?.count || 0),
+      demoUsers: Number(demoUserCount?.count || 0),
     };
   } catch {
     database = 'error';
   }
+  const turnstileMode = String(env.TURNSTILE_ENFORCEMENT_MODE || 'web');
+  const turnstileSiteKey = String(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
+  const turnstileConfigured =
+    turnstileMode === 'off' ||
+    (Boolean(env.TURNSTILE_SECRET_KEY && env.TURNSTILE_SECRET_KEY.length >= 20) &&
+      Boolean(turnstileSiteKey && !/REPLACE_WITH|PLACEHOLDER/i.test(turnstileSiteKey)));
   const required = {
     D1: database === 'connected',
     R2: Boolean(env.HARIYO_MEDIA),
@@ -1562,16 +1570,23 @@ async function readiness() {
     SERVICES: Boolean(env.HARIYO_SERVICES),
     JWT_SECRET: Boolean(env.JWT_SECRET && env.JWT_SECRET.length >= 32),
     JWT_REFRESH_SECRET: Boolean(env.JWT_REFRESH_SECRET && env.JWT_REFRESH_SECRET.length >= 32),
+    TURNSTILE: turnstileConfigured,
+    DEMO_CLEAN: env.APP_ENV !== 'production' || seed.demoUsers === 0,
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.2.0',
+    version: '8.4.3',
     status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues + Workflows + Turnstile',
     database,
     required,
     adminConfigured,
     seed,
+    productionGuard: {
+      demoFallbackEnabled: env.APP_ENV !== 'production' && env.NEXT_PUBLIC_DEMO_MODE === 'true',
+      demoUsersPresent: seed.demoUsers > 0,
+      turnstileConfigured,
+    },
     timestamp: new Date().toISOString(),
   });
 }

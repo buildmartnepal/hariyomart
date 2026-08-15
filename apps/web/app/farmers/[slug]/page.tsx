@@ -5,6 +5,7 @@ import { BadgeCheck, MapPin, PackageCheck, Sprout, Truck, UserRound } from 'luci
 import { catalog, type Product } from '@/lib/catalog';
 import { farms, farmForProduct, type Farm } from '@/lib/marketplace';
 import { ProductCard } from '@/components/ProductCard';
+import { getPublicRuntimeConfig } from '@/server/cloudflare/public-config';
 type StoreData = { farm: Farm; products: Product[] };
 function normalizeProduct(p: any, farm: Farm): Product {
   return {
@@ -34,9 +35,8 @@ function normalizeProduct(p: any, farm: Farm): Product {
   } as Product;
 }
 async function getStore(slug: string): Promise<StoreData | null> {
-  const api =
-    process.env.NEXT_PUBLIC_API_URL ||
-    (process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/api` : '');
+  const config = getPublicRuntimeConfig();
+  const api = config.apiBase;
   if (api) {
     try {
       const response = await fetch(`${api}/marketplace/farms/${encodeURIComponent(slug)}`, {
@@ -45,7 +45,8 @@ async function getStore(slug: string): Promise<StoreData | null> {
       if (response.ok) {
         const data = (await response.json()) as { farm: any; products?: any[] },
           source = data.farm,
-          coordinates = source.location?.geo?.coordinates;
+          location = source.location || {};
+        const delivery = source.delivery || {};
         const farm: Farm = {
           slug: source.slug,
           name: source.name,
@@ -53,16 +54,16 @@ async function getStore(slug: string): Promise<StoreData | null> {
           province: source.location?.province || 'bagmati',
           district: source.location?.district || 'Nepal',
           municipality: source.location?.municipality || source.location?.district || 'Nepal',
-          lat: Array.isArray(coordinates) ? Number(coordinates[1]) : 0,
-          lng: Array.isArray(coordinates) ? Number(coordinates[0]) : 0,
-          verified: source.verificationStatus === 'verified',
+          lat: Number(location.lat || 0),
+          lng: Number(location.lng || 0),
+          verified: source.status === 'verified',
           rating: Number(source.rating || 4.8),
           story:
             source.story || `${source.name} sells traceable harvests through Hariyo Mart Nepal.`,
           specialties: source.specialties || source.productionTypes || [],
-          deliveryRadiusKm: Number(source.serviceRadiusKm || source.delivery?.radiusKm || 35),
-          pickup: source.pickup !== false,
-          sameDay: !!source.sameDay,
+          deliveryRadiusKm: Number(delivery.radiusKm || 35),
+          pickup: delivery.pickup !== false,
+          sameDay: Boolean(delivery.sameDay),
           badge: 'Verified farmer',
         };
         return {
@@ -71,9 +72,10 @@ async function getStore(slug: string): Promise<StoreData | null> {
         };
       }
     } catch {
-      // Fall through to the bundled Nepal-wide seed catalogue.
+      // Production never substitutes sample sellers for a failed live API request.
     }
   }
+  if (!config.demoEnabled) return null;
   const local = farms.find((farm) => farm.slug === slug);
   return local
     ? {
@@ -81,9 +83,6 @@ async function getStore(slug: string): Promise<StoreData | null> {
         products: catalog.products.filter((product) => farmForProduct(product).slug === local.slug),
       }
     : null;
-}
-export function generateStaticParams() {
-  return farms.map((f) => ({ slug: f.slug }));
 }
 export async function generateMetadata({
   params,

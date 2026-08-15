@@ -12,7 +12,7 @@ const bindingNames = (items = []) => new Set(items.map((item) => item.binding));
 
 if (web.name !== 'hariyo-mart-nepal') fail(`${webPath} Worker name must match the connected Cloudflare Worker: hariyo-mart-nepal`);
 if (web.main !== '.open-next/worker.js') fail(`${webPath} must use the OpenNext Worker entrypoint`);
-if (web.compatibility_date !== '2026-08-14') fail(`${webPath} compatibility_date must be 2026-08-14 for this release`);
+if (web.compatibility_date !== '2026-08-15') fail(`${webPath} compatibility_date must be 2026-08-15 for this release`);
 for (const flag of ['nodejs_compat', 'global_fetch_strictly_public']) {
   if (!web.compatibility_flags?.includes(flag)) fail(`${webPath} is missing compatibility flag ${flag}`);
 }
@@ -24,7 +24,7 @@ if (!web.observability?.enabled) fail(`${webPath} observability must be enabled`
 const vars = web.vars || {};
 if (vars.APP_ENV !== 'production' || vars.DATA_PLATFORM !== 'cloudflare-native')
   fail(`${webPath} must declare the Cloudflare-native production platform`);
-if (vars.RELEASE_VERSION !== '8.4.2') fail(`${webPath} RELEASE_VERSION must be 8.4.2`);
+if (vars.RELEASE_VERSION !== '8.4.3') fail(`${webPath} RELEASE_VERSION must be 8.4.3`);
 if (!vars.NEXT_PUBLIC_SITE_URL || !URL.canParse(vars.NEXT_PUBLIC_SITE_URL) || new URL(vars.NEXT_PUBLIC_SITE_URL).protocol !== 'https:')
   fail(`${webPath} NEXT_PUBLIC_SITE_URL must be a valid production HTTPS URL`);
 if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);
@@ -89,4 +89,4 @@ if (!siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey)) {
   else fail(message);
 }
 
-console.log('Cloudflare v8.4.2 production configuration PASS');
+console.log('Cloudflare v8.4.3 production configuration PASS');
