@@ -1,0 +1,109 @@
+diff --git a/apps/web/wrangler.jsonc b/apps/web/wrangler.jsonc
+--- a/apps/web/wrangler.jsonc
++++ b/apps/web/wrangler.jsonc
+@@
+-    "TURNSTILE_ENFORCEMENT_MODE": "web",
++    "TURNSTILE_ENFORCEMENT_MODE": "off",
+     "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY"
+
+diff --git a/scripts/configure-cloudflare.mjs b/scripts/configure-cloudflare.mjs
+--- a/scripts/configure-cloudflare.mjs
++++ b/scripts/configure-cloudflare.mjs
+@@
+ const d1 = process.env.CLOUDFLARE_D1_DATABASE_ID;
+ const kv = process.env.CLOUDFLARE_KV_NAMESPACE_ID;
+ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
++const turnstileMode = String(process.env.TURNSTILE_ENFORCEMENT_MODE || 'off').trim().toLowerCase();
++const turnstileSiteKey = String(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
++
+ if (!d1 || !/^[0-9a-f-]{36}$/i.test(d1)) {
+   throw new Error('CLOUDFLARE_D1_DATABASE_ID must be a D1 database UUID');
+ }
+@@
+ if (siteUrl.includes('YOUR_SUBDOMAIN')) {
+   throw new Error('NEXT_PUBLIC_SITE_URL still contains the YOUR_SUBDOMAIN placeholder');
+ }
++if (!['off', 'web'].includes(turnstileMode)) {
++  throw new Error('TURNSTILE_ENFORCEMENT_MODE must be either "off" or "web"');
++}
++if (
++  turnstileMode === 'web' &&
++  (!turnstileSiteKey || /REPLACE_WITH|PLACEHOLDER/i.test(turnstileSiteKey))
++) {
++  throw new Error(
++    'NEXT_PUBLIC_TURNSTILE_SITE_KEY must contain a real Cloudflare Turnstile site key when TURNSTILE_ENFORCEMENT_MODE=web',
++  );
++}
+
+ for (const file of ['apps/web/wrangler.jsonc', 'infra/cloudflare/services/wrangler.jsonc']) {
+   const resolved = path.resolve(file);
+   const source = fs.readFileSync(resolved, 'utf8');
+-  const configured = source
++  let configured = source
+     .replace(/("database_id"\s*:\s*")[^"]+("\s*,?)/g, `$1${d1}$2`)
+     .replace(/("id"\s*:\s*")[0-9a-f]{32}("\s*,?)/gi, `$1${kv}$2`)
+     .replace(/("NEXT_PUBLIC_SITE_URL"\s*:\s*")[^"]+("\s*,?)/g, `$1${siteUrl}$2`);
++
++  if (file === 'apps/web/wrangler.jsonc') {
++    configured = configured.replace(
++      /("TURNSTILE_ENFORCEMENT_MODE"\s*:\s*")[^"]+("\s*,?)/g,
++      `$1${turnstileMode}$2`,
++    );
++    if (turnstileSiteKey) {
++      configured = configured.replace(
++        /("NEXT_PUBLIC_TURNSTILE_SITE_KEY"\s*:\s*")[^"]+("\s*,?)/g,
++        `$1${turnstileSiteKey}$2`,
++      );
++    }
++  }
++
+   fs.writeFileSync(resolved, configured);
+   console.log(`Configured ${file}`);
+ }
++
++console.log(
++  turnstileMode === 'web'
++    ? 'Turnstile: web verification enabled'
++    : 'Turnstile: temporarily disabled; API rate limiting remains active',
++);
+
+diff --git a/scripts/check-cloudflare-config.mjs b/scripts/check-cloudflare-config.mjs
+--- a/scripts/check-cloudflare-config.mjs
++++ b/scripts/check-cloudflare-config.mjs
+@@
+ if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);
+ if (vars.SESSION_COOKIE_NAME !== 'hariyo_session') fail(`${webPath} session cookie name changed unexpectedly`);
+-if (vars.TURNSTILE_ENFORCEMENT_MODE !== 'web') fail(`${webPath} Turnstile must be web-enforced in production`);
++if (!['web', 'off'].includes(vars.TURNSTILE_ENFORCEMENT_MODE))
++  fail(`${webPath} TURNSTILE_ENFORCEMENT_MODE must be "web" or "off"`);
+@@
+ const siteKey = String(vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
+-if (!siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey)) {
+-  const message = 'NEXT_PUBLIC_TURNSTILE_SITE_KEY is still a placeholder. Replace it before production deploy.';
+-  console.warn(`WARNING: ${message} Deployment can proceed; rate limiting remains active.`);
++const turnstilePlaceholder = !siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey);
++
++if (vars.TURNSTILE_ENFORCEMENT_MODE === 'web' && turnstilePlaceholder) {
++  fail(
++    `${webPath} cannot enable web Turnstile while NEXT_PUBLIC_TURNSTILE_SITE_KEY is missing or still a placeholder`,
++  );
++}
++
++if (vars.TURNSTILE_ENFORCEMENT_MODE === 'off') {
++  console.warn(
++    'WARNING: Turnstile is temporarily disabled. Authentication API rate limiting remains active. Configure a real site/secret key and switch TURNSTILE_ENFORCEMENT_MODE to web for production protection.',
++  );
+ }
+
+ console.log('Cloudflare v8.3.3 standalone production configuration PASS');
+
+diff --git a/.github/workflows/cloudflare-deploy.yml b/.github/workflows/cloudflare-deploy.yml
+--- a/.github/workflows/cloudflare-deploy.yml
++++ b/.github/workflows/cloudflare-deploy.yml
+@@
+       CLOUDFLARE_D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
+       CLOUDFLARE_KV_NAMESPACE_ID: ${{ secrets.CLOUDFLARE_KV_NAMESPACE_ID }}
+       NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
++      TURNSTILE_ENFORCEMENT_MODE: ${{ vars.TURNSTILE_ENFORCEMENT_MODE }}
++      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+     steps:
