@@ -1,6 +1,6 @@
 {
   "name": "@hariyo/web",
-  "version": "8.4.0",
+  "version": "8.4.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,7 +18,11 @@
     "db:seed": "tsx scripts/seed.ts",
     "env:check": "tsx scripts/check-env.ts",
     "secrets:generate": "node scripts/generate-secrets.mjs",
-    "cf:seed:remote": "wrangler d1 execute HARIYO_DB --remote --file=seed/cloudflare.sql"
+    "cf:seed:remote": "wrangler d1 execute HARIYO_DB --remote --file=seed/cloudflare.sql",
+    "cf:demo:local": "wrangler d1 execute HARIYO_DB --local --file=seed/demo-accounts.sql",
+    "cf:demo:remote": "wrangler d1 execute HARIYO_DB --remote --file=seed/demo-accounts.sql",
+    "cf:demo:remove:local": "wrangler d1 execute HARIYO_DB --local --file=seed/remove-demo-accounts.sql",
+    "cf:demo:remove:remote": "wrangler d1 execute HARIYO_DB --remote --file=seed/remove-demo-accounts.sql"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",

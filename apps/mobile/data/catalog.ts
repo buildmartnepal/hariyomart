@@ -213,7 +213,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/tea-coffee.svg"
+      "image": "https://images.unsplash.com/photo-1521012012373-6a85bade18da?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-large-cardamom",
@@ -237,7 +237,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-fresh-ginger",
@@ -261,7 +261,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-mandarin-orange",
@@ -285,7 +285,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-akabare-chilli",
@@ -309,7 +309,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-kiwi-fruit",
@@ -333,7 +333,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-bamboo-shoot-pickle",
@@ -357,7 +357,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/pickles.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-green-tea",
@@ -381,7 +381,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/tea-coffee.svg"
+      "image": "https://images.unsplash.com/photo-1521012012373-6a85bade18da?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-avocado",
@@ -405,7 +405,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-buckwheat-flour",
@@ -429,7 +429,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-lapsi-candy",
@@ -453,7 +453,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-fresh-coriander",
@@ -477,7 +477,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/leafy-greens.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-basmati-rice",
@@ -501,7 +501,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-malda-mango",
@@ -525,7 +525,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-red-lentils",
@@ -549,7 +549,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-bottle-gourd",
@@ -573,7 +573,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-cauliflower",
@@ -597,7 +597,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-green-peas",
@@ -621,7 +621,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-sugarcane-jaggery",
@@ -645,7 +645,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/sugar-free.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-makhana",
@@ -669,7 +669,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-pigeon-pea",
@@ -693,7 +693,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-mustard-greens",
@@ -717,7 +717,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/leafy-greens.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-guava",
@@ -741,7 +741,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-amla-pickle",
@@ -765,7 +765,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/pickles.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-organic-broccoli",
@@ -789,7 +789,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-buffalo-ghee",
@@ -813,7 +813,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dairy.svg"
+      "image": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-oyster-mushroom",
@@ -837,7 +837,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-spinach-leaves",
@@ -861,7 +861,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/leafy-greens.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-cherry-tomato",
@@ -885,7 +885,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-farm-yoghurt",
@@ -909,7 +909,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dairy.svg"
+      "image": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-fresh-paneer",
@@ -933,7 +933,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dairy.svg"
+      "image": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-carrot",
@@ -957,7 +957,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-cucumber",
@@ -981,7 +981,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-microgreens",
@@ -1005,7 +1005,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/leafy-greens.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-cold-brew-coffee",
@@ -1029,7 +1029,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/tea-coffee.svg"
+      "image": "https://images.unsplash.com/photo-1521012012373-6a85bade18da?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-baby-cereal-mix",
@@ -1053,7 +1053,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/baby-food.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-mustang-apple",
@@ -1077,7 +1077,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-wildflower-honey",
@@ -1101,7 +1101,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/honey.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-himalayan-bean",
@@ -1125,7 +1125,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-arabica-coffee",
@@ -1149,7 +1149,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/tea-coffee.svg"
+      "image": "https://images.unsplash.com/photo-1521012012373-6a85bade18da?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-dried-apple",
@@ -1173,7 +1173,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dry-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-buckwheat-noodles",
@@ -1197,7 +1197,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-fresh-trout-fillet",
@@ -1221,7 +1221,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-mountain-thyme",
@@ -1245,7 +1245,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-pear",
@@ -1269,7 +1269,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-tangerine-marmalade",
@@ -1293,7 +1293,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/sugar-free.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-pumpkin-seeds",
@@ -1317,7 +1317,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dry-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-organic-oats",
@@ -1341,7 +1341,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-mustard-oil",
@@ -1365,7 +1365,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/oils.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-black-gram",
@@ -1389,7 +1389,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-brown-rice",
@@ -1413,7 +1413,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-turmeric-powder",
@@ -1437,7 +1437,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-chickpeas",
@@ -1461,7 +1461,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-flattened-rice",
@@ -1485,7 +1485,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-sesame-oil",
@@ -1509,7 +1509,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/oils.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-tomato-pickle",
@@ -1533,7 +1533,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/pickles.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-papaya",
@@ -1557,7 +1557,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-maize-flour",
@@ -1581,7 +1581,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-peanut-butter",
@@ -1605,7 +1605,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-herbal-infusion",
@@ -1629,7 +1629,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/tea-coffee.svg"
+      "image": "https://images.unsplash.com/photo-1521012012373-6a85bade18da?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-marshi-rice",
@@ -1653,7 +1653,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-jumla-walnut",
@@ -1677,7 +1677,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dry-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-black-bean",
@@ -1701,7 +1701,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-sea-buckthorn-juice",
@@ -1725,7 +1725,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/juices.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-red-rice",
@@ -1749,7 +1749,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-dried-apricot",
@@ -1773,7 +1773,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dry-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-nettle-powder",
@@ -1797,7 +1797,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-foxtail-millet",
@@ -1821,7 +1821,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-mountain-garlic",
@@ -1845,7 +1845,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-chino-rice",
@@ -1869,7 +1869,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-hemp-seed",
@@ -1893,7 +1893,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/dry-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-herbal-salt",
@@ -1917,7 +1917,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-finger-millet-flour",
@@ -1941,7 +1941,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-chiuri-honey",
@@ -1965,7 +1965,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/honey.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-lemon-pickle",
@@ -1989,7 +1989,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/pickles.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-roasted-soybean",
@@ -2013,7 +2013,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-kodo-cookies",
@@ -2037,7 +2037,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/snacks.svg"
+      "image": "https://images.unsplash.com/photo-1771626717980-0049820ed4e1?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-citrus-squash",
@@ -2061,7 +2061,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/juices.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-horse-gram",
@@ -2085,7 +2085,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/lentils-beans.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-cold-pressed-sesame-oil",
@@ -2109,7 +2109,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/oils.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-local-banana",
@@ -2133,7 +2133,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/fresh-fruits.svg"
+      "image": "https://images.unsplash.com/photo-1773739686762-140369959d7f?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-radish-pickle",
@@ -2157,7 +2157,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/pickles.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-amaranth-flour",
@@ -2181,7 +2181,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-forest-herb-tea",
@@ -2205,7 +2205,7 @@ export const catalog = {
         "Freshness and quality checks",
         "Secure food-grade packaging"
       ],
-      "image": "/products/tea-coffee.svg"
+      "image": "https://images.unsplash.com/photo-1521012012373-6a85bade18da?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-oyster-mushroom",
@@ -2229,7 +2229,7 @@ export const catalog = {
         "Controlled farm production",
         "Restaurant packs available"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "koshi-kiwi-sapling",
@@ -2253,7 +2253,7 @@ export const catalog = {
         "Planting guide included",
         "Scheduled live-plant delivery"
       ],
-      "image": "/products/leafy-greens.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-free-range-eggs",
@@ -2277,7 +2277,7 @@ export const catalog = {
         "Protective tray packing",
         "Small-farm sourcing"
       ],
-      "image": "/products/dairy.svg"
+      "image": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "madhesh-stoneground-wheat-flour",
@@ -2301,7 +2301,7 @@ export const catalog = {
         "Whole-grain flour",
         "Cooperative packed"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-shiitake-mushroom",
@@ -2325,7 +2325,7 @@ export const catalog = {
         "Small-batch harvest",
         "Breathable food-safe pack"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "bagmati-family-farm-box",
@@ -2349,7 +2349,7 @@ export const catalog = {
         "Multi-farm traceability",
         "Weekly subscription ready"
       ],
-      "image": "/products/vegetables.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-buckwheat-flour",
@@ -2373,7 +2373,7 @@ export const catalog = {
         "Batch milling record",
         "Traditional grain variety"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "gandaki-seasonal-flower-bouquet",
@@ -2397,7 +2397,7 @@ export const catalog = {
         "Local seasonal varieties",
         "Low-plastic wrapping"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-country-eggs",
@@ -2421,7 +2421,7 @@ export const catalog = {
         "Cooperative quality check",
         "Protective packing"
       ],
-      "image": "/products/dairy.svg"
+      "image": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "lumbini-mustard-seedlings",
@@ -2445,7 +2445,7 @@ export const catalog = {
         "Care instructions",
         "Reusable nursery tray"
       ],
-      "image": "/products/leafy-greens.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-highland-grain-box",
@@ -2469,7 +2469,7 @@ export const catalog = {
         "Grower-group traceability",
         "Gift-ready reusable box"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "karnali-wild-nettle-soap",
@@ -2493,7 +2493,7 @@ export const catalog = {
         "Producer-group traceability",
         "Plastic-light packaging"
       ],
-      "image": "/products/honey.svg"
+      "image": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-marigold-garland",
@@ -2517,7 +2517,7 @@ export const catalog = {
         "Fresh field flowers",
         "Festival bulk enquiry"
       ],
-      "image": "/products/herbs-spices.svg"
+      "image": "https://images.unsplash.com/photo-1748342319942-223b99937d4e?auto=format&fit=crop&w=1200&q=82"
     },
     {
       "slug": "sudurpashchim-millet-flour",
@@ -2541,7 +2541,7 @@ export const catalog = {
         "Hill-farm sourcing",
         "Food-grade sealed pack"
       ],
-      "image": "/products/grains.svg"
+      "image": "https://images.unsplash.com/photo-1763368403529-0b8d9108cf9c?auto=format&fit=crop&w=1200&q=82"
     }
   ]
 } as const;

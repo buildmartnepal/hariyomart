@@ -5,22 +5,30 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   BadgeCheck,
+  KeyRound,
   LockKeyhole,
   MapPin,
   ShieldCheck,
+  Sparkles,
   Sprout,
   Store,
   UserRound,
 } from 'lucide-react';
+import { DEMO_PASSWORD, demoAccounts } from '@/lib/demo-accounts';
 import { useAuth } from './AuthProvider';
 import { TurnstileWidget } from './TurnstileWidget';
+
 export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
-  const auth = useAuth(),
-    router = useRouter();
-  const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState(''),
-    [turnstileToken, setTurnstileToken] = useState(''),
-    [challengeNonce, setChallengeNonce] = useState(0);
+  const auth = useAuth();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [challengeNonce, setChallengeNonce] = useState(0);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || process.env.NODE_ENV !== 'production';
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -29,11 +37,11 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
     try {
       const user =
         mode === 'login'
-          ? await auth.login(String(fd.get('email')), String(fd.get('password')), turnstileToken || undefined)
+          ? await auth.login(email, password, turnstileToken || undefined)
           : await auth.registerBuyer({
               name: String(fd.get('name')),
-              email: String(fd.get('email')),
-              password: String(fd.get('password')),
+              email,
+              password,
               phone: String(fd.get('phone') || ''),
               turnstileToken: turnstileToken || undefined,
             });
@@ -53,6 +61,13 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
       setBusy(false);
     }
   }
+
+  function loadDemo(emailValue: string) {
+    setEmail(emailValue);
+    setPassword(DEMO_PASSWORD);
+    setMessage('Demo credentials loaded. Complete the security challenge if it is enabled, then sign in.');
+  }
+
   return (
     <div className="auth-shell">
       <section className="auth-story">
@@ -78,8 +93,8 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           <div className="admin-owner-hint">
             <ShieldCheck size={16} />
             <span>
-              <b>Owner access</b> greenmandux@gmail.com · password is created securely during
-              deployment
+              <b>Production owner access</b> is created securely during deployment and is separate
+              from the removable demo identities below.
             </span>
           </div>
         )}
@@ -107,12 +122,13 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
           <Store /> I am a farmer or cooperative <span>Open seller onboarding →</span>
         </Link>
       </section>
+
       <form className="auth-card" onSubmit={submit} aria-busy={busy}>
         <div className="auth-icon">{mode === 'login' ? <LockKeyhole /> : <UserRound />}</div>
         <h2>{mode === 'login' ? 'Sign in' : 'Join Hariyo Mart'}</h2>
         <p>
           {mode === 'login'
-            ? 'Use your buyer, farmer or admin account.'
+            ? 'Use your buyer, farmer, team or admin account.'
             : 'Create a buyer account in less than a minute.'}
         </p>
         {mode === 'register' && (
@@ -129,6 +145,8 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
         </label>
         {mode === 'register' && (
@@ -146,12 +164,41 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
             minLength={mode === 'register' ? 10 : 1}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             placeholder={mode === 'register' ? '10+ chars with upper, lower & number' : 'Your password'}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
           />
         </label>
         {mode === 'register' && (
           <div className="password-hint">Use 10+ characters with uppercase, lowercase and a number.</div>
         )}
-        <TurnstileWidget key={`${mode}-${challengeNonce}`} action={mode === 'login' ? 'login' : 'register'} onToken={setTurnstileToken} />
+
+        {mode === 'login' && demoEnabled && (
+          <section className="demo-login-panel" aria-label="Demo accounts">
+            <div className="demo-login-heading">
+              <span><Sparkles size={16} /> Demo workspaces</span>
+              <small><KeyRound size={13} /> Shared password: <code>{DEMO_PASSWORD}</code></small>
+            </div>
+            <div className="demo-login-grid">
+              {demoAccounts.map((account) => (
+                <button
+                  type="button"
+                  key={account.email}
+                  onClick={() => loadDemo(account.email)}
+                  title={`${account.workspace} — ${account.email}`}
+                >
+                  <b>{account.label}</b>
+                  <span>{account.workspace}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <TurnstileWidget
+          key={`${mode}-${challengeNonce}`}
+          action={mode === 'login' ? 'login' : 'register'}
+          onToken={setTurnstileToken}
+        />
         {message && <div className="auth-error" role="alert" aria-live="polite">{message}</div>}
         <button className="btn btn-primary btn-full" disabled={busy} type="submit">
           <Sprout size={17} />

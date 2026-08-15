@@ -69,7 +69,7 @@ for (const marker of ['INVENTORY_COORDINATOR','TENANT_REALTIME','analytics_engin
 }
 
 const webConfig = JSON.parse(fs.readFileSync('apps/web/wrangler.jsonc', 'utf8'));
-if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.4 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
+if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.4.1 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
 if (webConfig.services?.find((item) => item.binding === 'WORKER_SELF_REFERENCE')?.service !== webConfig.name)
   throw new Error('WORKER_SELF_REFERENCE does not match Worker name');
 for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS','HARIYO_SERVICES','AI']) {
@@ -132,7 +132,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.4.0') throw new Error(`Expected v8.4.0 package, got ${pkg.version}`);
+if (pkg.version !== '8.4.1') throw new Error(`Expected v8.4.1 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

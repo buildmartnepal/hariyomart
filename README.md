@@ -90,3 +90,12 @@ npm run dev:web
 7. Verify `/api/health`, `/api/system/readiness` and `/api/system/supply-stack`.
 
 See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.
+
+
+## v8.4.1 — Real photos and demo access
+
+- 98 built-in catalog products now render photographic seed imagery rather than SVG placeholders.
+- Complete role-based demo identities are available through `DEMO-ACCOUNTS.md`.
+- Shared demo password: `HariyoDemo@2026`.
+- Seed locally with `npm run demo:seed:local`; seed a dedicated staging/demo D1 with `npm run demo:seed:remote`.
+- Keep `NEXT_PUBLIC_DEMO_MODE=false` for a real production launch and remove demo users with `npm run demo:remove:remote`.

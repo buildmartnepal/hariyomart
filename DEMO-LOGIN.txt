@@ -1,0 +1,23 @@
+HARIYO MART v8.4.1 DEMO LOGIN
+=============================
+Shared password for every demo identity: HariyoDemo@2026
+
+Buyer:          buyer@demo.hariyomart.local
+Farmer owner:   farmer@demo.hariyomart.local
+Cooperative:    cooperative@demo.hariyomart.local
+Tenant admin:   tenantadmin@demo.hariyomart.local
+Manager:        manager@demo.hariyomart.local
+Procurement:    procurement@demo.hariyomart.local
+Inventory:      inventory@demo.hariyomart.local
+Sales:          sales@demo.hariyomart.local
+Delivery:       delivery@demo.hariyomart.local
+Accounting:     accounting@demo.hariyomart.local
+Field farmer:   fieldfarmer@demo.hariyomart.local
+Viewer:         viewer@demo.hariyomart.local
+Vendor:         vendor@demo.hariyomart.local
+Platform admin: admin@demo.hariyomart.local
+
+Local seed:      npm run demo:seed:local
+Remote seed:     npm run demo:seed:remote
+Remove remote:   npm run demo:remove:remote
+Demo UI switch:  NEXT_PUBLIC_DEMO_MODE=true (staging/demo only)
