@@ -13,15 +13,18 @@ async function probeV8Schema() {
       env.HARIYO_DB.prepare('SELECT id FROM shopping_carts LIMIT 1'),
       env.HARIYO_DB.prepare('SELECT id FROM return_requests LIMIT 1'),
       env.HARIYO_DB.prepare('SELECT id FROM inventory_alert_rules LIMIT 1'),
+      env.HARIYO_DB.prepare('SELECT id FROM crop_cycles LIMIT 1'),
+      env.HARIYO_DB.prepare('SELECT id FROM buyer_demands LIMIT 1'),
+      env.HARIYO_DB.prepare('SELECT lot_id FROM lot_traceability_links LIMIT 1'),
     ]);
     return {
-      schemaReady: checks.length === 9,
-      detail: 'Cloudflare D1 v8.3 farmer SaaS + commerce tables are available.',
+      schemaReady: checks.length === 12,
+      detail: 'Cloudflare D1 v8.4 Farmer OS + SaaS + commerce tables are available.',
     };
   } catch {
     return {
       schemaReady: false,
-      detail: 'Cloudflare D1 is connected; apply migrations through 0005_commerce_control_plane.sql.',
+      detail: 'Cloudflare D1 is connected; apply migrations through 0006_farmer_os_growth.sql.',
     };
   }
 }
@@ -33,7 +36,7 @@ async function probeServices() {
       configured: false,
       inventoryCoordinator: false,
       workflows: false,
-      detail: 'Standalone D1 fallbacks are active. The private services Worker is an optional advanced coordination layer.',
+      detail: 'Deploy hariyo-mart-services and bind HARIYO_SERVICES.',
     };
   }
   try {
@@ -63,9 +66,9 @@ export async function supplyStackStatus() {
   const [d1, services] = await Promise.all([probeV8Schema(), probeServices()]);
   return apiJson({
     service: 'hariyo-mart-cloudflare-native-produce-saas',
-    version: '8.3.3',
+    version: '8.4.0',
     mode: 'cloudflare-native',
-    sourceOfTruth: services.configured ? 'cloudflare-d1-with-durable-object-coordination' : 'cloudflare-d1-standalone',
+    sourceOfTruth: 'cloudflare-d1-with-durable-object-coordination',
     d1,
     auth: {
       provider: 'cloudflare-workers-d1-sessions',

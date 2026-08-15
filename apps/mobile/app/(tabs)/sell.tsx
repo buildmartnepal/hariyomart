@@ -26,6 +26,8 @@ export default function Sell() {
   const [busy, setBusy] = useState(false);
   const [dash, setDash] = useState<any>(null);
   const [saas, setSaas] = useState<any>(null);
+  const [farmerOs, setFarmerOs] = useState<any>(null);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   useEffect(() => {
     SecureStore.getItemAsync('hariyo-farmer-token').then(setToken);
   }, []);
@@ -33,6 +35,8 @@ export default function Sell() {
     if (!token) {
       setDash(null);
       setSaas(null);
+      setFarmerOs(null);
+      setRecommendations([]);
       return;
     }
     const headers = { authorization: `Bearer ${token}`, ...mobileHeaders };
@@ -45,9 +49,19 @@ export default function Sell() {
         if (!r.ok) throw new Error('Farmer SaaS profile unavailable');
         return (await r.json()) as any;
       }),
-    ]).then(([dashboardResult, saasResult]) => {
+      fetch(`${api}/farmer-os/overview`, { headers }).then(async (r) => {
+        if (!r.ok) throw new Error('Farmer OS unavailable');
+        return (await r.json()) as any;
+      }),
+      fetch(`${api}/farmer-os/recommendations`, { headers }).then(async (r) => {
+        if (!r.ok) throw new Error('Recommendations unavailable');
+        return (await r.json()) as any;
+      }),
+    ]).then(([dashboardResult, saasResult, osResult, recResult]) => {
       setDash(dashboardResult.status === 'fulfilled' ? dashboardResult.value : null);
       setSaas(saasResult.status === 'fulfilled' ? saasResult.value : null);
+      setFarmerOs(osResult.status === 'fulfilled' ? osResult.value : null);
+      setRecommendations(recResult.status === 'fulfilled' ? recResult.value?.data || [] : []);
     });
   }, [token]);
   async function persist(data: any) {
@@ -331,6 +345,29 @@ export default function Sell() {
               <Metric label="Warehouses" value={`${saas?.usage?.warehouses?.used || 0}/${saas?.usage?.warehouses?.limit || 0}`} />
               <Metric label="B2B buyers" value={String(saas?.performance30d?.activeBusinessCustomers || 0)} />
             </View>
+          </View>
+          <View style={card}>
+            <Text style={{ fontSize: 12, fontWeight: '900', color: colors.green, letterSpacing: 1.2 }}>
+              FARMER OS · LIVE SIGNALS
+            </Text>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.dark, marginTop: 6 }}>
+              Farm economics + buyer demand
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 14 }}>
+              <Metric label="30d revenue" value={`NPR ${Math.round(Number(farmerOs?.metrics?.revenue30dNpr || 0))}`} />
+              <Metric label="Farm expenses" value={`NPR ${Math.round(Number(farmerOs?.metrics?.farmExpense30dNpr || 0))}`} />
+              <Metric label="Buyer matches" value={String(farmerOs?.metrics?.matchingBuyerDemands || 0)} />
+              <Metric label="Upcoming harvest" value={String(farmerOs?.metrics?.upcomingHarvestCycles || 0)} />
+            </View>
+            {recommendations.slice(0, 3).map((item, index) => (
+              <View key={`${item?.type || 'rec'}-${index}`} style={{ marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: '#F2F7ED' }}>
+                <Text style={{ fontSize: 10, fontWeight: '900', color: colors.green, letterSpacing: 1 }}>
+                  {String(item?.priority || 'medium').toUpperCase()} · {String(item?.type || 'FARM')}
+                </Text>
+                <Text style={{ fontWeight: '900', color: colors.dark, marginTop: 4 }}>{String(item?.title || 'Farm recommendation')}</Text>
+                <Text style={{ color: colors.muted, lineHeight: 19, marginTop: 3 }}>{String(item?.message || '')}</Text>
+              </View>
+            ))}
           </View>
           <View style={card}>
             <Text style={{ fontSize: 20, fontWeight: '900', color: colors.dark }}>

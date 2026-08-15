@@ -26,31 +26,19 @@ function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
 async function nextNumber(tenantId: string, key: string, prefix: string) {
   const env = cloudflareEnv();
   if (env.HARIYO_SERVICES) {
-    try {
-      const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/sequence', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ tenantId, key, prefix }),
-      });
-      if (response.ok) {
-        const body = (await response.json()) as { formatted?: string };
-        if (body.formatted) return body.formatted;
-      }
-    } catch {
-      // Fall through to D1 sequence allocation.
+    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/sequence', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tenantId, key, prefix }),
+    });
+    if (response.ok) {
+      const body = (await response.json()) as { formatted?: string };
+      if (body.formatted) return body.formatted;
     }
   }
-  const row = await env.HARIYO_DB.prepare(
-    `INSERT INTO tenant_sequences(tenant_id,sequence_key,next_value,updated_at)
-     VALUES (?,?,2,datetime('now'))
-     ON CONFLICT(tenant_id,sequence_key) DO UPDATE SET
-       next_value=tenant_sequences.next_value+1,updated_at=datetime('now')
-     RETURNING next_value-1 AS value`,
-  )
-    .bind(tenantId, key)
-    .first<{ value: number }>();
-  const value = Number(row?.value || 1);
-  return `${prefix}-${String(value).padStart(6, '0')}`;
+  if (env.APP_ENV === 'production')
+    throw new CloudflareApiError(503, 'Tenant sequencing service is unavailable');
+  return `${prefix}-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
 }
 
 export async function supplyOverview(req: NextRequest) {
@@ -119,7 +107,11 @@ export async function warehousesApi(req: NextRequest) {
     const result = await env.HARIYO_DB.prepare(`SELECT w.*,(SELECT COUNT(*) FROM warehouse_bins b WHERE b.warehouse_id=w.id AND b.active=1) bin_count FROM warehouses w WHERE tenant_id=? ORDER BY active DESC,name`).bind(access.tenantId).all();
     return apiJson({ data: result.results || [] });
   }
-  const input = parsed(warehouseInput, await requestBody(req)); const id = crypto.randomUUID();
+  const input = parsed(warehouseInput, await requestBody(req));
+  const warehouseUsage = await env.HARIYO_DB.prepare(`SELECT COALESCE(p.max_warehouses,1) max_warehouses,(SELECT COUNT(*) FROM warehouses w WHERE w.tenant_id=t.id AND w.active=1) used_warehouses FROM tenants t LEFT JOIN tenant_subscriptions s ON s.tenant_id=t.id LEFT JOIN plan_catalog p ON p.code=COALESCE(s.plan_code,'starter') WHERE t.id=?`).bind(access.tenantId).first<{ max_warehouses: number; used_warehouses: number }>();
+  if (warehouseUsage && Number(warehouseUsage.used_warehouses || 0) >= Number(warehouseUsage.max_warehouses || 1))
+    throw new CloudflareApiError(409, `Your SaaS plan allows ${Number(warehouseUsage.max_warehouses || 1)} active warehouse(s). Upgrade the workspace plan to add another location.`);
+  const id = crypto.randomUUID();
   await env.HARIYO_DB.prepare(`INSERT INTO warehouses (id,tenant_id,code,name,warehouse_type,province,district,municipality,address_line,latitude,longitude) VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
     .bind(id, access.tenantId, input.code, input.name, input.warehouseType, input.province || null, input.district || null, input.municipality || null, input.addressLine || null, input.latitude ?? null, input.longitude ?? null).run();
   await audit(req, access.user, 'supply.warehouse_created', 'warehouse', id);
@@ -233,6 +225,10 @@ export async function subscriptionsApi(req: NextRequest) {
     const result = await env.HARIYO_DB.prepare(`SELECT s.*,(SELECT COUNT(*) FROM produce_subscription_items i WHERE i.subscription_id=s.id) item_count FROM produce_subscriptions s WHERE s.tenant_id=? ORDER BY s.status,s.next_delivery_date LIMIT 500`).bind(access.tenantId).all();
     return apiJson({ data: result.results || [] });
   }
+  const entitlement = await env.HARIYO_DB.prepare(`SELECT COALESCE(p.features_json,'{}') features_json FROM tenants t LEFT JOIN tenant_subscriptions s ON s.tenant_id=t.id LEFT JOIN plan_catalog p ON p.code=COALESCE(s.plan_code,'starter') WHERE t.id=?`).bind(access.tenantId).first<{ features_json: string }>();
+  let features: Record<string, unknown> = {};
+  try { features = JSON.parse(entitlement?.features_json || '{}') as Record<string, unknown>; } catch { features = {}; }
+  if (features.subscriptions !== true) throw new CloudflareApiError(403, 'Recurring produce subscriptions are available on Growth and Enterprise plans.');
   const input = parsed(subscriptionInput, await requestBody(req)); const id = crypto.randomUUID();
   const productIds = [...new Set(input.items.map((item) => item.productId))]; const placeholders = productIds.map(() => '?').join(',');
   const products = await env.HARIYO_DB.prepare(`SELECT id FROM products WHERE tenant_id=? AND id IN (${placeholders})`).bind(access.tenantId, ...productIds).all<{ id: string }>();
@@ -289,7 +285,7 @@ export async function supplyReportsApi(req: NextRequest) {
 export async function tenantSaasProfileApi(req: NextRequest) {
   const access = await requireTenantAccess(req);
   const env = cloudflareEnv();
-  const [tenantResult, membersResult, productsResult, warehousesResult, salesResult, procurementResult, recurringResult, customersResult] = await env.HARIYO_DB.batch([
+  const [tenantResult, membersResult, productsResult, warehousesResult, salesResult, procurementResult, recurringResult, customersResult, usageResult] = await env.HARIYO_DB.batch([
     env.HARIYO_DB.prepare(`SELECT t.id,t.slug,t.name,t.type,t.status,t.plan,t.province,t.district,
       COALESCE(s.plan_code,'starter') plan_code,COALESCE(s.status,'trialing') subscription_status,
       s.trial_ends_at,s.current_period_starts_at,s.current_period_ends_at,
@@ -307,6 +303,7 @@ export async function tenantSaasProfileApi(req: NextRequest) {
     env.HARIYO_DB.prepare("SELECT COUNT(*) orders,COALESCE(SUM(total_npr),0) value FROM purchase_orders WHERE tenant_id=? AND status!='cancelled' AND order_date>=date('now','-30 days')").bind(access.tenantId),
     env.HARIYO_DB.prepare("SELECT COUNT(*) count FROM produce_subscriptions WHERE tenant_id=? AND status='active'").bind(access.tenantId),
     env.HARIYO_DB.prepare('SELECT COUNT(*) count FROM business_customers WHERE tenant_id=? AND active=1').bind(access.tenantId),
+    env.HARIYO_DB.prepare("SELECT metric_key,COALESCE(SUM(quantity),0) quantity FROM tenant_usage_daily WHERE tenant_id=? AND usage_date>=date('now','start of month') GROUP BY metric_key ORDER BY quantity DESC").bind(access.tenantId),
   ]);
   const row = (result: { results?: unknown[] }) => (result.results?.[0] || {}) as Record<string, unknown>;
   const tenant = row(tenantResult);
@@ -341,6 +338,8 @@ export async function tenantSaasProfileApi(req: NextRequest) {
       products: { used: products, limit: maxProducts, percent: maxProducts ? Math.min(100, Math.round((products / maxProducts) * 100)) : 0 },
       warehouses: { used: warehouses, limit: maxWarehouses, percent: maxWarehouses ? Math.min(100, Math.round((warehouses / maxWarehouses) * 100)) : 0 },
       stockUnits: Number(row(productsResult).stock || 0),
+      activityThisMonth: (usageResult.results || []).reduce((sum, item) => sum + Number((item as Record<string, unknown>).quantity || 0), 0),
+      activityByMetric: usageResult.results || [],
     },
     performance30d: {
       salesOrders: Number(row(salesResult).orders || 0),

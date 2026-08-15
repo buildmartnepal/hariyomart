@@ -129,6 +129,11 @@ export const supplyModuleCopy: Record<SupplySection, { title: string; descriptio
 };
 
 export const supplyCapabilities = [
+  { label: 'Crop cycle planning', icon: Sprout },
+  { label: 'Farm profitability', icon: BadgeDollarSign },
+  { label: 'Buyer demand matching', icon: Gauge },
+  { label: 'QR traceability', icon: ShieldCheck },
+  { label: 'SaaS usage metering', icon: Building2 },
   { label: 'Harvest planning', icon: Sprout },
   { label: 'Supplier CRM', icon: Factory },
   { label: 'Purchase orders', icon: ClipboardList },

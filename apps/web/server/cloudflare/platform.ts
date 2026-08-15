@@ -198,117 +198,6 @@ export async function verifyTurnstile(
   return { configured: true, success: true, hostname: result.hostname };
 }
 
-let standaloneRateLimitTableReady: Promise<void> | null = null;
-
-async function ensureStandaloneRateLimitTable(db: D1Database) {
-  if (!standaloneRateLimitTableReady) {
-    standaloneRateLimitTableReady = db
-      .prepare(
-        `CREATE TABLE IF NOT EXISTS api_rate_limit_windows (
-          scope_key TEXT NOT NULL,
-          window_start INTEGER NOT NULL,
-          request_count INTEGER NOT NULL DEFAULT 0,
-          expires_at TEXT NOT NULL,
-          PRIMARY KEY (scope_key, window_start)
-        )`,
-      )
-      .run()
-      .then(() => undefined)
-      .catch((error) => {
-        standaloneRateLimitTableReady = null;
-        throw error;
-      });
-  }
-  await standaloneRateLimitTableReady;
-}
-
-async function coordinateInventoryWithD1(
-  env: HariyoCloudflareBindings,
-  input:
-    | {
-        action: 'adjust';
-        productId: string;
-        quantityChange: number;
-        actorId?: string;
-        reason: string;
-        eventType: 'harvest' | 'adjustment' | 'return' | 'spoilage';
-        operationId?: string;
-      }
-    | {
-        action: 'set';
-        productId: string;
-        stock: number;
-        actorId?: string;
-        reason: string;
-      },
-) {
-  if (input.action === 'adjust' && input.operationId) {
-    const previous = await env.HARIYO_DB.prepare(
-      `SELECT stock_after AS stockAfter FROM inventory_events
-       WHERE product_id=? AND reference_type='standalone_operation' AND reference_id=?
-       ORDER BY created_at DESC LIMIT 1`,
-    )
-      .bind(input.productId, input.operationId)
-      .first<{ stockAfter: number }>();
-    if (previous) return { stockAfter: Number(previous.stockAfter) };
-  }
-
-  const before = await env.HARIYO_DB.prepare('SELECT tenant_id,stock FROM products WHERE id=?')
-    .bind(input.productId)
-    .first<{ tenant_id: string; stock: number }>();
-  if (!before) throw new CloudflareApiError(404, 'Product not found');
-
-  if (input.action === 'adjust') {
-    if (!Number.isFinite(input.quantityChange))
-      throw new CloudflareApiError(400, 'Invalid inventory quantity');
-    const result = await env.HARIYO_DB.prepare(
-      `UPDATE products SET stock=stock+?,updated_at=datetime('now')
-       WHERE id=? AND stock+?>=0`,
-    )
-      .bind(input.quantityChange, input.productId, input.quantityChange)
-      .run();
-    const changed = Number((result.meta as { changes?: number } | undefined)?.changes || 0);
-    if (!changed) throw new CloudflareApiError(409, 'Inventory changed; refresh and try again');
-  } else {
-    if (!Number.isFinite(input.stock) || input.stock < 0)
-      throw new CloudflareApiError(400, 'Invalid inventory stock');
-    await env.HARIYO_DB.prepare(
-      `UPDATE products SET stock=?,updated_at=datetime('now') WHERE id=?`,
-    )
-      .bind(input.stock, input.productId)
-      .run();
-  }
-
-  const after = await env.HARIYO_DB.prepare('SELECT tenant_id,stock FROM products WHERE id=?')
-    .bind(input.productId)
-    .first<{ tenant_id: string; stock: number }>();
-  if (!after) throw new CloudflareApiError(404, 'Product not found');
-  const quantityChange =
-    input.action === 'adjust' ? input.quantityChange : Number(after.stock) - Number(before.stock);
-  const eventType = input.action === 'adjust' ? input.eventType : 'adjustment';
-
-  await env.HARIYO_DB.prepare(
-    `INSERT INTO inventory_events
-      (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason,reference_type,reference_id,created_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))`,
-  )
-    .bind(
-      crypto.randomUUID(),
-      input.productId,
-      after.tenant_id,
-      input.actorId || null,
-      eventType,
-      quantityChange,
-      Number(after.stock),
-      input.reason,
-      input.action === 'adjust' && input.operationId ? 'standalone_operation' : null,
-      input.action === 'adjust' ? input.operationId || null : null,
-    )
-    .run();
-
-  return { stockAfter: Number(after.stock) };
-}
-
 export async function coordinateInventory(input: {
   action: 'adjust';
   productId: string;
@@ -325,49 +214,27 @@ export async function coordinateInventory(input: {
   reason: string;
 }) {
   const env = cloudflareEnv();
-  if (env.HARIYO_SERVICES) {
-    try {
-      const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/inventory', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(input),
-      });
-      const body = (await response.json()) as { error?: string; stockAfter?: number };
-      if (response.ok) return { stockAfter: Number(body.stockAfter || 0) };
-      if (response.status < 500)
-        throw new CloudflareApiError(response.status, body.error || 'Inventory operation failed');
-    } catch (error) {
-      if (error instanceof CloudflareApiError) throw error;
-      // Infrastructure outage falls through to the D1 production fallback.
-    }
+  if (!env.HARIYO_SERVICES) {
+    if (env.APP_ENV === 'production')
+      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
+    return null;
   }
-  return coordinateInventoryWithD1(env, input);
-}
-
-async function enforceRateLimitWithD1(
-  env: HariyoCloudflareBindings,
-  req: NextRequest,
-  limit: number,
-  windowSeconds: number,
-  scope: string,
-) {
-  await ensureStandaloneRateLimitTable(env.HARIYO_DB);
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  const windowStart = Math.floor(nowSeconds / windowSeconds) * windowSeconds;
-  const expiresAt = new Date((windowStart + windowSeconds * 2) * 1000).toISOString();
-  const key = `${scope}:${clientIp(req)}`;
-  const row = await env.HARIYO_DB.prepare(
-    `INSERT INTO api_rate_limit_windows(scope_key,window_start,request_count,expires_at)
-     VALUES (?,?,1,?)
-     ON CONFLICT(scope_key,window_start) DO UPDATE SET
-       request_count=api_rate_limit_windows.request_count+1,
-       expires_at=excluded.expires_at
-     RETURNING request_count`,
-  )
-    .bind(key, windowStart, expiresAt)
-    .first<{ request_count: number }>();
-  if (Number(row?.request_count || 1) > limit)
-    throw new CloudflareApiError(429, 'Too many requests');
+  try {
+    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/inventory', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    const body = (await response.json()) as { error?: string; stockAfter?: number };
+    if (!response.ok)
+      throw new CloudflareApiError(response.status, body.error || 'Inventory operation failed');
+    return { stockAfter: Number(body.stockAfter || 0) };
+  } catch (error) {
+    if (error instanceof CloudflareApiError) throw error;
+    if (env.APP_ENV === 'production')
+      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
+    return null;
+  }
 }
 
 export async function enforceRateLimit(
@@ -377,26 +244,30 @@ export async function enforceRateLimit(
   scope = 'api',
 ) {
   const env = cloudflareEnv();
-  if (env.HARIYO_SERVICES) {
-    try {
-      const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/rate-limit', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ key: `${scope}:${clientIp(req)}`, limit, windowSeconds }),
-      });
-      if (response.ok) {
-        const result = (await response.json()) as { allowed?: boolean };
-        if (result.allowed === false) throw new CloudflareApiError(429, 'Too many requests');
-        return;
-      }
-      // Service-side infrastructure errors fall through to D1. A 429 remains authoritative.
-      if (response.status === 429) throw new CloudflareApiError(429, 'Too many requests');
-    } catch (error) {
-      if (error instanceof CloudflareApiError) throw error;
-      // Network/service failure falls through to D1.
-    }
+  const authCritical = scope.startsWith('auth:');
+  if (!env.HARIYO_SERVICES) {
+    if (env.APP_ENV === 'production' && authCritical)
+      throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
+    return;
   }
-  await enforceRateLimitWithD1(env, req, limit, windowSeconds, scope);
+  try {
+    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/rate-limit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ key: `${scope}:${clientIp(req)}`, limit, windowSeconds }),
+    });
+    if (!response.ok) {
+      if (env.APP_ENV === 'production' && authCritical)
+        throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
+      return;
+    }
+    const result = (await response.json()) as { allowed?: boolean };
+    if (result.allowed === false) throw new CloudflareApiError(429, 'Too many requests');
+  } catch (error) {
+    if (error instanceof CloudflareApiError) throw error;
+    if (env.APP_ENV === 'production' && authCritical)
+      throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
+  }
 }
 
 function base64url(value: Uint8Array | string) {

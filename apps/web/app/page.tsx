@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowRight,
+  BarChart3,
   Building2,
   ChefHat,
   CircleCheckBig,
@@ -9,8 +10,10 @@ import {
   HeartHandshake,
   LocateFixed,
   PackageCheck,
+  QrCode,
   Smartphone,
   Store,
+  Sparkles,
   Sprout,
   Tractor,
   Truck,
@@ -172,6 +175,38 @@ export default function Home() {
                 Find nearby produce <ArrowRight size={17} />
               </Link>
             </article>
+          </div>
+        </div>
+      </section>
+      <section className="section farmer-os-home">
+        <div className="container">
+          <div className="split-heading">
+            <div>
+              <span className="eyebrow">Hariyo Farmer OS</span>
+              <h2 className="section-title">Run the farm like a modern business.</h2>
+            </div>
+            <p className="section-copy">
+              Plan harvests, understand farm profit, match real buyer demand, trace produce lots and
+              use Hariyo AI from the same workspace that already manages products and orders.
+            </p>
+          </div>
+          <div className="farmer-os-home-grid">
+            {[
+              [<Sprout key="crop" />, 'Crop planning', 'Plan planting, harvest timing, expected volume, budget and target revenue.'],
+              [<BarChart3 key="profit" />, 'Farm profitability', 'Record farm costs and compare expenses, marketplace revenue, waste and crop economics.'],
+              [<Building2 key="b2b" />, 'B2B demand', 'See restaurant, hotel and retailer requirements and send supply offers directly.'],
+              [<QrCode key="trace" />, 'Lot traceability', 'Create a public produce journey from harvest and QC through packing, dispatch and delivery.'],
+              [<Sparkles key="ai" />, 'Hariyo AI', 'Ask business questions in English or Nepali using your own farm and marketplace data.'],
+              [<WalletCards key="saas" />, 'Farmer SaaS', 'Starter, Growth and Enterprise plans enforce product, warehouse and AI usage allowances.'],
+            ].map(([icon,title,copy]) => (
+              <article className="farmer-os-home-card" key={String(title)}>
+                <span>{icon}</span><h3>{title}</h3><p>{copy}</p>
+              </article>
+            ))}
+          </div>
+          <div className="farmer-os-home-actions">
+            <Link className="btn btn-primary" href="/sell">Start Farmer OS <ArrowRight size={17} /></Link>
+            <Link className="btn btn-secondary" href="/login">Open Farmer Studio</Link>
           </div>
         </div>
       </section>

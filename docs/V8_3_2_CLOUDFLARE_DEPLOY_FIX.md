@@ -1,5 +1,3 @@
-> **Superseded by v8.3.3:** the default web Worker no longer hard-binds `HARIYO_SERVICES`, so the private Worker is no longer required before first web deployment. See `V8_3_3_STANDALONE_DEPLOY.md`.
-
 # Hariyo Mart v8.3.2 — Cloudflare deploy fix
 
 ## What failed
@@ -74,7 +72,7 @@ Deploy command:
 npx @opennextjs/cloudflare deploy
 ```
 
-Historical v8.3.2 note: this ordering was required in that release. v8.3.3 removes the hard binding from the default web topology.
+The services Worker must deploy successfully before the web Worker on the initial rollout.
 
 ## Required web secrets
 

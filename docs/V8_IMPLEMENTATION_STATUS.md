@@ -57,7 +57,7 @@ npm run typecheck
 npm run build:cloudflare
 ```
 
-Then apply the remote migrations through `0006`, deploy the web Worker, and verify `/api/system/supply-stack` reports D1 schema ready. The services Worker is optional in v8.3.3 and may be enabled later for advanced coordination.
+Then apply the remote migration, deploy services first, deploy web second, and verify `/api/system/supply-stack` reports D1 schema ready and the services Worker reachable.
 
 ## Verification completed while packaging
 

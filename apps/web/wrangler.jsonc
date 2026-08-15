@@ -21,7 +21,7 @@
   "vars": {
     "APP_ENV": "production",
     "DATA_PLATFORM": "cloudflare-native",
-    "RELEASE_VERSION": "8.3.3",
+    "RELEASE_VERSION": "8.4.0",
     "NEXT_PUBLIC_SITE_URL": "https://hariyo-mart-nepal.nishrutesh.workers.dev",
     "NEXT_PUBLIC_API_URL": "/api",
     "SESSION_COOKIE_NAME": "hariyo_session",
@@ -71,6 +71,13 @@
     {
       "binding": "WORKER_SELF_REFERENCE",
       "service": "hariyo-mart-nepal"
+    },
+    {
+      "binding": "HARIYO_SERVICES",
+      "service": "hariyo-mart-services"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }

@@ -1,8 +1,8 @@
-# Hariyo Mart Nepal v8.3.3 — Standalone Cloudflare Commerce + Farmer SaaS
+# Hariyo Mart Nepal v8.4 — Farm-to-Market Operating System
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.3.3 keeps the v8.3 commerce and Farmer SaaS features while making the public OpenNext Worker independently deployable. D1-backed fallbacks cover checkout, inventory coordination, rate limiting and tenant numbering when the optional private coordination Worker is not enabled.
+v8.4 builds on the deploy-fixed v8.3 line and turns Hariyo Mart into a farm-to-market operating system: Farmer OS planning and profitability, buyer-demand matching, QR lot traceability, recommendation signals, SaaS usage metering, the existing produce supply chain, and the consumer marketplace share one Cloudflare-native multi-tenant platform.
 
 ## Production stack
 
@@ -19,17 +19,22 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
  business DB   media/cache    config/cache
        |
        v
-  optional `hariyo-mart-services` Worker
-       +-- Durable Objects / stronger coordination
-       +-- Queues + DLQ consumers
-       +-- Workflows / realtime
-       (not required for first web deployment)
+  private `hariyo-mart-services` Worker
+       +-- Durable Objects
+       +-- Queues + DLQ
+       +-- Workflows
        +-- Analytics Engine
 ```
 
-## v8.3 highlights
+## v8.4 highlights
 
-- strict Next.js TypeScript build fixes without disabling type checking
+- Farmer command center with 30-day revenue, expenses, contribution, payouts, stock, expiry, harvest and buyer signals
+- crop-cycle planner with area, planting/harvest dates, expected quantity, budget and target price
+- farm expense ledger and crop-level profitability
+- two-sided B2B buyer-demand network with farmer matching and offers
+- QR-ready public lot traceability timeline at `/trace/[token]`
+- deterministic farmer recommendation engine for stock, expiry, demand, harvest, waste and plan pressure
+- tenant SaaS activity metering and expanded Starter/Growth/Enterprise entitlements
 - `/farmer/business-center` tenant SaaS cockpit
 - tenant-safe `GET /api/supply/saas-profile`
 - Starter / Growth / Enterprise SaaS plan presentation on the farmer onboarding page
@@ -55,7 +60,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
 
 ```powershell
 npm ci
-npm run v8.3:doctor
+npm run v8.4:doctor
 npm run validate
 npm run smoke
 npm run cloudflare:types
@@ -79,9 +84,9 @@ npm run dev:web
 1. Replace `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `apps/web/wrangler.jsonc`.
 2. Set `JWT_SECRET`, `JWT_REFRESH_SECRET` and `TURNSTILE_SECRET_KEY` as Wrangler secrets.
 3. Export/backup the production D1 database.
-4. Apply migrations through `0006_standalone_web_runtime.sql` with the normal D1 migration command.
-5. Deploy the OpenNext web Worker `hariyo-mart-nepal`. The private services Worker is optional in v8.3.3.
-6. Verify `/api/health`, `/api/system/readiness` and `/api/system/supply-stack`.
-7. Optionally deploy `hariyo-mart-services` later for Durable Object/Workflow coordination, then add its service binding only after the target Worker exists.
+4. Apply migration `0005` through the normal D1 migration command.
+5. Deploy the private services Worker first.
+6. Deploy the OpenNext web Worker.
+7. Verify `/api/health`, `/api/system/readiness` and `/api/system/supply-stack`.
 
-See `docs/V8_3_3_STANDALONE_DEPLOY.md` for the current deployment topology and `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the broader Windows/PowerShell operations procedure.
+See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.

@@ -61,6 +61,8 @@ type FarmerSaaSProfile = {
     products?: { used?: number; limit?: number; percent?: number };
     warehouses?: { used?: number; limit?: number; percent?: number };
     stockUnits?: number;
+    activityThisMonth?: number;
+    activityByMetric?: Array<{ metric_key?: string; quantity?: number }>;
   };
   performance30d?: {
     salesOrders?: number;
@@ -145,7 +147,7 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
     <div className="supply-saas-workbench">
       <section className="supply-hero-card">
         <div>
-          <span className="eyebrow">V8 CLOUDFLARE-NATIVE PRODUCE OS</span>
+          <span className="eyebrow">V8.4 FARM-TO-MARKET OPERATING SYSTEM</span>
           <h2>{copy.title}</h2>
           <p>{copy.description}</p>
         </div>
@@ -223,6 +225,7 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
               <div><CheckCircle2 size={18} /><span>Team: {farmerSaaS.usage?.members?.used || 0} / {farmerSaaS.usage?.members?.limit || 0} ({farmerSaaS.usage?.members?.percent || 0}%)</span></div>
               <div><CheckCircle2 size={18} /><span>Products: {farmerSaaS.usage?.products?.used || 0} / {farmerSaaS.usage?.products?.limit || 0} ({farmerSaaS.usage?.products?.percent || 0}%)</span></div>
               <div><CheckCircle2 size={18} /><span>Warehouses: {farmerSaaS.usage?.warehouses?.used || 0} / {farmerSaaS.usage?.warehouses?.limit || 0} ({farmerSaaS.usage?.warehouses?.percent || 0}%)</span></div>
+              <div><CheckCircle2 size={18} /><span>Farmer OS actions this month: {farmerSaaS.usage?.activityThisMonth || 0}</span></div>
               <div><CheckCircle2 size={18} /><span>Workspace: {farmerSaaS.tenant?.name || 'Farmer business'} · {farmerSaaS.tenant?.district || farmerSaaS.tenant?.province || 'Nepal'}</span></div>
             </div>
           </section>

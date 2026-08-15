@@ -8,6 +8,7 @@ import { SupplySaaSWorkbench } from './SupplySaaSWorkbench';
 import { adminSupplySections, farmerSupplySections, type SupplySection } from '@/lib/supply-saas';
 import { TenantSwitcher } from './TenantSwitcher';
 import { CommerceControlPanel } from './CommerceControlPanel';
+import { BuyerDemandPortal, FarmerOSWorkbench } from './FarmerOSWorkbench';
 const roleCopy = {
   Farmer: {
     kicker: 'SELLER WORKSPACE',
@@ -89,7 +90,11 @@ export function DashboardPage({
                     </h2>
                   </div>
                 </div>
-                {section === 'commerce-control' || (role === 'Account' && section === 'returns') ? (
+                {role === 'Farmer' && ['overview','farm-planning','profitability','buyer-demand','traceability','ai-advisor'].includes(section) ? (
+                  <FarmerOSWorkbench section={section as 'overview' | 'farm-planning' | 'profitability' | 'buyer-demand' | 'traceability' | 'ai-advisor'} />
+                ) : role === 'Account' && section === 'business-demand' ? (
+                  <BuyerDemandPortal />
+                ) : section === 'commerce-control' || (role === 'Account' && section === 'returns') ? (
                   <CommerceControlPanel role={role} />
                 ) : (role === 'Admin' && adminSupplySections.some((item) => item === section)) ||
                 (role === 'Farmer' && farmerSupplySections.some((item) => item === section)) ? (

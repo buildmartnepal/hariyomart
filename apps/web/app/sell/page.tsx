@@ -24,7 +24,7 @@ export default function SellPage() {
             <p>
               From one basket of Akabare chilli to a cooperative truckload of rice, Hariyo Mart
               gives Nepal’s farmers a location-based storefront, buyer matching, order tools and
-              transparent settlement.
+              transparent settlement, crop planning, farm profitability and B2B demand matching.
             </p>
             <div className="hero-actions">
               <a className="btn btn-primary" href="#join">
@@ -61,24 +61,24 @@ export default function SellPage() {
               <h2>Start free. Grow into a complete produce operating system.</h2>
               <p className="section-copy">
                 Every farmer store is a secure tenant workspace. Upgrade when you need more team seats,
-                products, warehouses, subscriptions and advanced reporting.
+                products, warehouses, crop economics, buyer demand, traceability, AI assistance, subscriptions and advanced reporting.
               </p>
             </div>
           </div>
           <div className="seller-saas-grid">
             <article className="seller-saas-plan">
               <span>Starter</span><h3>NPR 0</h3><small>For an individual farmer starting online</small>
-              <ul><li>Up to 150 products</li><li>3 team members</li><li>1 warehouse / collection point</li><li>Procurement, lots and delivery tools</li></ul>
+              <ul><li>Up to 150 products</li><li>3 team members</li><li>1 warehouse / collection point</li><li>Crop planning + profitability</li><li>Buyer demand + QR traceability</li><li>50 Hariyo AI calls / month</li><li>Procurement, lots and delivery tools</li></ul>
               <a className="btn btn-secondary" href="#join">Start free</a>
             </article>
             <article className="seller-saas-plan featured">
               <span>Growth</span><h3>NPR 2,499 <small>/ month</small></h3><small>For growing farms and cooperatives</small>
-              <ul><li>Up to 2,000 products</li><li>15 team members</li><li>5 warehouses</li><li>Produce subscriptions + advanced reports</li></ul>
+              <ul><li>Up to 2,000 products</li><li>15 team members</li><li>5 warehouses</li><li>Advanced inventory + CRM/team roles</li><li>Produce subscriptions + advanced reports</li><li>500 Hariyo AI calls / month</li></ul>
               <a className="btn btn-primary" href="#join">Open Growth workspace</a>
             </article>
             <article className="seller-saas-plan">
               <span>Enterprise</span><h3>NPR 9,999 <small>/ month</small></h3><small>For large cooperatives and supply networks</small>
-              <ul><li>Up to 100,000 products</li><li>100 team members</li><li>50 warehouses</li><li>Custom domain + isolated data-tier entitlement</li></ul>
+              <ul><li>Up to 100,000 products</li><li>100 team members</li><li>50 warehouses</li><li>Custom domain + API access</li><li>5,000 Hariyo AI calls / month</li><li>Isolated data-tier entitlement</li></ul>
               <a className="btn btn-secondary" href="/contact">Talk to Hariyo</a>
             </article>
           </div>

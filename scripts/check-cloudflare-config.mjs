@@ -24,7 +24,7 @@ if (!web.observability?.enabled) fail(`${webPath} observability must be enabled`
 const vars = web.vars || {};
 if (vars.APP_ENV !== 'production' || vars.DATA_PLATFORM !== 'cloudflare-native')
   fail(`${webPath} must declare the Cloudflare-native production platform`);
-if (vars.RELEASE_VERSION !== '8.3.3') fail(`${webPath} RELEASE_VERSION must be 8.3.3`);
+if (vars.RELEASE_VERSION !== '8.4.0') fail(`${webPath} RELEASE_VERSION must be 8.4.0`);
 if (!vars.NEXT_PUBLIC_SITE_URL || !URL.canParse(vars.NEXT_PUBLIC_SITE_URL) || new URL(vars.NEXT_PUBLIC_SITE_URL).protocol !== 'https:')
   fail(`${webPath} NEXT_PUBLIC_SITE_URL must be a valid production HTTPS URL`);
 if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);
@@ -57,12 +57,13 @@ for (const name of ['HARIYO_MEDIA', 'NEXT_INC_CACHE_R2_BUCKET'])
   if (!r2.has(name)) fail(`${webPath} is missing R2 binding ${name}`);
 const queueProducers = bindingNames(web.queues?.producers);
 if (!queueProducers.has('HARIYO_EVENTS')) fail(`${webPath} is missing HARIYO_EVENTS queue producer`);
+if (web.ai?.binding !== 'AI') fail(`${webPath} is missing Workers AI binding AI`);
 
 const servicesBindings = new Map((web.services || []).map((item) => [item.binding, item.service]));
 if (servicesBindings.get('WORKER_SELF_REFERENCE') !== web.name)
   fail('WORKER_SELF_REFERENCE.service must exactly match the web Worker name');
-if (servicesBindings.has('HARIYO_SERVICES'))
-  fail(`${webPath} must remain standalone-deployable by default; enable HARIYO_SERVICES only after the target Worker exists`);
+if (servicesBindings.get('HARIYO_SERVICES') !== 'hariyo-mart-services')
+  fail(`${webPath} must bind the internal hariyo-mart-services Worker`);
 
 if (services.name !== 'hariyo-mart-services') fail(`${servicesPath} Worker name changed unexpectedly`);
 if (services.upload_source_maps !== true || !services.observability?.enabled)
@@ -84,7 +85,8 @@ if (!subscriptionWorkflow?.schedules?.length)
 const siteKey = String(vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
 if (!siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey)) {
   const message = 'NEXT_PUBLIC_TURNSTILE_SITE_KEY is still a placeholder. Replace it before production deploy.';
-  console.warn(`WARNING: ${message} Deployment can proceed; rate limiting remains active.`);
+  if (process.env.ALLOW_TURNSTILE_PLACEHOLDER === '1') console.warn(`WARNING: ${message}`);
+  else fail(message);
 }
 
-console.log('Cloudflare v8.3.3 standalone production configuration PASS');
+console.log('Cloudflare v8.4.0 production configuration PASS');

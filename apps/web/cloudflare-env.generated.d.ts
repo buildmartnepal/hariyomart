@@ -10,13 +10,14 @@ interface __BaseEnv_CloudflareEnv {
 	ASSETS: Fetcher;
 	APP_ENV: "production";
 	DATA_PLATFORM: "cloudflare-native";
-	RELEASE_VERSION: "8.3.3";
-	NEXT_PUBLIC_SITE_URL: "https://hariyo-mart-nepal.nishrutesh.workers.dev";
+	RELEASE_VERSION: "8.2.0";
+	NEXT_PUBLIC_SITE_URL: "https://hariyomart.nishrutesh.workers.dev";
 	NEXT_PUBLIC_API_URL: "/api";
 	SESSION_COOKIE_NAME: "hariyo_session";
 	TURNSTILE_ENFORCEMENT_MODE: "web";
 	NEXT_PUBLIC_TURNSTILE_SITE_KEY: "REPLACE_WITH_TURNSTILE_SITE_KEY";
 	WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
+	HARIYO_SERVICES: Fetcher /* hariyo-mart-services */;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {

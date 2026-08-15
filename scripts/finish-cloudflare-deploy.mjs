@@ -16,7 +16,7 @@ if (!siteUrl || !URL.canParse(siteUrl) || new URL(siteUrl).protocol !== 'https:'
   throw new Error('apps/web/wrangler.jsonc must contain the final HTTPS NEXT_PUBLIC_SITE_URL.');
 }
 if (/REPLACE_WITH|PLACEHOLDER/i.test(String(webConfigJson.vars?.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''))) {
-  console.warn('WARNING: Turnstile site key is still a placeholder. Deployment can continue, but configure Turnstile before public launch.');
+  throw new Error('Replace NEXT_PUBLIC_TURNSTILE_SITE_KEY with the real production site key before deployment.');
 }
 
 function run(command, args, options = {}) {
@@ -64,7 +64,9 @@ const secretList = wrangler(['secret', 'list', '--config', 'apps/web/wrangler.js
 });
 const currentSecrets = `${secretList.stdout || ''}\n${secretList.stderr || ''}`;
 if (!currentSecrets.includes('TURNSTILE_SECRET_KEY')) {
-  console.warn('WARNING: TURNSTILE_SECRET_KEY is missing. D1 rate limiting remains active; configure Turnstile before public launch.');
+  throw new Error(
+    'TURNSTILE_SECRET_KEY is missing. Set the real Turnstile secret first: npx wrangler secret put TURNSTILE_SECRET_KEY --config apps/web/wrangler.jsonc',
+  );
 }
 const missingJwt = ['JWT_SECRET', 'JWT_REFRESH_SECRET'].filter((name) => !currentSecrets.includes(name));
 if (missingJwt.length) {
@@ -84,8 +86,14 @@ console.log(`D1 backup written to ${backup}`);
 console.log('\n4/8 Applying D1 migrations');
 run(npm, ['run', 'cloudflare:db:remote']);
 
-console.log('\n5/8 Standalone deployment selected');
-console.log('The optional hariyo-mart-services Worker is not required for the web deploy.');
+console.log('\n5/8 Deploying private coordination services');
+wrangler([
+  'deploy',
+  '--config',
+  'infra/cloudflare/services/wrangler.jsonc',
+  '--message',
+  'Hariyo Mart v8.2 Cloudflare commerce production release',
+]);
 
 console.log('\n6/8 Building and deploying the OpenNext web Worker');
 run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy']);
@@ -127,5 +135,5 @@ if (!readiness?.adminConfigured) {
   console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart v8.3.3 is live: ${siteUrl}`);
+console.log(`\nHariyo Mart v8.2 is live: ${siteUrl}`);
 console.log(`Owner sign-in: ${siteUrl}/login`);

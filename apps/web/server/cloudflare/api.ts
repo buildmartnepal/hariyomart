@@ -52,6 +52,18 @@ import {
   warehousesApi,
 } from './supply-api';
 import {
+  buyerDemandOffersApi,
+  farmerAiAssistantApi,
+  buyerDemandsApi,
+  cropCyclesApi,
+  farmExpensesApi,
+  farmerOsOverviewApi,
+  farmerProfitabilityApi,
+  farmerRecommendationsApi,
+  publicTraceabilityApi,
+  traceabilityApi,
+} from './farmer-os-api';
+import {
   adminAudit,
   adminBlog,
   adminCategories,
@@ -617,6 +629,9 @@ async function createProduct(req: NextRequest) {
   const env = cloudflareEnv();
   const access = await requireTenantAccess(req, ['owner', 'admin', 'manager', 'inventory', 'sales', 'farmer']);
   const input = validation(productInput, await requestBody(req));
+  const planUsage = await env.HARIYO_DB.prepare(`SELECT COALESCE(p.max_products,150) max_products,(SELECT COUNT(*) FROM products x WHERE x.tenant_id=t.id AND x.status!='archived') used_products FROM tenants t LEFT JOIN tenant_subscriptions s ON s.tenant_id=t.id LEFT JOIN plan_catalog p ON p.code=COALESCE(s.plan_code,'starter') WHERE t.id=?`).bind(access.tenantId).first<{ max_products: number; used_products: number }>();
+  if (planUsage && Number(planUsage.used_products || 0) >= Number(planUsage.max_products || 150))
+    throw new CloudflareApiError(409, `Your SaaS plan allows ${Number(planUsage.max_products || 150)} active products. Upgrade the workspace plan or archive an existing product.`);
   const id = crypto.randomUUID();
   const slug = `${slugify(input.slug || input.name)}-${id.slice(0, 6)}`;
   const now = new Date().toISOString();
@@ -872,21 +887,20 @@ async function placeOrder(req: NextRequest, guest: boolean) {
         body: JSON.stringify(payload),
       });
       responseData = await serviceResponse.json();
-      if (!serviceResponse.ok) {
-        // Validation/conflict responses are authoritative. Infrastructure failures fall back to D1.
-        if (serviceResponse.status < 500)
-          throw new CloudflareApiError(
-            serviceResponse.status,
-            String((responseData as { error?: string }).error || 'Checkout failed'),
-          );
-        responseData = await checkoutCore(env, payload);
-      }
+      if (!serviceResponse.ok)
+        throw new CloudflareApiError(
+          serviceResponse.status,
+          String((responseData as { error?: string }).error || 'Checkout failed'),
+        );
     } catch (error) {
       if (error instanceof CloudflareApiError) throw error;
-      // Standalone mode is production-supported: D1 remains the source of truth.
+      if (env.APP_ENV === 'production')
+        throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
       responseData = await checkoutCore(env, payload);
     }
   } else {
+    if (env.APP_ENV === 'production')
+      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
     responseData = await checkoutCore(env, payload);
   }
   await audit(req, user, 'order.placed', 'order', (responseData as { id?: string }).id, {
@@ -1588,6 +1602,16 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (route === 'commerce/tenant/returns' && method === 'GET') return await tenantReturnsApi(req);
     if (segments[0] === 'commerce' && segments[1] === 'tenant' && segments[2] === 'returns' && segments[3] && method === 'PATCH')
       return await updateReturnApi(req, segments[3]);
+    if (route === 'farmer-os/overview' && method === 'GET') return await farmerOsOverviewApi(req);
+    if (route === 'farmer-os/crop-cycles' && ['GET', 'POST'].includes(method)) return await cropCyclesApi(req);
+    if (route === 'farmer-os/expenses' && ['GET', 'POST'].includes(method)) return await farmExpensesApi(req);
+    if (route === 'farmer-os/profitability' && method === 'GET') return await farmerProfitabilityApi(req);
+    if (route === 'farmer-os/buyer-demands' && ['GET', 'POST'].includes(method)) return await buyerDemandsApi(req);
+    if (route === 'farmer-os/buyer-demand-offers' && method === 'POST') return await buyerDemandOffersApi(req);
+    if (route === 'farmer-os/traceability' && ['GET', 'POST'].includes(method)) return await traceabilityApi(req);
+    if (route === 'farmer-os/recommendations' && method === 'GET') return await farmerRecommendationsApi(req);
+    if (route === 'farmer-os/ai-assistant' && method === 'POST') return await farmerAiAssistantApi(req);
+    if (segments[0] === 'trace' && segments[1] && method === 'GET') return await publicTraceabilityApi(segments[1]);
     if (route === 'supply/overview' && method === 'GET') return await supplyOverview(req);
     if (route === 'supply/suppliers' && ['GET', 'POST'].includes(method)) return await suppliersApi(req);
     if (route === 'supply/customers' && ['GET', 'POST'].includes(method)) return await customersApi(req);

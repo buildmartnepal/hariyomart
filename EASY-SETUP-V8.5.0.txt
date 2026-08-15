@@ -1,0 +1,18 @@
+HARIYO MART v8.5.0 — EASY SETUP
+
+Windows easiest:
+1. Double-click SETUP-HARIYO-V8.5.0.cmd
+2. Enter your production URL, admin email, and Cloudflare Turnstile keys when asked.
+3. The script generates strong JWT + refresh + bootstrap secrets.
+4. It creates web/mobile env files, can push Worker secrets, applies D1 migrations, and can deploy.
+5. If this is a brand-new database, choose Yes when asked to create the first admin and enter your own strong password.
+
+Manual:
+npm install
+npm run setup:env
+npm run secrets:push
+npm run cloudflare:db:remote
+npm run deploy:cloudflare
+npm run bootstrap:admin   (first admin only)
+
+Generated private files are gitignored. Never share HARIYO-PRIVATE-SETUP.generated.txt or apps/web/.dev.vars.

@@ -4,11 +4,15 @@ import path from 'node:path';
 const required = [
   'apps/web/migrations/0004_cloudflare_native_supply_saas.sql',
   'apps/web/migrations/0005_commerce_control_plane.sql',
+  'apps/web/migrations/0006_farmer_os_growth.sql',
   'apps/web/server/cloudflare/supply-api.ts',
+  'apps/web/server/cloudflare/farmer-os-api.ts',
   'apps/web/server/cloudflare/supply-stack.ts',
   'apps/web/server/cloudflare/commerce-api.ts',
   'apps/web/server/cloudflare/checkout.ts',
   'apps/web/components/SupplySaaSWorkbench.tsx',
+  'apps/web/components/FarmerOSWorkbench.tsx',
+  'apps/web/components/TraceabilityPublicView.tsx',
   'apps/web/components/CommerceControlPanel.tsx',
   'apps/web/components/TurnstileWidget.tsx',
   'apps/web/components/CartProvider.tsx',
@@ -45,6 +49,11 @@ for (const table of [
 for (const marker of ['discount_npr','delivery_slot_id','redemption_count'])
   if (!commerceMigration.includes(marker)) throw new Error(`V8.3 commerce migration missing ${marker}`);
 
+const farmerOsMigration = fs.readFileSync('apps/web/migrations/0006_farmer_os_growth.sql', 'utf8');
+for (const table of ['crop_cycles','farm_expenses','buyer_demands','buyer_demand_offers','lot_traceability_events','lot_traceability_links','tenant_usage_daily','farmer_recommendations']) {
+  if (!farmerOsMigration.includes(`CREATE TABLE IF NOT EXISTS ${table}`)) throw new Error(`V8.4 Farmer OS migration missing ${table}`);
+}
+
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
 for (const marker of [
   'InventoryCoordinator','TenantSequence','TenantRealtimeHub','OrderFulfillmentWorkflow',
@@ -60,17 +69,15 @@ for (const marker of ['INVENTORY_COORDINATOR','TENANT_REALTIME','analytics_engin
 }
 
 const webConfig = JSON.parse(fs.readFileSync('apps/web/wrangler.jsonc', 'utf8'));
-if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.3.3 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
+if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.4 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
 if (webConfig.services?.find((item) => item.binding === 'WORKER_SELF_REFERENCE')?.service !== webConfig.name)
   throw new Error('WORKER_SELF_REFERENCE does not match Worker name');
-if (webConfig.services?.some((item) => item.binding === 'HARIYO_SERVICES'))
-  throw new Error('Default web deploy must not hard-bind HARIYO_SERVICES before the target Worker exists');
-for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS']) {
+for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS','HARIYO_SERVICES','AI']) {
   if (!JSON.stringify(webConfig).includes(`"${marker}"`)) throw new Error(`Web Wrangler missing ${marker}`);
 }
 
 const platform = fs.readFileSync('apps/web/server/cloudflare/platform.ts', 'utf8');
-for (const marker of ['requireTenantAccess','tenant_members','verifyTurnstile','TURNSTILE_ENFORCEMENT_MODE','coordinateInventory','coordinateInventoryWithD1','enforceRateLimitWithD1','api_rate_limit_windows']) {
+for (const marker of ['requireTenantAccess','tenant_members','verifyTurnstile','TURNSTILE_ENFORCEMENT_MODE','coordinateInventory']) {
   if (!platform.includes(marker)) throw new Error(`Platform security missing ${marker}`);
 }
 
@@ -82,6 +89,8 @@ for (const marker of [
   'tenants/memberships','tenants/switch','order.cancelled.inventory_restore',
   'commerce/cart','commerce/coupons/validate','commerce/delivery-slots','commerce/returns',
   'commerce/summary','commerce/inventory-alerts','product_price_history',
+  'farmer-os/overview','farmer-os/crop-cycles','farmer-os/expenses','farmer-os/profitability',
+  'farmer-os/buyer-demands','farmer-os/buyer-demand-offers','farmer-os/traceability','farmer-os/recommendations','farmer-os/ai-assistant',
 ]) {
   if (!api.includes(marker)) throw new Error(`V8.3 API dispatcher missing ${marker}`);
 }
@@ -123,7 +132,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.3.3') throw new Error(`Expected v8.3.3 package, got ${pkg.version}`);
+if (pkg.version !== '8.4.0') throw new Error(`Expected v8.4.0 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

@@ -1,0 +1,5 @@
+import fs from 'node:fs'; import path from 'node:path'; import { spawnSync } from 'node:child_process';
+const root=process.cwd(), file=path.join(root,'apps','web','.dev.vars'); if(!fs.existsSync(file)) throw new Error('Run npm run setup:env first.');
+const values=Object.fromEntries(fs.readFileSync(file,'utf8').split(/\r?\n/).filter(Boolean).map(line=>{const i=line.indexOf('='); return [line.slice(0,i),line.slice(i+1).replace(/^"|"$/g,'')]}));
+for (const key of ['JWT_SECRET','JWT_REFRESH_SECRET','ADMIN_BOOTSTRAP_KEY','TURNSTILE_SECRET_KEY']) { const value=values[key]; if(!value || (key==='TURNSTILE_SECRET_KEY' && !value.trim())) { console.log(`Skip ${key}: not configured`); continue; } const bin=process.platform==='win32'?'npx.cmd':'npx'; const r=spawnSync(bin,['wrangler','secret','put',key,'--config','apps/web/wrangler.jsonc'],{cwd:root,input:value+'\n',stdio:['pipe','inherit','inherit'],encoding:'utf8'}); if(r.status!==0) process.exit(r.status||1); }
+console.log('Cloudflare secrets pushed.');
