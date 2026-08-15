@@ -1,34 +1,45 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
+
   "name": "hariyo-mart-nepal",
   "main": ".open-next/worker.js",
+
   "compatibility_date": "2026-08-14",
+
   "compatibility_flags": [
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+
   "workers_dev": true,
   "preview_urls": true,
   "upload_source_maps": true,
+
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
   },
+
   "vars": {
     "APP_ENV": "production",
     "DATA_PLATFORM": "cloudflare-native",
     "RELEASE_VERSION": "8.4.2",
+
     "NEXT_PUBLIC_SITE_URL": "https://hariyo-mart-nepal.nishrutesh.workers.dev",
     "NEXT_PUBLIC_API_URL": "/api",
     "NEXT_PUBLIC_DEMO_MODE": "false",
+
     "SESSION_COOKIE_NAME": "hariyo_session",
+
     "TURNSTILE_ENFORCEMENT_MODE": "web",
     "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY"
   },
+
   "secrets": {
     "required": [
       "JWT_SECRET",
@@ -36,6 +47,7 @@
       "TURNSTILE_SECRET_KEY"
     ]
   },
+
   "d1_databases": [
     {
       "binding": "HARIYO_DB",
@@ -44,12 +56,14 @@
       "migrations_dir": "migrations"
     }
   ],
+
   "kv_namespaces": [
     {
       "binding": "HARIYO_KV",
       "id": "fc22c7ded52641b2af4f1f1c68ecbd0e"
     }
   ],
+
   "r2_buckets": [
     {
       "binding": "HARIYO_MEDIA",
@@ -60,6 +74,7 @@
       "bucket_name": "hariyo-mart-opennext-cache"
     }
   ],
+
   "queues": {
     "producers": [
       {
@@ -68,17 +83,19 @@
       }
     ]
   },
+
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
       "service": "hariyo-mart-nepal"
-    },
-    {
-      "binding": "HARIYO_SERVICES",
-      "service": "hariyo-mart-services"
     }
   ],
+
   "ai": {
     "binding": "AI"
+  },
+
+  "images": {
+    "binding": "IMAGES"
   }
 }
