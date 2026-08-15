@@ -9,6 +9,9 @@ type HariyoUser = {
   role: string;
   tenantId?: string;
   isVerified?: boolean;
+  status?: 'active' | 'suspended';
+  mustChangePassword?: boolean;
+  lastLoginAt?: string;
 };
 type AuthResponse = {
   user: HariyoUser & { _id?: string };

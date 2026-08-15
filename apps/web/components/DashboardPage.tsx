@@ -9,6 +9,7 @@ import { adminSupplySections, farmerSupplySections, type SupplySection } from '@
 import { TenantSwitcher } from './TenantSwitcher';
 import { CommerceControlPanel } from './CommerceControlPanel';
 import { BuyerDemandPortal, FarmerOSWorkbench } from './FarmerOSWorkbench';
+import { WorkspaceSecurityGate } from './PasswordChangeGate';
 const roleCopy = {
   Farmer: {
     kicker: 'SELLER WORKSPACE',
@@ -54,6 +55,7 @@ export function DashboardPage({
                 <Plus size={17} /> List today’s harvest
               </Link>
             )}
+            
           </div>
         </div>
       </section>
@@ -76,6 +78,7 @@ export function DashboardPage({
             </div>
           </aside>
           <div className="dashboard-main">
+            <WorkspaceSecurityGate>
             {farmer && section === 'list-harvest' ? (
               <HarvestPublisher />
             ) : (
@@ -119,6 +122,7 @@ export function DashboardPage({
                 )}
               </>
             )}
+            </WorkspaceSecurityGate>
           </div>
         </div>
       </section>

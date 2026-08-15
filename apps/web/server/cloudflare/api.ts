@@ -546,16 +546,20 @@ async function changePassword(req: NextRequest) {
   if (await verifyPassword(input.newPassword, user.password_hash))
     throw new CloudflareApiError(409, 'Choose a password you have not already used');
   const now = new Date().toISOString();
-  await env.HARIYO_DB.batch([
-    env.HARIYO_DB.prepare('UPDATE users SET password_hash=?,updated_at=? WHERE id=?').bind(
-      await hashPassword(input.newPassword),
-      now,
-      user.id,
-    ),
-    env.HARIYO_DB.prepare(
-      'UPDATE sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL',
-    ).bind(now, user.id),
-  ]);
+  const passwordHash = await hashPassword(input.newPassword);
+  try {
+    await env.HARIYO_DB.prepare(
+      'UPDATE users SET password_hash=?,must_change_password=0,password_changed_at=?,updated_at=? WHERE id=?',
+    ).bind(passwordHash, now, now, user.id).run();
+  } catch {
+    // Backward-compatible path if the access-control migration has not been applied yet.
+    await env.HARIYO_DB.prepare('UPDATE users SET password_hash=?,updated_at=? WHERE id=?')
+      .bind(passwordHash, now, user.id)
+      .run();
+  }
+  await env.HARIYO_DB.prepare(
+    'UPDATE sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL',
+  ).bind(now, user.id).run();
   await audit(req, user, 'account.password_changed', 'user', user.id);
   return clearSessionCookies(apiJson({ ok: true, signInAgain: true }));
 }

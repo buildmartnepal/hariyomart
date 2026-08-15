@@ -17,6 +17,10 @@ export type CloudflareUserRow = {
   addresses: string;
   wishlist: string;
   reward_points: number;
+  status?: 'active' | 'suspended';
+  must_change_password?: number;
+  last_login_at?: string | null;
+  password_changed_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -78,6 +82,9 @@ export function publicUser(user: CloudflareUserRow) {
     role: user.role,
     tenantId: effectiveTenantId(user) || undefined,
     isVerified: Boolean(user.is_verified),
+    status: user.status || 'active',
+    mustChangePassword: Boolean(user.must_change_password),
+    lastLoginAt: user.last_login_at || undefined,
   };
 }
 

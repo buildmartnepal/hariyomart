@@ -10,7 +10,7 @@ interface __BaseEnv_CloudflareEnv {
 	ASSETS: Fetcher;
 	APP_ENV: "production";
 	DATA_PLATFORM: "cloudflare-native";
-	RELEASE_VERSION: "8.2.0";
+	RELEASE_VERSION: "8.4.2";
 	NEXT_PUBLIC_SITE_URL: "https://hariyomart.nishrutesh.workers.dev";
 	NEXT_PUBLIC_API_URL: "/api";
 	SESSION_COOKIE_NAME: "hariyo_session";

@@ -338,7 +338,7 @@ export async function tenantSaasProfileApi(req: NextRequest) {
       products: { used: products, limit: maxProducts, percent: maxProducts ? Math.min(100, Math.round((products / maxProducts) * 100)) : 0 },
       warehouses: { used: warehouses, limit: maxWarehouses, percent: maxWarehouses ? Math.min(100, Math.round((warehouses / maxWarehouses) * 100)) : 0 },
       stockUnits: Number(row(productsResult).stock || 0),
-      activityThisMonth: (usageResult.results || []).reduce((sum, item) => sum + Number((item as Record<string, unknown>).quantity || 0), 0),
+      activityThisMonth: (usageResult.results || []).reduce<number>((sum, item) => sum + Number((item as Record<string, unknown>).quantity || 0), 0),
       activityByMetric: usageResult.results || [],
     },
     performance30d: {
