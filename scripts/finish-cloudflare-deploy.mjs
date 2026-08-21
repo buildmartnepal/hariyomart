@@ -15,8 +15,11 @@ const siteUrl = webConfigJson.vars?.NEXT_PUBLIC_SITE_URL;
 if (!siteUrl || !URL.canParse(siteUrl) || new URL(siteUrl).protocol !== 'https:') {
   throw new Error('apps/web/wrangler.jsonc must contain the final HTTPS NEXT_PUBLIC_SITE_URL.');
 }
-if (/REPLACE_WITH|PLACEHOLDER/i.test(String(webConfigJson.vars?.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''))) {
-  throw new Error('Replace NEXT_PUBLIC_TURNSTILE_SITE_KEY with the real production site key before deployment.');
+if (webConfigJson.keep_vars !== true) {
+  throw new Error('keep_vars=true is required so Dashboard-managed production variables survive deploy.');
+}
+if ('NEXT_PUBLIC_TURNSTILE_SITE_KEY' in (webConfigJson.vars || {})) {
+  throw new Error('Remove NEXT_PUBLIC_TURNSTILE_SITE_KEY from source vars; manage it in the Cloudflare Dashboard.');
 }
 
 function run(command, args, options = {}) {
@@ -86,14 +89,19 @@ console.log(`D1 backup written to ${backup}`);
 console.log('\n4/8 Applying D1 migrations');
 run(npm, ['run', 'cloudflare:db:remote']);
 
-console.log('\n5/8 Deploying private coordination services');
-wrangler([
-  'deploy',
-  '--config',
-  'infra/cloudflare/services/wrangler.jsonc',
-  '--message',
-  'Hariyo Mart v8.6.1 Cloudflare marketplace production release',
-]);
+console.log('\n5/8 Optional private coordination services');
+if (process.env.ENABLE_HARIYO_SERVICES === '1') {
+  console.log('ENABLE_HARIYO_SERVICES=1: deploying hariyo-mart-services before the web Worker.');
+  wrangler([
+    'deploy',
+    '--config',
+    'infra/cloudflare/services/wrangler.jsonc',
+    '--message',
+    'Hariyo Mart v8.6.2 optional services release',
+  ]);
+} else {
+  console.log('Skipping optional hariyo-mart-services; the public Worker uses D1/KV/Queue fallbacks.');
+}
 
 console.log('\n6/8 Building and deploying the OpenNext web Worker');
 run(npm, ['--workspace', 'apps/web', 'run', 'cf:deploy']);
@@ -135,5 +143,5 @@ if (!readiness?.adminConfigured) {
   console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart v8.6.1 is live: ${siteUrl}`);
+console.log(`\nHariyo Mart v8.6.2 is live: ${siteUrl}`);
 console.log(`Owner sign-in: ${siteUrl}/login`);

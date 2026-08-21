@@ -21,13 +21,12 @@
   "vars": {
     "APP_ENV": "production",
     "DATA_PLATFORM": "cloudflare-native",
-    "RELEASE_VERSION": "8.6.1",
+    "RELEASE_VERSION": "8.6.2",
     "NEXT_PUBLIC_SITE_URL": "https://hariyo-mart-nepal.nishrutesh.workers.dev",
     "NEXT_PUBLIC_API_URL": "/api",
     "NEXT_PUBLIC_DEMO_MODE": "true",
     "SESSION_COOKIE_NAME": "hariyo_session",
     "TURNSTILE_ENFORCEMENT_MODE": "web",
-    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
     "PRODUCTION_TEST_MODE": "true"
   },
   "secrets": {
@@ -73,10 +72,6 @@
     {
       "binding": "WORKER_SELF_REFERENCE",
       "service": "hariyo-mart-nepal"
-    },
-    {
-      "binding": "HARIYO_SERVICES",
-      "service": "hariyo-mart-services"
     }
   ],
   "ai": {
@@ -84,5 +79,6 @@
   },
   "images": {
     "binding": "IMAGES"
-  }
+  },
+  "keep_vars": true
 }

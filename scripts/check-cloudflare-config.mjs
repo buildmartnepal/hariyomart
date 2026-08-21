@@ -24,7 +24,7 @@ if (!web.observability?.enabled) fail(`${webPath} observability must be enabled`
 const vars = web.vars || {};
 if (vars.APP_ENV !== 'production' || vars.DATA_PLATFORM !== 'cloudflare-native')
   fail(`${webPath} must declare the Cloudflare-native production platform`);
-if (vars.RELEASE_VERSION !== '8.6.1') fail(`${webPath} RELEASE_VERSION must be 8.6.1`);
+if (vars.RELEASE_VERSION !== '8.6.2') fail(`${webPath} RELEASE_VERSION must be 8.6.2`);
 if (!vars.NEXT_PUBLIC_SITE_URL || !URL.canParse(vars.NEXT_PUBLIC_SITE_URL) || new URL(vars.NEXT_PUBLIC_SITE_URL).protocol !== 'https:')
   fail(`${webPath} NEXT_PUBLIC_SITE_URL must be a valid production HTTPS URL`);
 if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);
@@ -62,8 +62,9 @@ if (web.ai?.binding !== 'AI') fail(`${webPath} is missing Workers AI binding AI`
 const servicesBindings = new Map((web.services || []).map((item) => [item.binding, item.service]));
 if (servicesBindings.get('WORKER_SELF_REFERENCE') !== web.name)
   fail('WORKER_SELF_REFERENCE.service must exactly match the web Worker name');
-if (servicesBindings.get('HARIYO_SERVICES') !== 'hariyo-mart-services')
-  fail(`${webPath} must bind the internal hariyo-mart-services Worker`);
+if (servicesBindings.has('HARIYO_SERVICES'))
+  fail(`${webPath} must remain standalone by default; HARIYO_SERVICES may only be enabled after hariyo-mart-services exists`);
+if (web.keep_vars !== true) fail(`${webPath} must set keep_vars=true to preserve Dashboard-managed production variables`);
 
 if (services.name !== 'hariyo-mart-services') fail(`${servicesPath} Worker name changed unexpectedly`);
 if (services.upload_source_maps !== true || !services.observability?.enabled)
@@ -82,11 +83,8 @@ const subscriptionWorkflow = services.workflows?.find((item) => item.binding ===
 if (!subscriptionWorkflow?.schedules?.length)
   fail(`${servicesPath} subscription workflow must have a recurring schedule`);
 
-const siteKey = String(vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
-if (!siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey)) {
-  const message = 'NEXT_PUBLIC_TURNSTILE_SITE_KEY is still a placeholder. Replace it before production deploy.';
-  if (process.env.ALLOW_TURNSTILE_PLACEHOLDER === '1') console.warn(`WARNING: ${message}`);
-  else fail(message);
-}
+if ('NEXT_PUBLIC_TURNSTILE_SITE_KEY' in vars)
+  fail('NEXT_PUBLIC_TURNSTILE_SITE_KEY must not be committed in wrangler vars; keep it in the Cloudflare Dashboard.');
+console.log('Turnstile public site key: Dashboard-managed (preserved by keep_vars=true).');
 
-console.log('Cloudflare v8.6.1 production configuration PASS');
+console.log('Cloudflare v8.6.2 production configuration PASS');

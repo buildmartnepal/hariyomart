@@ -1,6 +1,6 @@
-# Hariyo Mart Nepal v8.6.1 — Marketplace Experience Handoff
+# Hariyo Mart Nepal v8.6.2 — Marketplace Experience Handoff
 
-This repository is the deploy-ready v8.6.1 marketplace release.
+This repository is the deploy-ready v8.6.2 marketplace release.
 
 ## Included
 - Web + mobile source code

@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "8.6.1",
+  "version": "8.6.2",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -21,7 +21,7 @@
     "cloudflare:config:check": "node scripts/check-cloudflare-config.mjs",
     "deploy:cloudflare:services": "npm run typecheck:services && wrangler deploy --config infra/cloudflare/services/wrangler.jsonc",
     "deploy:cloudflare:web": "npm --workspace apps/web run cf:deploy",
-    "deploy:cloudflare": "npm run cloudflare:config:check && npm run cloudflare:types && npm run typecheck && npm run deploy:cloudflare:services && npm run deploy:cloudflare:web",
+    "deploy:cloudflare": "npm run cloudflare:config:check && npm run cloudflare:types && npm run typecheck && npm run deploy:cloudflare:web",
     "finish:cloudflare": "node scripts/finish-cloudflare-deploy.mjs",
     "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "cloudflare:db:local": "npm --workspace apps/web run cf:db:local",
@@ -48,7 +48,7 @@
     "cloudflare:deploy:dry-run": "npm run build:cloudflare && wrangler deploy --config apps/web/wrangler.jsonc --dry-run",
     "typecheck:services": "tsc -p infra/cloudflare/services/tsconfig.json",
     "v8.3.1:doctor": "node scripts/v8-doctor.mjs",
-    "deploy:cloudflare:first": "npm run typecheck:services && npm run deploy:cloudflare:services && npm run build:cloudflare && npm run deploy:cloudflare:web",
+    "deploy:cloudflare:first": "npm run build:cloudflare && npm run deploy:cloudflare:web",
     "cloudflare:bootstrap:services": "node scripts/bootstrap-cloudflare-services.mjs",
     "v8.3.2:doctor": "node scripts/v8-doctor.mjs",
     "v8.4:doctor": "node scripts/v8-doctor.mjs",
@@ -63,7 +63,8 @@
     "production:demo:remove": "npm run demo:remove:remote",
     "deploy:cloudflare:production": "node scripts/cloudflare-connected-deploy.mjs",
     "v8.4.4:doctor": "node scripts/v8-doctor.mjs",
-    "v8.6:doctor": "node scripts/v8-doctor.mjs"
+    "v8.6:doctor": "node scripts/v8-doctor.mjs",
+    "deploy:cloudflare:full": "npm run cloudflare:config:check && npm run cloudflare:types && npm run typecheck && npm run deploy:cloudflare:services && npm run deploy:cloudflare:web"
   },
   "engines": {
     "node": ">=22.13.0"

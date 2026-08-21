@@ -7,7 +7,7 @@ const services = new Map((config.services || []).map((item) => [item.binding, it
 const failures = [];
 const warnings = [];
 
-if (vars.RELEASE_VERSION !== '8.6.1') failures.push('RELEASE_VERSION must be 8.6.1.');
+if (vars.RELEASE_VERSION !== '8.6.2') failures.push('RELEASE_VERSION must be 8.6.2.');
 if (!fs.existsSync('apps/web/migrations/0009_marketplace_experience_v860.sql'))
   failures.push('v8.6 marketplace migration 0009 is missing.');
 
@@ -17,15 +17,16 @@ const demoRequested = String(vars.NEXT_PUBLIC_DEMO_MODE) === 'true';
 if (demoRequested && !productionTestMode) failures.push('NEXT_PUBLIC_DEMO_MODE may be true in production only when PRODUCTION_TEST_MODE=true.');
 if (services.get('WORKER_SELF_REFERENCE') !== config.name)
   failures.push('WORKER_SELF_REFERENCE must point to the web Worker itself.');
-if (services.get('HARIYO_SERVICES') !== 'hariyo-mart-services')
-  failures.push('HARIYO_SERVICES must point to hariyo-mart-services.');
+if (services.has('HARIYO_SERVICES'))
+  failures.push('Default production web config must not hard-bind HARIYO_SERVICES; deploy the optional services Worker separately before enabling that binding.');
 if (!config.d1_databases?.some((item) => item.binding === 'HARIYO_DB')) failures.push('HARIYO_DB binding is missing.');
 if (!config.r2_buckets?.some((item) => item.binding === 'HARIYO_MEDIA')) failures.push('HARIYO_MEDIA binding is missing.');
 if (!config.kv_namespaces?.some((item) => item.binding === 'HARIYO_KV')) failures.push('HARIYO_KV binding is missing.');
 
-const siteKey = String(vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
-if (!siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey))
-  warnings.push('Turnstile site key is still a placeholder; login/register protection will not be complete.');
+if (config.keep_vars !== true) failures.push('keep_vars must be true so Dashboard-managed production variables are preserved.');
+if ('NEXT_PUBLIC_TURNSTILE_SITE_KEY' in vars)
+  failures.push('NEXT_PUBLIC_TURNSTILE_SITE_KEY must be Dashboard-managed, not hardcoded in wrangler vars.');
+warnings.push('Turnstile site key is expected from the Cloudflare Dashboard and is preserved by keep_vars=true.');
 
 if (failures.length) {
   console.error('Hariyo Mart production guard FAILED');
@@ -35,4 +36,4 @@ if (failures.length) {
 console.log('Hariyo Mart production guard PASS');
 warnings.forEach((item) => console.warn(`WARNING: ${item}`));
 console.log(productionTestMode ? 'Production Test Mode is explicitly enabled with a scoped test buyer identity.' : 'Demo fallback is disabled in production.');
-console.log('The private services Worker binding is intact.');
+console.log('Standalone web deployment is enabled; HARIYO_SERVICES remains optional until its target Worker exists.');

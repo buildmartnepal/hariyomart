@@ -18,8 +18,8 @@ function run(args, extraEnv = {}) {
   if (result.status !== 0) throw new Error(`npm ${args.join(' ')} failed with exit code ${result.status}`);
 }
 
-console.log('\nHariyo Mart v8.6.1 connected production deployment');
-console.log('Order: guard -> config -> internal services -> D1 migrations -> OpenNext build -> public web Worker.');
+console.log('\nHariyo Mart v8.6.2 connected production deployment');
+console.log('Order: guard -> config -> optional services -> D1 migrations -> OpenNext build -> public standalone web Worker.');
 
 console.log('\n1/6 Running production safety guard');
 run(['run', 'production:guard']);
@@ -29,8 +29,13 @@ console.log('\n2/6 Validating Cloudflare configuration');
 // will enforce required private secrets; the public key remains a launch warning.
 run(['run', 'cloudflare:config:check'], { ALLOW_TURNSTILE_PLACEHOLDER: '1' });
 
-console.log('\n3/6 Bootstrapping and verifying internal Cloudflare services');
-run(['run', 'cloudflare:bootstrap:services']);
+console.log('\n3/6 Optional internal Cloudflare services');
+if (process.env.ENABLE_HARIYO_SERVICES === '1') {
+  console.log('ENABLE_HARIYO_SERVICES=1: deploying the optional coordination Worker.');
+  run(['run', 'cloudflare:bootstrap:services']);
+} else {
+  console.log('Skipping optional hariyo-mart-services. D1/KV/Queue fallbacks keep the public Worker fully deployable.');
+}
 
 console.log('\n4/6 Applying production D1 migrations');
 run(['--workspace', 'apps/web', 'run', 'cf:db:remote']);
@@ -46,5 +51,5 @@ if (!fs.existsSync(openNextWorker) || !fs.existsSync(openNextAssets)) {
 console.log('\n6/6 Deploying public OpenNext Worker');
 run(['--workspace', 'apps/web', 'run', 'cf:deploy:built']);
 
-console.log('\nHariyo Mart v8.6.1 deployment completed.');
+console.log('\nHariyo Mart v8.6.2 deployment completed.');
 console.log('Verify /api/health, /api/system/readiness, login/register, multi-photo product listing, Nearby matching, mobile flow and checkout.');

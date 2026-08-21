@@ -1652,7 +1652,7 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.6.1',
+    version: '8.6.2',
     status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues + Workflows + Turnstile',
     database,

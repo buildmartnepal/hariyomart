@@ -133,7 +133,7 @@ for (const key of [
   'JWT_REFRESH_SECRET=',
   'ADMIN_BOOTSTRAP_KEY=',
   'TURNSTILE_SECRET_KEY=',
-  'NEXT_PUBLIC_SITE_URL=https://hariyomart.nishrutesh.workers.dev',
+  'NEXT_PUBLIC_SITE_URL=https://hariyo-mart-nepal.nishrutesh.workers.dev',
 ]) {
   if (!env.includes(key)) throw new Error(`Production env template missing ${key}`);
 }
