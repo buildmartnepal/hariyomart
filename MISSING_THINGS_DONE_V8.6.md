@@ -21,3 +21,8 @@ This release closes the main marketplace-experience gaps identified after v8.4.4
 - Replace the placeholder Cloudflare Turnstile public site key and ensure `TURNSTILE_SECRET_KEY`, `JWT_SECRET` and `JWT_REFRESH_SECRET` exist as Worker secrets.
 - Apply D1 migration `0009` to the production database before serving gallery writes.
 - Existing live products with only one real photo need additional seller photos uploaded; the code does not fabricate misleading product imagery.
+
+
+## v8.6.3 standalone auth hardening
+
+Production login, checkout, inventory and tenant sequencing no longer require the optional `hariyo-mart-services` Worker. KV/D1 fallbacks keep the public Worker operational. Run `npm run prepare:cloudflare:test` before the first Production Test Mode deployment, or use `npm run deploy:cloudflare:production`, which applies migrations and idempotent seed data automatically.

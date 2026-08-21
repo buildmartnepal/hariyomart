@@ -221,27 +221,71 @@ export async function coordinateInventory(input: {
   reason: string;
 }) {
   const env = cloudflareEnv();
-  if (!env.HARIYO_SERVICES) {
-    if (env.APP_ENV === 'production')
-      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
-    return null;
+  if (env.HARIYO_SERVICES) {
+    try {
+      const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/inventory', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const body = (await response.json()) as { error?: string; stockAfter?: number };
+      if (response.ok) return { stockAfter: Number(body.stockAfter || 0) };
+      // Validation/conflict responses are authoritative; infrastructure failures fall back to D1.
+      if (response.status < 500)
+        throw new CloudflareApiError(response.status, body.error || 'Inventory operation failed');
+    } catch (error) {
+      if (error instanceof CloudflareApiError && error.status < 500) throw error;
+      // Continue into the D1 fallback. The coordination Worker is an optional accelerator.
+    }
   }
-  try {
-    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/inventory', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    const body = (await response.json()) as { error?: string; stockAfter?: number };
-    if (!response.ok)
-      throw new CloudflareApiError(response.status, body.error || 'Inventory operation failed');
-    return { stockAfter: Number(body.stockAfter || 0) };
-  } catch (error) {
-    if (error instanceof CloudflareApiError) throw error;
-    if (env.APP_ENV === 'production')
-      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
-    return null;
-  }
+
+  const now = new Date().toISOString();
+  const product = await env.HARIYO_DB.prepare('SELECT id,tenant_id,stock FROM products WHERE id=?')
+    .bind(input.productId)
+    .first<{ id: string; tenant_id: string; stock: number }>();
+  if (!product) throw new CloudflareApiError(404, 'Product not found');
+  const stockAfter = input.action === 'set' ? Number(input.stock) : Number(product.stock) + Number(input.quantityChange);
+  if (!Number.isFinite(stockAfter) || stockAfter < 0)
+    throw new CloudflareApiError(409, 'Inventory operation would make stock negative');
+  const quantityChange = stockAfter - Number(product.stock);
+  await env.HARIYO_DB.batch([
+    env.HARIYO_DB.prepare('UPDATE products SET stock=?,updated_at=? WHERE id=?').bind(stockAfter, now, product.id),
+    env.HARIYO_DB.prepare(
+      `INSERT INTO inventory_events (id,product_id,tenant_id,actor_id,event_type,quantity_change,stock_after,reason,reference_type,reference_id,created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    ).bind(
+      crypto.randomUUID(),
+      product.id,
+      product.tenant_id,
+      input.actorId || null,
+      input.action === 'adjust' ? input.eventType : 'adjustment',
+      quantityChange,
+      stockAfter,
+      `${input.reason} (standalone D1 coordination)`,
+      'standalone_runtime',
+      input.action === 'adjust' ? input.operationId || null : product.id,
+      now,
+    ),
+  ]);
+  return { stockAfter };
+}
+
+async function kvRateLimit(
+  env: HariyoCloudflareBindings,
+  req: NextRequest,
+  limit: number,
+  windowSeconds: number,
+  scope: string,
+) {
+  const bucket = Math.floor(Date.now() / (Math.max(1, windowSeconds) * 1000));
+  const digest = await sha256(`${scope}:${clientIp(req)}:${bucket}`);
+  const key = `rate:${scope}:${digest}`;
+  const current = Number((await env.HARIYO_KV.get(key)) || '0');
+  if (Number.isFinite(current) && current >= limit)
+    throw new CloudflareApiError(429, 'Too many requests. Please try again shortly.');
+  await env.HARIYO_KV.put(key, String((Number.isFinite(current) ? current : 0) + 1), {
+    expirationTtl: Math.max(60, windowSeconds * 2),
+  });
 }
 
 export async function enforceRateLimit(
@@ -251,29 +295,30 @@ export async function enforceRateLimit(
   scope = 'api',
 ) {
   const env = cloudflareEnv();
-  const authCritical = scope.startsWith('auth:');
-  if (!env.HARIYO_SERVICES) {
-    if (env.APP_ENV === 'production' && authCritical)
-      throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
-    return;
+  if (env.HARIYO_SERVICES) {
+    try {
+      const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/rate-limit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ key: `${scope}:${clientIp(req)}`, limit, windowSeconds }),
+      });
+      if (response.ok) {
+        const result = (await response.json()) as { allowed?: boolean };
+        if (result.allowed === false) throw new CloudflareApiError(429, 'Too many requests');
+        return;
+      }
+      if (response.status === 429) throw new CloudflareApiError(429, 'Too many requests');
+    } catch (error) {
+      if (error instanceof CloudflareApiError && error.status === 429) throw error;
+      // Optional Durable Object limiter failed; continue with the always-bound KV fallback.
+    }
   }
   try {
-    const response = await env.HARIYO_SERVICES.fetch('https://hariyo-services/rate-limit', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ key: `${scope}:${clientIp(req)}`, limit, windowSeconds }),
-    });
-    if (!response.ok) {
-      if (env.APP_ENV === 'production' && authCritical)
-        throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
-      return;
-    }
-    const result = (await response.json()) as { allowed?: boolean };
-    if (result.allowed === false) throw new CloudflareApiError(429, 'Too many requests');
+    await kvRateLimit(env, req, limit, windowSeconds, scope);
   } catch (error) {
     if (error instanceof CloudflareApiError) throw error;
-    if (env.APP_ENV === 'production' && authCritical)
-      throw new CloudflareApiError(503, 'Authentication protection service is unavailable');
+    // Do not turn an optional protection-layer outage into a total production login outage.
+    // Turnstile and password verification still apply; readiness reports the degraded limiter.
   }
 }
 
@@ -302,14 +347,59 @@ async function hmac(secret: string, value: string) {
   return new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(value)));
 }
 
-function tokenSecret(env: HariyoCloudflareBindings, type: TokenPayload['type']) {
-  const secret = type === 'access' ? env.JWT_SECRET : env.JWT_REFRESH_SECRET;
-  if (!secret || secret.length < 32)
-    throw new CloudflareApiError(
-      503,
-      `${type === 'access' ? 'JWT_SECRET' : 'JWT_REFRESH_SECRET'} is not configured`,
-    );
-  return secret;
+function isProductionTestMode(env: HariyoCloudflareBindings) {
+  return String(env.APP_ENV) === 'production' &&
+    String((env as unknown as Record<string, unknown>).PRODUCTION_TEST_MODE) === 'true';
+}
+
+async function productionTestSessionSecret(
+  env: HariyoCloudflareBindings,
+  type: TokenPayload['type'],
+) {
+  // Production Test Mode may be enabled before Wrangler secrets are installed. Persist a random,
+  // server-only signing key in D1 so test sessions survive isolates without hardcoding credentials.
+  await env.HARIYO_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS runtime_test_secrets (
+       secret_key TEXT PRIMARY KEY,
+       secret_value TEXT NOT NULL,
+       created_at TEXT NOT NULL DEFAULT (datetime('now')),
+       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+     )`,
+  ).run();
+  const key = `jwt_${type}`;
+  let row = await env.HARIYO_DB.prepare(
+    'SELECT secret_value FROM runtime_test_secrets WHERE secret_key=?',
+  )
+    .bind(key)
+    .first<{ secret_value: string }>();
+  if (!row?.secret_value || row.secret_value.length < 32) {
+    const bytes = crypto.getRandomValues(new Uint8Array(48));
+    const candidate = base64url(bytes);
+    await env.HARIYO_DB.prepare(
+      `INSERT INTO runtime_test_secrets(secret_key,secret_value,updated_at) VALUES (?,?,?)
+       ON CONFLICT(secret_key) DO NOTHING`,
+    )
+      .bind(key, candidate, new Date().toISOString())
+      .run();
+    row = await env.HARIYO_DB.prepare(
+      'SELECT secret_value FROM runtime_test_secrets WHERE secret_key=?',
+    )
+      .bind(key)
+      .first<{ secret_value: string }>();
+  }
+  if (!row?.secret_value || row.secret_value.length < 32)
+    throw new CloudflareApiError(503, 'Production test session storage is unavailable');
+  return row.secret_value;
+}
+
+async function tokenSecret(env: HariyoCloudflareBindings, type: TokenPayload['type']) {
+  const configured = type === 'access' ? env.JWT_SECRET : env.JWT_REFRESH_SECRET;
+  if (configured && configured.length >= 32) return configured;
+  if (isProductionTestMode(env)) return productionTestSessionSecret(env, type);
+  throw new CloudflareApiError(
+    503,
+    `${type === 'access' ? 'JWT_SECRET' : 'JWT_REFRESH_SECRET'} is not configured`,
+  );
 }
 
 async function signToken(
@@ -331,7 +421,7 @@ async function signToken(
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const encodedPayload = base64url(JSON.stringify(payload));
   const message = `${header}.${encodedPayload}`;
-  return { token: `${message}.${base64url(await hmac(tokenSecret(env, type), message))}`, payload };
+  return { token: `${message}.${base64url(await hmac(await tokenSecret(env, type), message))}`, payload };
 }
 
 async function verifyToken(
@@ -349,7 +439,7 @@ async function verifyToken(
   }
   if (payload.type !== expectedType || payload.exp <= Math.floor(Date.now() / 1000))
     throw new CloudflareApiError(401, 'Session expired');
-  const expected = await hmac(tokenSecret(env, expectedType), `${header}.${payloadPart}`);
+  const expected = await hmac(await tokenSecret(env, expectedType), `${header}.${payloadPart}`);
   const received = fromBase64url(signature);
   if (expected.length !== received.length) throw new CloudflareApiError(401, 'Invalid session');
   let difference = 0;

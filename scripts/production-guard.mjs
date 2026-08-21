@@ -7,8 +7,8 @@ const services = new Map((config.services || []).map((item) => [item.binding, it
 const failures = [];
 const warnings = [];
 
-if (vars.RELEASE_VERSION !== '8.6.2') failures.push('RELEASE_VERSION must be 8.6.2.');
-if (!fs.existsSync('apps/web/migrations/0009_marketplace_experience_v860.sql'))
+if (vars.RELEASE_VERSION !== '8.6.3') failures.push('RELEASE_VERSION must be 8.6.3.');
+if (!fs.existsSync('apps/web/migrations/0010_standalone_auth_runtime_v863.sql'))
   failures.push('v8.6 marketplace migration 0009 is missing.');
 
 if (vars.APP_ENV !== 'production') failures.push('APP_ENV must be production.');
@@ -35,5 +35,5 @@ if (failures.length) {
 }
 console.log('Hariyo Mart production guard PASS');
 warnings.forEach((item) => console.warn(`WARNING: ${item}`));
-console.log(productionTestMode ? 'Production Test Mode is explicitly enabled with a scoped test buyer identity.' : 'Demo fallback is disabled in production.');
+console.log(productionTestMode ? 'Production Test Mode is explicitly enabled with explicit test identities.' : 'Demo fallback is disabled in production.');
 console.log('Standalone web deployment is enabled; HARIYO_SERVICES remains optional until its target Worker exists.');

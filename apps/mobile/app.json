@@ -3,7 +3,7 @@
     "name": "Hariyo Mart Nepal",
     "slug": "hariyo-mart-nepal",
     "scheme": "hariyo",
-    "version": "8.6.2",
+    "version": "8.6.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -22,7 +22,10 @@
       "adaptiveIcon": {
         "backgroundColor": "#062D22"
       },
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",

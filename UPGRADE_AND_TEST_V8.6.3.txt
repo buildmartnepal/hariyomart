@@ -1,0 +1,36 @@
+HARIYO MART NEPAL v8.6.3 — UPGRADE + TEST
+
+CLOUDFLARE WORKERS BUILDS
+Build command:
+  npx @opennextjs/cloudflare build
+
+Deploy command:
+  npm run deploy:cloudflare:production
+
+The deploy command now runs:
+  production guard -> config check -> migrations -> full operational seed -> Production Test Mode identities -> deploy
+
+TEST PASSWORD
+  HariyoDemo@2026
+
+QUICK ACCOUNTS
+  buyer@demo.hariyomart.local
+  farmer@demo.hariyomart.local
+  manager@demo.hariyomart.local
+  vendor@demo.hariyomart.local
+  admin@demo.hariyomart.local
+
+READINESS
+  /api/system/readiness
+Expected after seeded test deployment: status = test_ready
+Expected products = 98, tenants = 7, demoUsers = 14
+
+BEFORE REAL PRODUCTION
+  Configure JWT_SECRET
+  Configure JWT_REFRESH_SECRET
+  Configure TURNSTILE_SECRET_KEY
+  Configure NEXT_PUBLIC_TURNSTILE_SITE_KEY in Dashboard
+  npm run demo:remove:remote
+  Set NEXT_PUBLIC_DEMO_MODE=false
+  Set PRODUCTION_TEST_MODE=false
+  Rebuild and redeploy

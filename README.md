@@ -1,8 +1,8 @@
-# Hariyo Mart Nepal v8.6.2 — Smart Farm-to-Market Marketplace OS
+# Hariyo Mart Nepal v8.6.3 — Smart Farm-to-Market Marketplace OS
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.6.2 keeps the Cloudflare-native Farmer OS, commerce, traceability and deployment architecture while adding a buyer-facing marketplace experience layer: real multi-photo product galleries, explainable location-aware ranking, richer product details, seller media tooling and stronger mobile discovery.
+v8.6.3 keeps the Cloudflare-native Farmer OS, commerce, traceability and marketplace experience while hardening standalone production runtime: KV-backed auth throttling fallback, D1 checkout/inventory/sequence fallbacks, idempotent full test seeding, actionable readiness diagnostics and Production Test Mode session resilience.
 
 ## Production stack
 
@@ -19,7 +19,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
  business DB   media/cache    config/cache
        |
        v
-  private `hariyo-mart-services` Worker
+  optional private `hariyo-mart-services` Worker
        +-- Durable Objects
        +-- Queues + DLQ
        +-- Workflows
@@ -95,7 +95,7 @@ npm run dev:web
 1. Replace `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `apps/web/wrangler.jsonc`.
 2. Set `JWT_SECRET`, `JWT_REFRESH_SECRET` and `TURNSTILE_SECRET_KEY` as Wrangler secrets.
 3. Export/backup the production D1 database.
-4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.6.2.cmd`). The connected deploy verifies the services Worker, applies D1 migration `0009`, builds OpenNext and deploys the public Worker in the safe order.
+4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.6.3.cmd`). The connected deploy verifies the services Worker, applies D1 migration `0009`, builds OpenNext and deploys the public Worker in the safe order.
 5. Verify `/api/health`, `/api/system/readiness`, `/shop`, `/nearby`, a live product gallery and `/admin/matching-engine`.
 
 See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.
@@ -110,6 +110,11 @@ See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShe
 - Keep `NEXT_PUBLIC_DEMO_MODE=false` for a real production launch and remove demo users with `npm run demo:remove:remote`.
 
 
-## v8.6.2 deployment
+## v8.6.3 deployment
 
 For Cloudflare Workers Builds use `npm run build:cloudflare` followed by `npm run deploy:cloudflare:connected`. The deploy step verifies `hariyo-mart-services`, applies D1 migrations before web cutover, and then publishes `hariyo-mart-nepal`. See `CLOUDFLARE_CONNECTED_DEPLOY.md`.
+
+
+## v8.6.3 standalone auth hardening
+
+Production login, checkout, inventory and tenant sequencing no longer require the optional `hariyo-mart-services` Worker. KV/D1 fallbacks keep the public Worker operational. Run `npm run prepare:cloudflare:test` before the first Production Test Mode deployment, or use `npm run deploy:cloudflare:production`, which applies migrations and idempotent seed data automatically.

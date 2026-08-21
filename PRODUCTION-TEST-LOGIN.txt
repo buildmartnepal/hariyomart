@@ -1,16 +1,35 @@
-HARIYO MART NEPAL v8.6.1 — PRODUCTION TEST LOGIN
+HARIYO MART NEPAL v8.6.3 — PRODUCTION TEST LOGINS
 
 Production Test Mode is explicitly enabled in apps/web/wrangler.jsonc.
-It does NOT reuse the real production administrator.
+These identities are for deployment verification only. Remove them before real customer use.
 
-Test buyer login
-Email: buyer@demo.hariyomart.local
-Password: HariyoDemo@2026
+Shared password for all test identities:
+HariyoDemo@2026
 
-Behavior:
-- The scoped test buyer is auto-provisioned in D1 on the first successful login.
-- Production admin credentials remain separate and are never included here.
-- To disable after testing, set NEXT_PUBLIC_DEMO_MODE=false and PRODUCTION_TEST_MODE=false, rebuild and redeploy.
-- Remove test/demo identities with: npm run demo:remove:remote
+Quick test accounts
+Buyer: buyer@demo.hariyomart.local
+Farmer owner: farmer@demo.hariyomart.local
+Manager: manager@demo.hariyomart.local
+Vendor: vendor@demo.hariyomart.local
+Platform admin: admin@demo.hariyomart.local
 
-Do not use the test identity for real customer transactions.
+All 14 role test identities are defined in apps/web/seed/demo-accounts.sql.
+
+Production Test Mode behavior:
+- KV is the standalone authentication rate-limit fallback when hariyo-mart-services is not deployed.
+- If JWT Wrangler secrets are not installed yet, a random server-only test signing key is persisted in D1.
+- The test identities may bypass Turnstile only while PRODUCTION_TEST_MODE=true and only with the exact shared test password.
+- The buyer identity can self-provision if the demo seed was not applied yet.
+
+Recommended Cloudflare settings for this release:
+Build command: npx @opennextjs/cloudflare build
+Deploy command: npm run deploy:cloudflare:production
+
+The production deploy command applies migrations, operational seed and test identities before publishing the Worker.
+
+Before real production:
+1. Configure JWT_SECRET and JWT_REFRESH_SECRET as Wrangler/Cloudflare secrets.
+2. Configure the real Turnstile public and private keys.
+3. Run: npm run demo:remove:remote
+4. Set NEXT_PUBLIC_DEMO_MODE=false and PRODUCTION_TEST_MODE=false.
+5. Rebuild and redeploy.

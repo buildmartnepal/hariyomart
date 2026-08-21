@@ -1,6 +1,6 @@
-# Hariyo Mart Nepal v8.6.2 — Marketplace Experience Handoff
+# Hariyo Mart Nepal v8.6.3 — Marketplace Experience Handoff
 
-This repository is the deploy-ready v8.6.2 marketplace release.
+This repository is the deploy-ready v8.6.3 marketplace release.
 
 ## Included
 - Web + mobile source code
@@ -27,3 +27,8 @@ npm run deploy:cloudflare:production
 ```
 
 Configure real Cloudflare secrets and Turnstile values before public launch.
+
+
+## v8.6.3 standalone auth hardening
+
+Production login, checkout, inventory and tenant sequencing no longer require the optional `hariyo-mart-services` Worker. KV/D1 fallbacks keep the public Worker operational. Run `npm run prepare:cloudflare:test` before the first Production Test Mode deployment, or use `npm run deploy:cloudflare:production`, which applies migrations and idempotent seed data automatically.

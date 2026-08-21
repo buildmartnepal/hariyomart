@@ -36,9 +36,15 @@ async function nextNumber(tenantId: string, key: string, prefix: string) {
       if (body.formatted) return body.formatted;
     }
   }
-  if (env.APP_ENV === 'production')
-    throw new CloudflareApiError(503, 'Tenant sequencing service is unavailable');
-  return `${prefix}-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
+  const sequence = await env.HARIYO_DB.prepare(
+    `INSERT INTO tenant_sequences(tenant_id,sequence_key,next_value,updated_at) VALUES (?,?,2,?)
+     ON CONFLICT(tenant_id,sequence_key) DO UPDATE SET next_value=tenant_sequences.next_value+1,updated_at=excluded.updated_at
+     RETURNING next_value-1 AS value`,
+  )
+    .bind(tenantId, key, new Date().toISOString())
+    .first<{ value: number }>();
+  const value = Number(sequence?.value || 1);
+  return `${prefix ? `${prefix}-` : ''}${String(value).padStart(6, '0')}`;
 }
 
 export async function supplyOverview(req: NextRequest) {

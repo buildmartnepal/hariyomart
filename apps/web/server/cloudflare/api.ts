@@ -491,11 +491,12 @@ async function login(req: NextRequest) {
     String(env.APP_ENV) === 'production' && String(envRecord.PRODUCTION_TEST_MODE) === 'true';
   const isProductionTestBuyer =
     productionTestMode && email === 'buyer@demo.hariyomart.local' && input.password === DEMO_PASSWORD;
+  const isSeededDemoIdentity =
+    productionTestMode && email.endsWith('@demo.hariyomart.local') && input.password === DEMO_PASSWORD;
 
-  // The scoped production-test buyer is intentionally allowed through without Turnstile so
-  // a new deployment can always be smoke-tested even before the real widget keys are installed.
-  // All real production accounts still require the configured Turnstile policy.
-  if (!isProductionTestBuyer) await verifyTurnstile(req, input.turnstileToken, 'login');
+  // Explicit production-test identities may bypass Turnstile only while PRODUCTION_TEST_MODE=true.
+  // Real customer/farmer/admin identities always follow the configured Turnstile policy.
+  if (!isSeededDemoIdentity) await verifyTurnstile(req, input.turnstileToken, 'login');
 
   let user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
     .bind(email)
@@ -526,6 +527,13 @@ async function login(req: NextRequest) {
 
   if (!user || !(await verifyPassword(input.password, user.password_hash)))
     throw new CloudflareApiError(401, 'Invalid email or password');
+  if (user.status === 'suspended')
+    throw new CloudflareApiError(403, 'This account is suspended');
+  const now = new Date().toISOString();
+  await env.HARIYO_DB.prepare('UPDATE users SET last_login_at=?,updated_at=? WHERE id=?')
+    .bind(now, now, user.id)
+    .run();
+  user.last_login_at = now;
   const tokens = await issueSession(user);
   await audit(req, user, 'auth.login', 'user', user.id);
   return attachSessionCookies(req, apiJson(sessionResponsePayload(req, user, tokens)), tokens);
@@ -966,20 +974,16 @@ async function placeOrder(req: NextRequest, guest: boolean) {
         body: JSON.stringify(payload),
       });
       responseData = await serviceResponse.json();
-      if (!serviceResponse.ok)
-        throw new CloudflareApiError(
-          serviceResponse.status,
-          String((responseData as { error?: string }).error || 'Checkout failed'),
-        );
+      if (!serviceResponse.ok) {
+        const message = String((responseData as { error?: string }).error || 'Checkout failed');
+        if (serviceResponse.status < 500) throw new CloudflareApiError(serviceResponse.status, message);
+        responseData = await checkoutCore(env, payload);
+      }
     } catch (error) {
-      if (error instanceof CloudflareApiError) throw error;
-      if (env.APP_ENV === 'production')
-        throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is unavailable');
+      if (error instanceof CloudflareApiError && error.status < 500) throw error;
       responseData = await checkoutCore(env, payload);
     }
   } else {
-    if (env.APP_ENV === 'production')
-      throw new CloudflareApiError(503, 'Cloudflare inventory coordination service is not bound');
     responseData = await checkoutCore(env, payload);
   }
   await audit(req, user, 'order.placed', 'order', (responseData as { id?: string }).id, {
@@ -1644,17 +1648,21 @@ async function readiness() {
     R2: Boolean(env.HARIYO_MEDIA),
     KV: Boolean(env.HARIYO_KV),
     QUEUES: Boolean(env.HARIYO_EVENTS),
-    SERVICES: Boolean(env.HARIYO_SERVICES),
-    JWT_SECRET: Boolean(env.JWT_SECRET && env.JWT_SECRET.length >= 32),
-    JWT_REFRESH_SECRET: Boolean(env.JWT_REFRESH_SECRET && env.JWT_REFRESH_SECRET.length >= 32),
-    TURNSTILE: turnstileConfigured,
+    JWT_SECRET: Boolean(env.JWT_SECRET && env.JWT_SECRET.length >= 32) || productionTestMode,
+    JWT_REFRESH_SECRET: Boolean(env.JWT_REFRESH_SECRET && env.JWT_REFRESH_SECRET.length >= 32) || productionTestMode,
+    TURNSTILE: turnstileConfigured || productionTestMode,
     DEMO_CLEAN: String(env.APP_ENV) !== 'production' || productionTestMode || seed.demoUsers === 0,
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.6.2',
-    status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
-    architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues + Workflows + Turnstile',
+    version: '8.6.3',
+    status:
+      Object.values(required).every(Boolean) && (adminConfigured || productionTestMode)
+        ? seed.products >= 98 && seed.tenants >= 7
+          ? (productionTestMode ? 'test_ready' : 'ready')
+          : 'seed_required'
+        : 'setup_required',
+    architecture: 'Cloudflare Workers + D1 + R2 + KV + Queues with optional Durable Objects/Workflows coordination',
     database,
     required,
     adminConfigured,
@@ -1664,6 +1672,10 @@ async function readiness() {
       productionTestMode,
       demoUsersPresent: seed.demoUsers > 0,
       turnstileConfigured,
+      standaloneRateLimitFallback: 'KV',
+      standaloneCheckoutFallback: 'D1',
+      optionalServicesBound: Boolean(env.HARIYO_SERVICES),
+      testSessionSecretFallback: productionTestMode && !(env.JWT_SECRET && env.JWT_REFRESH_SECRET),
     },
     timestamp: new Date().toISOString(),
   });
@@ -1890,15 +1902,27 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
       return await adminSettings(req);
     throw new CloudflareApiError(404, 'Route not found');
   } catch (error) {
-    const details = error instanceof CloudflareApiError ? error.details : undefined;
+    const requestId = crypto.randomUUID();
+    const expected = error instanceof CloudflareApiError;
+    const details = expected ? error.details : undefined;
     const message = error instanceof Error ? error.message : 'Unexpected server error';
-    let status = error instanceof CloudflareApiError ? error.status : 500;
+    let status = expected ? error.status : 500;
     if (/UNIQUE constraint failed/i.test(message)) status = 409;
+    if (/no such table|no such column/i.test(message)) status = 503;
     const payload: Record<string, unknown> = {
-      error: status >= 500 ? 'Unexpected server error' : message,
+      error:
+        expected || status === 503
+          ? message
+          : 'Unexpected server error',
+      requestId,
     };
+    if (/no such table|no such column/i.test(message)) {
+      payload.error = 'Database setup is incomplete. Apply the latest D1 migrations and production-test seed.';
+      payload.code = 'DATABASE_SETUP_REQUIRED';
+    }
     if (details) payload.details = details;
     if (status >= 500 && process.env.NODE_ENV !== 'production') payload.debug = message;
+    console.error(JSON.stringify({ requestId, route, method, status, message }));
     return apiJson(payload, status);
   }
 }

@@ -1,4 +1,4 @@
-# Hariyo Mart v8.6.2 — Cloudflare Connected Deployment
+# Hariyo Mart v8.6.3 — Cloudflare Connected Deployment
 
 Use the repository root as the Cloudflare Workers Builds root.
 
@@ -48,7 +48,7 @@ Replace `REPLACE_WITH_TURNSTILE_SITE_KEY` in `apps/web/wrangler.jsonc` with the 
 ## One-command Windows deployment
 
 ```text
-DEPLOY-HARIYO-V8.6.2.cmd
+DEPLOY-HARIYO-V8.6.3.cmd
 ```
 
 It installs the lockfile dependencies, synchronizes the 98-product catalog/seed, runs v8.6 checks, generates Cloudflare binding types, applies remote D1 migrations, and runs the connected production deployment.

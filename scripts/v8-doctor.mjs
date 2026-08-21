@@ -31,7 +31,7 @@ const required = [
   'RELEASE_NOTES_V8.3.md',
   'RELEASE_NOTES_V8.6.md',
   'scripts/cloudflare-connected-deploy.mjs',
-  'DEPLOY-HARIYO-V8.6.2.cmd',
+  'DEPLOY-HARIYO-V8.6.3.cmd',
   'MISSING_THINGS_DONE_V8.6.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
@@ -84,12 +84,16 @@ const adminMatching = fs.readFileSync('apps/web/components/AdminMatchingCenter.t
 for (const marker of ['Hariyo Match v3', 'radiusKm: radius']) {
   if (!adminMatching.includes(marker)) throw new Error(`V8.6 admin matching missing ${marker}`);
 }
+const hardeningMigration = fs.readFileSync('apps/web/migrations/0010_standalone_auth_runtime_v863.sql', 'utf8');
+for (const marker of ['runtime_test_secrets','idx_sessions_user_expires']) {
+  if (!hardeningMigration.includes(marker)) throw new Error(`V8.6.3 auth hardening migration missing ${marker}`);
+}
 const cloudSeed = fs.readFileSync('apps/web/seed/cloudflare.sql', 'utf8');
 const migrationSeed = fs.readFileSync('apps/web/migrations/seed.sql', 'utf8');
 if (cloudSeed !== migrationSeed) throw new Error('V8.6 catalog seed files are out of sync');
 if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 98)
   throw new Error('V8.6 Cloudflare seed must contain exactly 98 catalog products');
-if (!cloudSeed.includes(`('marketplace.release','"8.6.2"',1)`))
+if (!cloudSeed.includes(`('marketplace.release','"8.6.3"',1)`))
   throw new Error('V8.6 seed release marker is stale');
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
@@ -118,7 +122,7 @@ for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_
 }
 
 const platform = fs.readFileSync('apps/web/server/cloudflare/platform.ts', 'utf8');
-for (const marker of ['requireTenantAccess','tenant_members','verifyTurnstile','TURNSTILE_ENFORCEMENT_MODE','coordinateInventory']) {
+for (const marker of ['requireTenantAccess','tenant_members','verifyTurnstile','TURNSTILE_ENFORCEMENT_MODE','coordinateInventory','kvRateLimit','productionTestSessionSecret','standalone D1 coordination']) {
   if (!platform.includes(marker)) throw new Error(`Platform security missing ${marker}`);
 }
 
@@ -132,7 +136,7 @@ for (const marker of [
   'commerce/summary','commerce/inventory-alerts','product_price_history',
   'farmer-os/overview','farmer-os/crop-cycles','farmer-os/expenses','farmer-os/profitability',
   'farmer-os/buyer-demands','farmer-os/buyer-demand-offers','farmer-os/traceability','farmer-os/recommendations','farmer-os/ai-assistant',
-  'rankMarketplaceProducts','images_json','Hariyo Match v3','matching:',
+  'rankMarketplaceProducts','images_json','Hariyo Match v3','matching:','standaloneCheckoutFallback','seed_required','DATABASE_SETUP_REQUIRED',
 ]) {
   if (!api.includes(marker)) throw new Error(`V8.3 API dispatcher missing ${marker}`);
 }
@@ -174,7 +178,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.6.2') throw new Error(`Expected v8.6.2 package, got ${pkg.version}`);
+if (pkg.version !== '8.6.3') throw new Error(`Expected v8.6.3 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

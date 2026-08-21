@@ -18,5 +18,9 @@ export const demoAccounts = [
 ] as const;
 
 export const productionTestAccounts = [
-  { label: 'Production test buyer', email: 'buyer@demo.hariyomart.local', workspace: 'Customer account (isolated test identity)' },
+  { label: 'Buyer', email: 'buyer@demo.hariyomart.local', workspace: 'Customer checkout & account' },
+  { label: 'Farmer owner', email: 'farmer@demo.hariyomart.local', workspace: 'Farmer OS / seller workspace' },
+  { label: 'Manager', email: 'manager@demo.hariyomart.local', workspace: 'Operations manager role' },
+  { label: 'Vendor', email: 'vendor@demo.hariyomart.local', workspace: 'Vendor workspace' },
+  { label: 'Platform admin', email: 'admin@demo.hariyomart.local', workspace: 'Platform admin test workspace' },
 ] as const;
