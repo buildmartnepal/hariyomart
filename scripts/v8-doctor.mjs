@@ -15,6 +15,14 @@ const required = [
   'apps/web/components/SupplySaaSWorkbench.tsx',
   'apps/web/components/FarmerOSWorkbench.tsx',
   'apps/web/components/ProductGallery.tsx',
+  'apps/web/components/ProductExperienceProvider.tsx',
+  'apps/web/components/ProductActions.tsx',
+  'apps/web/components/CompareTray.tsx',
+  'apps/web/components/MobileCommerceNav.tsx',
+  'apps/web/components/MarketplaceSearch.tsx',
+  'apps/web/components/ProductReviews.tsx',
+  'apps/web/app/compare/page.tsx',
+  'apps/web/app/saved/page.tsx',
   'apps/web/components/ProductLocationFit.tsx',
   'apps/web/components/AdminMatchingCenter.tsx',
   'apps/web/lib/matching.ts',
@@ -34,8 +42,11 @@ const required = [
   'RELEASE_NOTES_V8.3.md',
   'RELEASE_NOTES_V8.6.md',
   'scripts/cloudflare-connected-deploy.mjs',
-  'DEPLOY-HARIYO-V8.7.0.cmd',
+  'DEPLOY-HARIYO-V8.9.0.cmd',
   'MISSING_THINGS_DONE_V8.6.md',
+  'RELEASE_NOTES_V8.9.0.md',
+  'PUBLIC_PAGE_SYSTEM_V8.9.0.md',
+  'V8_9_0_VALIDATION.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
 if (missing.length) throw new Error(`V8.3 required files missing: ${missing.join(', ')}`);
@@ -76,7 +87,7 @@ for (const marker of ['rankMarketplaceProducts', 'distance', 'freshness', 'verif
   if (!matching.toLowerCase().includes(marker.toLowerCase())) throw new Error(`V8.6 matching engine missing ${marker}`);
 }
 const gallery = fs.readFileSync('apps/web/components/ProductGallery.tsx', 'utf8');
-for (const marker of ['ProductGallery', 'ProductCardGallery', 'slice(0, 8)', 'onTouchStart', 'ArrowRight']) {
+for (const marker of ['ProductGallery', 'ProductCardGallery', 'slice(0, 8)', 'onTouchStart', 'ArrowRight', 'gallery-lightbox']) {
   if (!gallery.includes(marker)) throw new Error(`V8.6 product gallery missing ${marker}`);
 }
 const shop = fs.readFileSync('apps/web/components/ShopClient.tsx', 'utf8');
@@ -100,7 +111,7 @@ const migrationSeed = fs.readFileSync('apps/web/migrations/seed.sql', 'utf8');
 if (cloudSeed !== migrationSeed) throw new Error('V8.6 catalog seed files are out of sync');
 if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 98)
   throw new Error('V8.6 Cloudflare seed must contain exactly 98 catalog products');
-if (!cloudSeed.includes(`('marketplace.release','"8.7.0"',1)`))
+if (!cloudSeed.includes(`('marketplace.release','"8.9.0"',1)`))
   throw new Error('V8.6 seed release marker is stale');
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
@@ -185,13 +196,40 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.7.0') throw new Error(`Expected v8.7.0 package, got ${pkg.version}`);
+if (pkg.version !== '8.9.0') throw new Error(`Expected v8.9.0 package, got ${pkg.version}`);
+
+
+const infoExperience = fs.readFileSync('apps/web/components/InfoPageExperience.tsx', 'utf8');
+for (const marker of ['AboutSystemGraphic', 'ContactRoutingGraphic', 'info-story-shell', 'Common questions']) {
+  if (!infoExperience.includes(marker)) throw new Error(`V8.9 public content experience missing ${marker}`);
+}
+const infoPage = fs.readFileSync('apps/web/app/info/[slug]/page.tsx', 'utf8');
+for (const marker of ['InfoPageExperience', 'contact-form-layout', 'info-final-cta']) {
+  if (!infoPage.includes(marker)) throw new Error(`V8.9 info page system missing ${marker}`);
+}
+const howPage = fs.readFileSync('apps/web/app/how-it-works/page.tsx', 'utf8');
+for (const marker of ['how-system-graphic', 'how-step-grid', 'how-dual-journey', 'Trust checkpoints']) {
+  if (!howPage.includes(marker)) throw new Error(`V8.9 how-it-works experience missing ${marker}`);
+}
+
+const productExperience = fs.readFileSync('apps/web/components/ProductExperienceProvider.tsx', 'utf8');
+for (const marker of ['account/wishlist', 'toggleCompare', 'markViewed', 'Promise.allSettled']) {
+  if (!productExperience.includes(marker)) throw new Error(`V8.8 product experience missing ${marker}`);
+}
+const productActions = fs.readFileSync('apps/web/components/ProductActions.tsx', 'utf8');
+for (const marker of ['Save product', 'Compare product']) if (!productActions.includes(marker)) throw new Error(`V8.8 product actions missing ${marker}`);
+const comparePage = fs.readFileSync('apps/web/app/compare/page.tsx', 'utf8');
+for (const marker of ['Compare what matters', 'Add to basket', 'compare-facts']) if (!comparePage.includes(marker)) throw new Error(`V8.8 compare page missing ${marker}`);
+const cartDrawerV88 = fs.readFileSync('apps/web/components/CartDrawer.tsx', 'utf8');
+for (const marker of ['cart-seller-group', 'Guest checkout', 'Review basket']) if (!cartDrawerV88.includes(marker)) throw new Error(`V8.8 cart UX missing ${marker}`);
+const checkoutV88 = fs.readFileSync('apps/web/app/checkout/page.tsx', 'utf8');
+for (const marker of ['Guest checkout is ready', 'checkout-progress', 'Choose a delivery date']) if (!checkoutV88.includes(marker)) throw new Error(`V8.8 checkout UX missing ${marker}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [
   '--nav-text','--field-text','--footer-text','cross-theme contrast hardening',
   'newsletter-form input:-webkit-autofill','v8.2 commerce control plane','commerce-kpis',
-  'Adaptive brand system',"data-theme-mode='system'",'demo-login-action','password-field',
+  'Adaptive brand system',"data-theme-mode='system'",'demo-login-action','password-field','Commerce Experience System','mobile-commerce-nav','compare-tray','market-quick-filters',
 ]) {
   if (!css.includes(marker)) throw new Error(`Theme/commerce UI hardening missing ${marker}`);
 }

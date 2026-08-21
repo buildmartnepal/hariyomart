@@ -1,8 +1,13 @@
-# Hariyo Mart Nepal v8.7.0 — Smart Farm-to-Market Marketplace OS
+# Hariyo Mart Nepal v8.9.0 — Commerce Experience + Farm-to-Market OS
+
+## v8.9.0 — Public Story & Trust Experience
+
+v8.9.0 adds a richer public content system across About, Contact, How It Works and all supporting guide/policy pages: visual story modules, page-specific artwork, metrics, decision cards, contextual FAQs, stronger CTAs, support routing and mobile-responsive system diagrams. The v8.8 commerce/product experience remains intact.
+
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.7.0 adds self-healing Production Test Mode demo authentication, one-click role login, an adaptive Auto brand theme, improved password/form ergonomics and mobile-first visual polish while retaining the Cloudflare-native Farmer OS, commerce, traceability, D1/KV/R2 runtime fallbacks and marketplace experience.
+v8.9.0 adds a complete buyer decision and conversion layer: predictive marketplace search, persistent Save/Compare/Recently Viewed, full-screen gallery zoom, seller-grouped basket UX, guest-first checkout, published reviews and seller replies, mobile commerce navigation and stronger product decision information while retaining v8.7 authentication hardening, adaptive brand, Farmer OS and Cloudflare-native runtime fallbacks.
 
 ## Production stack
 
@@ -26,7 +31,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
        +-- Analytics Engine
 ```
 
-## Core platform + v8.7 highlights
+## Core platform + v8.8 highlights
 
 - Farmer command center with 30-day revenue, expenses, contribution, payouts, stock, expiry, harvest and buyer signals
 - crop-cycle planner with area, planting/harvest dates, expected quantity, budget and target price
@@ -71,7 +76,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
 
 ```powershell
 npm ci
-npm run v8.7:doctor
+npm run v8.8:doctor
 npm run validate
 npm run smoke
 npm run cloudflare:types
@@ -95,7 +100,7 @@ npm run dev:web
 1. Keep the public Turnstile site key in the Cloudflare Dashboard; `keep_vars=true` preserves it.
 2. Set `JWT_SECRET`, `JWT_REFRESH_SECRET` and `TURNSTILE_SECRET_KEY` as Wrangler secrets before real production. Production Test Mode can be used temporarily for verification.
 3. Export/backup the production D1 database.
-4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.7.0.cmd`). The connected deploy applies all D1 migrations through `0011`, refreshes the idempotent seed/test identities when enabled, builds OpenNext when needed and deploys the standalone public Worker.
+4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.9.0.cmd`). The connected deploy applies all D1 migrations through `0011`, refreshes the idempotent seed/test identities when enabled, builds OpenNext when needed and deploys the standalone public Worker.
 5. Verify `/api/health`, `/api/system/readiness`, one-click demo login, `/shop`, `/nearby`, a live product gallery and `/admin/matching-engine`.
 
 See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.
@@ -110,17 +115,27 @@ See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShe
 - Keep `NEXT_PUBLIC_DEMO_MODE=false` for a real production launch and remove demo users with `npm run demo:remove:remote`.
 
 
-## v8.7.0 deployment
+## v8.9.0 deployment
 
 For Cloudflare Workers Builds use `npm run build:cloudflare` followed by `npm run deploy:cloudflare:connected`. The deploy step keeps `hariyo-mart-services` optional, applies D1 migrations and idempotent seed repair before web cutover, and then publishes the standalone `hariyo-mart-nepal` Worker. See `CLOUDFLARE_CONNECTED_DEPLOY.md`.
 
 
-## v8.7.0 standalone auth hardening
+## v8.9.0 commerce experience
+
+- Predictive global search with product/category suggestions, recent-search memory and Shop query handoff.
+- Real signed-in D1 wishlist with guest local fallback and guest-to-account merge.
+- Compare up to three products, dedicated comparison workspace and recently-viewed recovery.
+- Zoomable multi-photo product gallery, structured buying facts, service-zone/seller trust context and fixed mobile buy bar.
+- Published product reviews, rating summary, seller replies and moderated buyer review submission.
+- Seller-grouped basket/cart, guest-first checkout, clearer delivery-date decisions and mobile commerce dock.
+- Expanded Shop quick filters for verified sellers, same-day local fulfillment, organic, top-rated and price ceilings.
+
+## v8.7 standalone auth hardening retained
 
 Production login, checkout, inventory and tenant sequencing no longer require the optional `hariyo-mart-services` Worker. KV/D1 fallbacks keep the public Worker operational. Run `npm run prepare:cloudflare:test` before the first Production Test Mode deployment, or use `npm run deploy:cloudflare:production`, which applies migrations and idempotent seed data automatically.
 
 
-## v8.7.0 adaptive brand + demo login
+## v8.7 adaptive brand + demo login retained
 
 - Auto theme follows the operating system and changes Hariyo's brand accents between a bright daytime lime/emerald palette and a mint/forest night palette.
 - Manual Light and Dark remain stable choices.

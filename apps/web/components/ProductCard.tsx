@@ -15,6 +15,7 @@ import { distanceKm, farmForProduct } from '@/lib/marketplace';
 import { useCart } from './CartProvider';
 import { useMarketLocation } from './LocationProvider';
 import { ProductCardGallery } from './ProductGallery';
+import { ProductActions } from './ProductActions';
 
 export function ProductCard({ product, matchScore, matchReasons }: { product: CardProduct; matchScore?: number; matchReasons?: readonly string[] }) {
   const c = useCart(); const farm = farmForProduct(product); const location = useMarketLocation();
@@ -31,7 +32,7 @@ export function ProductCard({ product, matchScore, matchReasons }: { product: Ca
   return <article className="product-card product-card-v85">
     <div className="product-media-shell">
       <ProductCardGallery name={product.name} slug={product.slug} primary={product.image} images={product.images} />
-      <div className="product-photo-topline">
+      <div className="product-photo-topline"><ProductActions slug={product.slug} compact />
         {product.organic ? <span className="organic-chip">Organic</span> : product.featured ? <span className="featured-chip">Hariyo pick</span> : <span/>}
         {discount > 0 && <span className="discount-chip">Save {discount}%</span>}
       </div>
@@ -46,7 +47,7 @@ export function ProductCard({ product, matchScore, matchReasons }: { product: Ca
       <div className="product-actions"><div className="product-price-stack"><span><span className="price">NPR {product.price}</span><small> / {product.unit}</small></span>{product.oldPrice > product.price && <span className="old-price">NPR {product.oldPrice}</span>}</div>
         <button className={`cart-button square-add${line ? ' is-in-basket' : ''}`} onClick={() => c.add(product)} disabled={product.stock <= 0} aria-label={`Add ${product.name} to cart`}><ShoppingBasket size={17}/>{product.stock <= 0 ? 'Sold out' : line ? `${line.quantity} added` : 'Add'}</button>
       </div>
-      <div className={`product-stock ${product.stock < 10 ? 'is-low' : ''}`}><span/>{product.stock <= 0 ? 'Restocking soon' : product.stock < 10 ? `Only ${product.stock} left today` : 'In stock and ready to order'}</div>
+      <div className={`product-stock ${product.stock < 10 ? 'is-low' : ''}`}><span/>{product.stock <= 0 ? 'Restocking soon' : product.stock < 10 ? `Only ${product.stock} left today` : 'In stock and ready to order'}{product.minimumOrder && product.minimumOrder > 1 ? <small>Min. {product.minimumOrder} {product.unit}</small> : null}</div>
     </div>
   </article>;
 }

@@ -34,6 +34,8 @@ export default function Shop() {
   const [category, setCategory] = useState(params.category || 'all');
   const [organicOnly, setOrganicOnly] = useState(false);
   const [stockOnly, setStockOnly] = useState(true);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sameDayOnly, setSameDayOnly] = useState(false);
   const [sort, setSort] = useState<'featured' | 'rating' | 'price'>('featured');
   const [live, setLive] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,6 +64,8 @@ export default function Shop() {
         (category === 'all' || p.category === category) &&
         (!organicOnly || p.organic) &&
         (!stockOnly || p.stock > 0) &&
+        (!verifiedOnly || p.farmerVerified !== false) &&
+        (!sameDayOnly || p.farmSameDay === true) &&
         `${p.name} ${p.shortDescription || ''}`.toLowerCase().includes(q.toLowerCase()),
     );
     return [...filtered].sort((a: any, b: any) => {
@@ -69,7 +73,7 @@ export default function Shop() {
       if (sort === 'price') return a.price - b.price;
       return Number(b.featured) - Number(a.featured);
     });
-  }, [category, organicOnly, q, sort, source, stockOnly]);
+  }, [category, organicOnly, q, sort, source, stockOnly, verifiedOnly, sameDayOnly]);
   return (
     <Screen>
       <Header
@@ -174,6 +178,16 @@ export default function Shop() {
               🌱 Organic
             </Text>
           </Pressable>
+          <Pressable
+            onPress={() => setVerifiedOnly((current) => !current)}
+            style={{ paddingHorizontal: 11, paddingVertical: 9, borderRadius: 10, marginRight: 7, backgroundColor: verifiedOnly ? palette.green : palette.bg }}
+            accessibilityState={{ checked: verifiedOnly }}
+          ><Text style={{ color: verifiedOnly ? '#062D22' : palette.dark, fontWeight: '800' }}>✓ Verified</Text></Pressable>
+          <Pressable
+            onPress={() => setSameDayOnly((current) => !current)}
+            style={{ paddingHorizontal: 11, paddingVertical: 9, borderRadius: 10, marginRight: 7, backgroundColor: sameDayOnly ? palette.green : palette.bg }}
+            accessibilityState={{ checked: sameDayOnly }}
+          ><Text style={{ color: sameDayOnly ? '#062D22' : palette.dark, fontWeight: '800' }}>⚡ Same-day</Text></Pressable>
           <Pressable
             onPress={() => setStockOnly((current) => !current)}
             style={{

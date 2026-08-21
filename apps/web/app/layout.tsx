@@ -8,6 +8,9 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { AuthProvider } from '@/components/AuthProvider';
 import { LocationProvider } from '@/components/LocationProvider';
 import { PublicConfigProvider } from '@/components/PublicConfigProvider';
+import { ProductExperienceProvider } from '@/components/ProductExperienceProvider';
+import { CompareTray } from '@/components/CompareTray';
+import { MobileCommerceNav } from '@/components/MobileCommerceNav';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hariyo-mart-nepal.nishrutesh.workers.dev'),
   title: {
@@ -42,10 +45,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
           <LocationProvider>
             <CartProvider>
-              <Header />
-              <CartDrawer />
-              {children}
-              <Footer />
+              <ProductExperienceProvider>
+                <Header />
+                <CartDrawer />
+                <CompareTray />
+                {children}
+                <Footer />
+                <MobileCommerceNav />
+              </ProductExperienceProvider>
             </CartProvider>
           </LocationProvider>
           </AuthProvider>

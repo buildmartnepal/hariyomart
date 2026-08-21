@@ -115,6 +115,8 @@ export function Footer() {
               <Link href="/info/returns">Returns & refunds</Link>
               <Link href="/info/faq">FAQs</Link>
               <Link href="/info/about">About Hariyo Mart</Link>
+              <Link href="/info/careers">Careers</Link>
+              <Link href="/info/press">Press & media</Link>
             </div>
           </nav>
         </div>

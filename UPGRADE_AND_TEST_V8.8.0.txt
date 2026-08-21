@@ -1,0 +1,46 @@
+HARIYO MART NEPAL v8.8.0 — UPGRADE & TEST
+==========================================
+
+CLOUDFLARE WORKERS BUILDS
+Build command:
+  npx @opennextjs/cloudflare build
+
+Recommended deploy command:
+  npm run deploy:cloudflare:production
+
+The production deploy command keeps the standalone public Worker topology, applies remote D1 migrations, refreshes the idempotent marketplace/test seed when Production Test Mode is enabled, validates configuration and deploys OpenNext.
+
+TEST MODE
+NEXT_PUBLIC_DEMO_MODE=true
+PRODUCTION_TEST_MODE=true
+Shared test password: HariyoDemo@2026
+
+Recommended test identities:
+Buyer: buyer@demo.hariyomart.local
+Farmer: farmer@demo.hariyomart.local
+Manager: manager@demo.hariyomart.local
+Vendor: vendor@demo.hariyomart.local
+Admin: admin@demo.hariyomart.local
+
+TEST THESE FLOWS
+1. /api/system/readiness — verify test_ready / seed counts.
+2. /login — one-click and manual buyer login.
+3. Header predictive search — search a product/category and open Shop.
+4. /shop — quick filters, Best Match, Save, Compare, product photo sliders.
+5. /compare — compare 2–3 products.
+6. /saved — guest and signed-in wishlist behavior.
+7. Product page — zoom gallery, product facts, delivery fit, review section, mobile buy bar.
+8. Basket — mixed sellers should group separately.
+9. /checkout — guest checkout, delivery date, payment, place order.
+10. /track — order lookup.
+11. Farmer Studio — product gallery, minimum order, delivery radius, inventory/order workflows.
+12. Admin — products, reviews, matching engine, orders, inventory, analytics and audit.
+13. Mobile/native — verified/same-day filters, product minimum-order step and delivery/seller trust.
+
+REAL PRODUCTION CUTOVER
+1. Configure JWT_SECRET, JWT_REFRESH_SECRET and TURNSTILE_SECRET_KEY as Cloudflare Worker secrets.
+2. Keep the public Turnstile site key in the Dashboard (keep_vars=true preserves it).
+3. Set NEXT_PUBLIC_DEMO_MODE=false and PRODUCTION_TEST_MODE=false.
+4. Run npm run production:demo:remove.
+5. Redeploy.
+6. Verify /api/system/readiness reports ready.

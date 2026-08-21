@@ -1683,7 +1683,7 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.7.0',
+    version: '8.9.0',
     status:
       Object.values(required).every(Boolean) && (adminConfigured || productionTestMode)
         ? seed.products >= 98 && seed.tenants >= 7

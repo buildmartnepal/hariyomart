@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Store,
   Tag,
+  UserRound,
   Truck,
 } from 'lucide-react';
 import { useCart } from '@/components/CartProvider';
@@ -181,10 +182,8 @@ export default function Checkout() {
         <div className="container">
           <span className="eyebrow">Multi-seller checkout</span>
           <h1>One cart. Seller-by-seller fulfillment.</h1>
-          <p className="section-copy">
-            Hariyo Mart keeps your checkout unified while each farmer receives only the items,
-            delivery task and settlement that belong to their store.
-          </p>
+          <p className="section-copy">Hariyo Mart keeps your checkout unified while each farmer receives only the items, delivery task and settlement that belong to their store.</p>
+          <div className="checkout-progress" aria-label="Checkout progress"><span className="is-active"><b>1</b>Delivery</span><i/><span><b>2</b>Schedule</span><i/><span><b>3</b>Payment</span><i/><span><b>4</b>Confirm</span></div>
         </div>
       </section>
       <section className="section">
@@ -207,6 +206,7 @@ export default function Checkout() {
             </div>
           ) : (
             <form className="checkout-form" onSubmit={submit}>
+              <div className="checkout-guest-callout"><UserRound size={20}/><div><b>Guest checkout is ready</b><span>No account or password is required. Add an email only if you want digital order updates.</span></div></div>
               <div className="checkout-card">
                 <div className="form-heading">
                   <MapPin />
@@ -217,41 +217,41 @@ export default function Checkout() {
                 </div>
                 <div className="form-2">
                   <label>
-                    Full name
-                    <input name="name" required />
+                    Full name <small>(required)</small>
+                    <input name="name" autoComplete="name" required />
                   </label>
                   <label>
-                    Mobile number
-                    <input name="phone" inputMode="tel" required />
+                    Mobile number <small>(required)</small>
+                    <input name="phone" inputMode="tel" autoComplete="tel" required />
                   </label>
                 </div>
                 <label>
-                  Email (optional)
-                  <input name="email" type="email" />
+                  Email <small>(optional)</small>
+                  <input name="email" type="email" autoComplete="email" />
                 </label>
                 <div className="form-2">
                   <label>
-                    Province
-                    <input name="province" required placeholder="Bagmati" />
+                    Province <small>(required)</small>
+                    <input name="province" autoComplete="address-level1" required placeholder="Bagmati" />
                   </label>
                   <label>
-                    District
-                    <input name="district" required placeholder="Kathmandu" />
+                    District <small>(required)</small>
+                    <input name="district" autoComplete="address-level2" required placeholder="Kathmandu" />
                   </label>
                 </div>
                 <div className="form-2">
                   <label>
-                    Municipality
-                    <input name="municipality" required />
+                    Municipality <small>(required)</small>
+                    <input name="municipality" autoComplete="address-level3" required />
                   </label>
                   <label>
-                    Ward
+                    Ward <small>(required)</small>
                     <input name="ward" required />
                   </label>
                 </div>
                 <label>
-                  Street / landmark
-                  <input name="street" required />
+                  Street / landmark <small>(required)</small>
+                  <input name="street" autoComplete="street-address" required />
                 </label>
                 <button className="location-helper" type="button" onClick={locate}>
                   <Crosshair size={16} />
@@ -265,17 +265,17 @@ export default function Checkout() {
                 <div className="form-heading">
                   <CalendarClock />
                   <div>
-                    <b>Delivery schedule</b>
-                    <span>Capacity is rechecked and reserved atomically at checkout</span>
+                    <b>Choose a delivery date</b>
+                    <span>Available dates are capacity-checked again when the order is placed</span>
                   </div>
                 </div>
                 <label>
-                  Preferred delivery slot
+                  Delivery date / time <small>(optional)</small>
                   <select
                     value={deliverySlotId}
                     onChange={(event) => setDeliverySlotId(event.target.value)}
                   >
-                    <option value="">Automatic / next available</option>
+                    <option value="">Next available delivery</option>
                     {deliverySlots.map((slot) => (
                       <option key={slot.id} value={slot.id}>
                         {slot.slot_date} · {slot.starts_at}–{slot.ends_at}
@@ -337,13 +337,13 @@ export default function Checkout() {
                 <div className="form-heading">
                   <ShieldCheck />
                   <div>
-                    <b>Payment method</b>
-                    <span>Order total remains separated by seller for settlement</span>
+                    <b>Payment</b>
+                    <span>Choose how you will pay when the order is fulfilled</span>
                   </div>
                 </div>
-                <select name="paymentMethod" defaultValue="cod" aria-label="Payment method">
+                <label>Payment method <small>(required)</small><select name="paymentMethod" defaultValue="cod" aria-label="Payment method">
                   <option value="cod">Cash on delivery</option>
-                </select>
+                </select></label>
                 <p className="payment-note">
                   Cash on delivery is active. eSewa, Khalti and Fonepay only become visible after
                   their signed callbacks and merchant accounts are verified in production.
@@ -354,13 +354,13 @@ export default function Checkout() {
                 className="btn btn-primary btn-full"
                 disabled={status === 'sending' || !lines.length}
               >
-                {status === 'sending' ? 'Creating order…' : 'Place marketplace order'}
+                {status === 'sending' ? 'Creating order…' : `Place order · NPR ${productsAfterDiscount.toLocaleString()}`}
               </button>
             </form>
           )}
           <aside className="order-summary">
             <div className="summary-head">
-              <h2>Order summary</h2>
+              <div><span className="eyebrow">Guest checkout</span><h2>Order summary</h2></div>
               <span>
                 {groups.length} seller{groups.length === 1 ? '' : 's'}
               </span>

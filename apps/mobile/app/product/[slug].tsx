@@ -59,6 +59,11 @@ export default function Product() {
     };
   }, [slug]);
 
+  useEffect(() => {
+    if (!p) return;
+    setQuantity(Math.max(0.01, Number(p.minimumOrder || 1)));
+  }, [p?.slug]);
+
   if (loading)
     return (
       <Screen>
@@ -85,6 +90,7 @@ export default function Product() {
   const discount =
     p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
   const line = cart.lines.find((item) => item.product.slug === p.slug);
+  const step = Math.max(0.01, Number(p.minimumOrder || 1));
   const category = catalog.categories.find((item) => item.slug === p.category);
 
   return (
@@ -198,6 +204,18 @@ export default function Product() {
       <Text style={[s.copy, { color: palette.muted, fontSize: 16, lineHeight: 25 }]}>
         {p.shortDescription}
       </Text>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+        {[
+          ['✓', p.farmerVerified === false ? 'Marketplace seller' : 'Verified seller'],
+          ['🚚', p.farmSameDay ? 'Same-day local' : 'Scheduled delivery'],
+          ['📍', `${p.deliveryRadiusKm || 35} km service zone`],
+        ].map(([icon, label]) => (
+          <View key={label} style={{ flex: 1, minHeight: 76, backgroundColor: palette.card, borderColor: palette.line, borderWidth: 1, borderRadius: 16, padding: 10, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 15 }}>{icon}</Text>
+            <Text style={{ color: palette.dark, fontSize: 10, fontWeight: '900', marginTop: 5, lineHeight: 14 }}>{label}</Text>
+          </View>
+        ))}
+      </View>
       {p.harvestWindow && (
         <Text style={{ marginTop: 10, color: '#5C9E25', fontWeight: '800' }}>
           🕒 {p.harvestWindow}
@@ -220,7 +238,7 @@ export default function Product() {
           <View>
             <Text style={{ color: palette.dark, fontWeight: '900' }}>Choose quantity</Text>
             <Text style={{ color: palette.muted, fontSize: 12, marginTop: 2 }}>
-              {p.unit} per unit
+              Minimum {step} {p.unit}
             </Text>
           </View>
           <View
@@ -233,8 +251,8 @@ export default function Product() {
             }}
           >
             <Pressable
-              onPress={() => setQuantity((current) => Math.max(1, current - 1))}
-              disabled={quantity <= 1}
+              onPress={() => setQuantity((current) => Math.max(step, Math.round((current - step) * 100) / 100))}
+              disabled={quantity <= step}
               style={{ width: 42, height: 42, alignItems: 'center', justifyContent: 'center' }}
               accessibilityLabel="Decrease quantity"
             >
@@ -246,7 +264,7 @@ export default function Product() {
               {quantity}
             </Text>
             <Pressable
-              onPress={() => setQuantity((current) => Math.min(p.stock, current + 1))}
+              onPress={() => setQuantity((current) => Math.min(p.stock, Math.round((current + step) * 100) / 100))}
               disabled={quantity >= p.stock}
               style={{ width: 42, height: 42, alignItems: 'center', justifyContent: 'center' }}
               accessibilityLabel="Increase quantity"

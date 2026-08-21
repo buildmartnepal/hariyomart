@@ -7,11 +7,11 @@ const services = new Map((config.services || []).map((item) => [item.binding, it
 const failures = [];
 const warnings = [];
 
-if (vars.RELEASE_VERSION !== '8.7.0') failures.push('RELEASE_VERSION must be 8.7.0.');
+if (vars.RELEASE_VERSION !== '8.9.0') failures.push('RELEASE_VERSION must be 8.9.0.');
 if (!fs.existsSync('apps/web/migrations/0010_standalone_auth_runtime_v863.sql'))
   failures.push('v8.6.3 standalone auth migration 0010 is missing.');
 if (!fs.existsSync('apps/web/migrations/0011_demo_identity_repair_v870.sql'))
-  failures.push('v8.7.0 demo identity repair migration 0011 is missing.');
+  failures.push('v8.9.0 demo identity repair migration 0011 is missing.');
 
 if (vars.APP_ENV !== 'production') failures.push('APP_ENV must be production.');
 const productionTestMode = String(vars.PRODUCTION_TEST_MODE) === 'true';

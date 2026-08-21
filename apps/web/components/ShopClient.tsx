@@ -28,6 +28,7 @@ type MarketProduct = Product & {
   farmName?: string;
   farmSlug?: string;
   farmerVerified?: boolean;
+  farmSameDay?: boolean;
   deliveryRadiusKm?: number;
   municipality?: string;
   lat?: number;
@@ -84,6 +85,10 @@ export function ShopClient() {
   const [district, setDistrict] = useState('all');
   const [organicOnly, setOrganicOnly] = useState(false);
   const [stockOnly, setStockOnly] = useState(true);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sameDayOnly, setSameDayOnly] = useState(false);
+  const [topRatedOnly, setTopRatedOnly] = useState(false);
+  const [maxPrice, setMaxPrice] = useState(0);
   const [sort, setSort] = useState('best-match');
   const [live, setLive] = useState<MarketProduct[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -91,6 +96,11 @@ export function ShopClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [density, setDensity] = useState<'grid' | 'roomy'>('grid');
+
+  useEffect(() => {
+    const initialQuery = new URLSearchParams(window.location.search).get('query');
+    if (initialQuery) setQ(initialQuery);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -169,6 +179,8 @@ export function ShopClient() {
         const sellerLat = Number.isFinite(Number(product.lat)) ? Number(product.lat) : farm.lat;
         const sellerLng = Number.isFinite(Number(product.lng)) ? Number(product.lng) : farm.lng;
         const deliveryRadius = Number(product.deliveryRadiusKm || farm.deliveryRadiusKm || market.radius);
+        const sellerVerified = product.farmerVerified ?? farm.verified;
+        const sellerSameDay = product.farmSameDay ?? farm.sameDay;
         const distance = distanceKm(market.place.lat, market.place.lng, sellerLat, sellerLng);
         const match = scoreMarketplaceProduct(
           {
@@ -176,7 +188,7 @@ export function ShopClient() {
             lat: sellerLat,
             lng: sellerLng,
             deliveryRadiusKm: deliveryRadius,
-            farmerVerified: product.farmerVerified ?? farm.verified,
+            farmerVerified: sellerVerified,
             farmName: product.farmName || farm.name,
           },
           {
@@ -188,9 +200,9 @@ export function ShopClient() {
             organicOnly,
           },
         );
-        return { product, distance, deliveryRadius, matchScore: match.matchScore, matchReasons: match.matchReasons };
+        return { product, distance, deliveryRadius, sellerVerified, sellerSameDay, matchScore: match.matchScore, matchReasons: match.matchReasons };
       })
-      .filter(({ product, distance, deliveryRadius }) => {
+      .filter(({ product, distance, deliveryRadius, sellerVerified, sellerSameDay }) => {
         const searchable =
           `${product.name} ${product.shortDescription} ${product.district} ${product.provinceName}`.toLowerCase();
         return (
@@ -200,6 +212,10 @@ export function ShopClient() {
           (district === 'all' || product.district === district) &&
           (!organicOnly || product.organic) &&
           (!stockOnly || product.stock > 0) &&
+          (!verifiedOnly || sellerVerified) &&
+          (!sameDayOnly || sellerSameDay) &&
+          (!topRatedOnly || product.rating >= 4.8) &&
+          (!maxPrice || product.price <= maxPrice) &&
           distance <= Math.min(market.radius >= 1000 ? deliveryRadius : market.radius, deliveryRadius)
         );
       })
@@ -220,6 +236,10 @@ export function ShopClient() {
     district,
     organicOnly,
     stockOnly,
+    verifiedOnly,
+    sameDayOnly,
+    topRatedOnly,
+    maxPrice,
     sort,
     market.place,
     market.radius,
@@ -232,6 +252,10 @@ export function ShopClient() {
     setDistrict('all');
     setOrganicOnly(false);
     setStockOnly(true);
+    setVerifiedOnly(false);
+    setSameDayOnly(false);
+    setTopRatedOnly(false);
+    setMaxPrice(0);
     setSort('best-match');
     market.setRadius(150);
   }
@@ -242,6 +266,10 @@ export function ShopClient() {
     Number(district !== 'all') +
     Number(organicOnly) +
     Number(!stockOnly) +
+    Number(verifiedOnly) +
+    Number(sameDayOnly) +
+    Number(topRatedOnly) +
+    Number(maxPrice > 0) +
     Number(Boolean(q.trim()));
 
   return (
@@ -307,6 +335,14 @@ export function ShopClient() {
             <small>{categoryCounts.get(item.slug) || 0}</small>
           </button>
         ))}
+      </div>
+
+      <div className="market-quick-filters" aria-label="Quick marketplace filters">
+        <button className={sameDayOnly ? 'is-active' : ''} onClick={() => setSameDayOnly((value) => !value)} aria-pressed={sameDayOnly}>⚡ Same-day local</button>
+        <button className={verifiedOnly ? 'is-active' : ''} onClick={() => setVerifiedOnly((value) => !value)} aria-pressed={verifiedOnly}>✓ Verified sellers</button>
+        <button className={organicOnly ? 'is-active' : ''} onClick={() => setOrganicOnly((value) => !value)} aria-pressed={organicOnly}>🌱 Organic</button>
+        <button className={topRatedOnly ? 'is-active' : ''} onClick={() => setTopRatedOnly((value) => !value)} aria-pressed={topRatedOnly}>★ 4.8+ rated</button>
+        <button className={maxPrice === 500 ? 'is-active' : ''} onClick={() => setMaxPrice((value) => value === 500 ? 0 : 500)} aria-pressed={maxPrice === 500}>Under NPR 500</button>
       </div>
 
       <div className="shop-layout advanced-shop-layout">
@@ -376,6 +412,14 @@ export function ShopClient() {
               <option key={item}>{item}</option>
             ))}
           </select>
+          <label htmlFor="market-max-price">Maximum price</label>
+          <select id="market-max-price" value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))}>
+            <option value={0}>Any price</option>
+            <option value={250}>Up to NPR 250</option>
+            <option value={500}>Up to NPR 500</option>
+            <option value={1000}>Up to NPR 1,000</option>
+            <option value={2500}>Up to NPR 2,500</option>
+          </select>
           <div className="filter-checks">
             <label>
               <input
@@ -393,6 +437,9 @@ export function ShopClient() {
               />
               <CheckCircle2 size={16} /> In stock now
             </label>
+            <label><input type="checkbox" checked={verifiedOnly} onChange={(event) => setVerifiedOnly(event.target.checked)} />✓ Verified sellers</label>
+            <label><input type="checkbox" checked={sameDayOnly} onChange={(event) => setSameDayOnly(event.target.checked)} />⚡ Same-day local</label>
+            <label><input type="checkbox" checked={topRatedOnly} onChange={(event) => setTopRatedOnly(event.target.checked)} />★ Rated 4.8+</label>
           </div>
           <div className="live-inventory-note" aria-live="polite">
             <RefreshCw size={16} className={loading ? 'is-spinning' : ''} />
@@ -491,6 +538,10 @@ export function ShopClient() {
                   Include sold out <X size={13} />
                 </button>
               )}
+              {verifiedOnly && <button onClick={() => setVerifiedOnly(false)}>Verified sellers <X size={13}/></button>}
+              {sameDayOnly && <button onClick={() => setSameDayOnly(false)}>Same-day local <X size={13}/></button>}
+              {topRatedOnly && <button onClick={() => setTopRatedOnly(false)}>4.8+ rated <X size={13}/></button>}
+              {maxPrice > 0 && <button onClick={() => setMaxPrice(0)}>Up to NPR {maxPrice.toLocaleString()} <X size={13}/></button>}
               <button className="clear-all-filter" onClick={clearFilters}>
                 Clear all
               </button>

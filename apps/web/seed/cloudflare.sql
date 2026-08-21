@@ -347,5 +347,5 @@ INSERT OR IGNORE INTO tenant_members(tenant_id,user_id,role,status,joined_at) SE
 INSERT OR IGNORE INTO tenant_subscriptions(tenant_id,plan_code,status) SELECT id,CASE WHEN plan='enterprise' THEN 'enterprise' WHEN plan='growth' THEN 'growth' ELSE 'starter' END,'active' FROM tenants;
 INSERT OR IGNORE INTO tenant_settings_v8(tenant_id) SELECT id FROM tenants;
 INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);
-INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.7.0"',1);
+INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.9.0"',1);
 INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);

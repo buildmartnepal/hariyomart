@@ -6,6 +6,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const fixed = [
     '',
     'shop',
+    'compare',
+    'saved',
     'nearby',
     'sell',
     'how-it-works',

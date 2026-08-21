@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ShopClient } from '@/components/ShopClient';
 import { BadgeCheck, MapPin, ShieldCheck, Truck } from 'lucide-react';
+import { RecentlyViewedRail } from '@/components/RecentlyViewedRail';
 export const metadata: Metadata = {
   title: 'Shop Organic Products in Nepal',
   description: 'Browse fresh foods and natural products from Nepal’s seven provinces.',
@@ -42,6 +43,7 @@ export default function Shop() {
           <ShopClient />
         </div>
       </section>
+      <section className="section shop-recent-section"><div className="container"><RecentlyViewedRail /></div></section>
     </main>
   );
 }

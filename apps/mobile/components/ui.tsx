@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } 
 import { Link } from 'expo-router';
 import { catalog } from '@/data/catalog';
 import { useCart } from '@/context/CartContext';
-type Product = (typeof catalog.products)[number] & { images?: readonly string[] };
+type Product = (typeof catalog.products)[number] & { images?: readonly string[]; farmName?: string; farmerVerified?: boolean; farmSameDay?: boolean; deliveryRadiusKm?: number };
 export const colors = {
   dark: '#062D22',
   green: '#88D92F',
@@ -96,9 +96,11 @@ export function ProductCard({ p, compact = false }: { p: Product; compact?: bool
           </Text>
         </Pressable>
       </Link>
-      <Text numberOfLines={1} style={[s.small, { color: palette.muted }]}>
-        {p.district} · {p.unit}
-      </Text>
+      <Text numberOfLines={1} style={[s.small, { color: palette.muted }]}>{p.district} · {p.farmName || 'Hariyo farmer'} · {p.unit}</Text>
+      <View style={{ flexDirection: 'row', gap: 5, marginTop: 7, flexWrap: 'wrap' }}>
+        {p.farmerVerified !== false && <Text style={{ fontSize: 9, fontWeight: '800', color: '#247447', backgroundColor: '#E9F7E5', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 99 }}>✓ VERIFIED</Text>}
+        {p.farmSameDay && <Text style={{ fontSize: 9, fontWeight: '800', color: '#7A4D00', backgroundColor: '#FFF2D5', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 99 }}>⚡ SAME-DAY</Text>}
+      </View>
       <View style={s.row}>
         <View>
           <Text style={[s.price, { color: palette.dark }]}>NPR {p.price}</Text>

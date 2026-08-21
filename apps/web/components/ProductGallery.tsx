@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Images } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Expand, Images, X } from 'lucide-react';
 
 function uniqueImages(primary: string, images?: readonly string[]) {
   return Array.from(new Set([primary, ...(images || [])].filter(Boolean))).slice(0, 8);
@@ -11,6 +11,7 @@ function uniqueImages(primary: string, images?: readonly string[]) {
 export function ProductGallery({ name, primary, images, priority = false }: { name: string; primary: string; images?: readonly string[]; priority?: boolean }) {
   const list = useMemo(() => uniqueImages(primary, images), [primary, images]);
   const [active, setActive] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const current = list[Math.min(active, list.length - 1)] || primary;
   const move = (delta: number) => {
@@ -33,13 +34,21 @@ export function ProductGallery({ name, primary, images, priority = false }: { na
         if (Math.abs(delta) >= 42) move(delta > 0 ? -1 : 1);
       }}
     >
-      <Image src={current} alt={`${name} photo ${active + 1}`} width={1000} height={780} sizes="(max-width: 860px) 100vw, 52vw" priority={priority} />
+      <button type="button" className="gallery-expand" onClick={() => setZoomed(true)} aria-label="Open full-screen product photo"><Expand size={16}/><span>Zoom</span></button>
+      <Image src={current} alt={`${name} photo ${active + 1}`} width={1000} height={780} sizes="(max-width: 860px) 100vw, 52vw" priority={priority} onClick={() => setZoomed(true)} />
       {list.length > 1 && <>
         <button type="button" className="gallery-arrow is-prev" onClick={() => move(-1)} aria-label="Previous product photo"><ChevronLeft /></button>
         <button type="button" className="gallery-arrow is-next" onClick={() => move(1)} aria-label="Next product photo"><ChevronRight /></button>
         <span className="gallery-count" aria-live="polite"><Images size={14}/>{active + 1}/{list.length}</span>
       </>}
     </div>
+    {zoomed && <div className="gallery-lightbox" role="dialog" aria-modal="true" aria-label={`${name} enlarged photo`} onClick={() => setZoomed(false)}>
+      <button type="button" className="gallery-lightbox-close" onClick={() => setZoomed(false)} aria-label="Close enlarged photo"><X/></button>
+      <div className="gallery-lightbox-stage" onClick={(event) => event.stopPropagation()}>
+        <Image src={current} alt={`${name} enlarged photo ${active + 1}`} width={1600} height={1300} sizes="95vw" />
+        {list.length > 1 && <><button type="button" className="gallery-arrow is-prev" onClick={() => move(-1)} aria-label="Previous product photo"><ChevronLeft/></button><button type="button" className="gallery-arrow is-next" onClick={() => move(1)} aria-label="Next product photo"><ChevronRight/></button><span className="gallery-count"><Images size={14}/>{active + 1}/{list.length}</span></>}
+      </div>
+    </div>}
     {list.length > 1 && <div className="product-gallery-thumbs" aria-label="Product photos">
       {list.map((src, index) => <button type="button" key={`${src}-${index}`} className={index === active ? 'is-active' : ''} onClick={() => setActive(index)} aria-label={`View photo ${index + 1}`}>
         <Image src={src} alt="" width={110} height={88} />

@@ -1,0 +1,21 @@
+HARIYO MART NEPAL v8.9.0 — UPGRADE & TEST
+
+1. Upload/commit the v8.9.0 repository.
+2. Keep Cloudflare Build command:
+   npx @opennextjs/cloudflare build
+3. Use Deploy command:
+   npm run deploy:cloudflare:production
+4. Verify /api/health and /api/system/readiness.
+5. Test these public routes on desktop + mobile:
+   /info/about
+   /info/contact
+   /how-it-works
+   /info/farmers
+   /info/delivery
+   /info/quality
+   /info/mobile-app
+6. On /info/contact, create a ticket and retain the returned ticket number.
+7. Test Auto, Light and Dark theme modes.
+8. Test the existing v8.8 buyer flow: Search → Save/Compare → Product → Cart → Checkout.
+9. Test one seller/farmer workspace and one admin workspace.
+10. Before real launch, disable Production Test Mode/demo mode and confirm real Turnstile + JWT secrets are configured.

@@ -1,0 +1,25 @@
+# Missing Things Done — v8.9.0
+
+- [x] About page expanded beyond two paragraphs.
+- [x] About marketplace/system graphic added.
+- [x] About metrics, trust pillars, FAQs and CTAs added.
+- [x] Contact page changed from generic form + text into routed support experience.
+- [x] Support categories and optional order/reference field added.
+- [x] Ticket privacy/security guidance added.
+- [x] Support success state strengthened.
+- [x] How It Works expanded to eight operational stages.
+- [x] Buyer journey added.
+- [x] Seller journey added.
+- [x] Trust checkpoints added.
+- [x] Public-page visual system added to all supporting info pages.
+- [x] Page-specific facts/metrics added.
+- [x] Page-specific decision cards added.
+- [x] Page-specific FAQs added.
+- [x] Strong next-step CTAs added.
+- [x] Mobile responsive diagrams and content panels added.
+- [x] Dark/light/auto theme compatibility retained.
+- [x] Mobile navigation exposes About and Contact.
+- [x] Footer company/help navigation expanded with Careers and Press.
+- [x] SEO canonical metadata added to info pages and How It Works.
+- [x] Existing CMS content override preserved.
+- [x] v8.8 commerce/product system preserved.

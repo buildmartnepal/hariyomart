@@ -19,6 +19,11 @@ import { getPublicRuntimeConfig } from '@/server/cloudflare/public-config';
 import { LiveProductGrid } from '@/components/LiveProductGrid';
 import { ProductGallery } from '@/components/ProductGallery';
 import { ProductLocationFit } from '@/components/ProductLocationFit';
+import { ProductActions } from '@/components/ProductActions';
+import { ProductViewed } from '@/components/ProductViewed';
+import { MobileProductBar } from '@/components/MobileProductBar';
+import { RecentlyViewedRail } from '@/components/RecentlyViewedRail';
+import { ProductReviews } from '@/components/ProductReviews';
 type LiveProduct = Product & {
   farmName?: string;
   farmSlug?: string;
@@ -148,6 +153,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdText }} />
+      <ProductViewed slug={p.slug} />
       <section className="page-hero compact">
         <div className="container">
           <div className="breadcrumbs">
@@ -189,7 +195,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 {p.district}, {p.provinceName}
               </span>
             </div>
-            <h1>{p.name}</h1>
+            <div className="product-title-row"><h1>{p.name}</h1><ProductActions slug={p.slug} /></div>
             <div className="product-detail-rating">
               <span>
                 <Star size={15} fill="currentColor" /> {p.rating} / 5
@@ -216,6 +222,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
             {p.harvestWindow && <div className="pill">{p.harvestWindow}</div>}
             <p className="product-detail-summary">{p.shortDescription}</p>
+            <div className="product-decision-strip">
+              <span><ShieldCheck size={16}/><b>Verified listing</b><small>Seller + stock traceable</small></span>
+              <span><Truck size={16}/><b>{farm.sameDay ? 'Today locally' : 'Scheduled'}</b><small>Delivery date confirmed at checkout</small></span>
+              <span><Store size={16}/><b>{farm.name}</b><small>{farm.deliveryRadiusKm} km seller service zone</small></span>
+            </div>
             <div className="product-fact-grid" aria-label="Product buying details">
               <div><small>PACK / UNIT</small><b>{p.unit}</b></div>
               <div><small>MINIMUM ORDER</small><b>{p.minimumOrder || 1} {p.unit}</b></div>
@@ -330,12 +341,32 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </aside>
         </div>
       </section>
+      <section className="section product-spec-section">
+        <div className="container">
+          <div className="product-spec-head"><div><span className="eyebrow">Buying details</span><h2 className="section-title">Everything needed to decide confidently.</h2></div><Link className="btn btn-soft" href={`/farmers/${farm.slug}`}>View seller store</Link></div>
+          <div className="product-spec-grid">
+            <div><small>PRODUCT</small><b>{p.name}</b><span>{p.category.replaceAll('-', ' ')}</span></div>
+            <div><small>ORIGIN</small><b>{p.district}</b><span>{p.provinceName}, Nepal</span></div>
+            <div><small>ORDER UNIT</small><b>{p.unit}</b><span>Minimum {p.minimumOrder || 1} {p.unit}</span></div>
+            <div><small>QUALITY / GRADE</small><b>{p.grade || (p.organic ? 'Organic listing' : 'Seller quality checked')}</b><span>{p.harvestWindow || 'Seller-managed fresh batch'}</span></div>
+            <div><small>SELLER</small><b>{farm.name}</b><span>{farm.verified ? 'Verified farmer store' : 'Marketplace seller'}</span></div>
+            <div><small>FULFILLMENT</small><b>{farm.sameDay ? 'Same-day local eligible' : 'Scheduled delivery'}</b><span>Pickup {farm.pickup ? 'available' : 'not listed'} · {farm.deliveryRadiusKm} km zone</span></div>
+          </div>
+        </div>
+      </section>
+      <section className="section product-reviews-section">
+        <div className="container">
+          <ProductReviews slug={p.slug} catalogRating={p.rating} />
+        </div>
+      </section>
       <section className="section" style={{ paddingTop: 10 }}>
         <div className="container">
           <h2 className="section-title">You may also like</h2>
           <LiveProductGrid category={p.category} excludeSlug={p.slug} limit={4} />
         </div>
       </section>
+      <section className="section recently-viewed-wrap"><div className="container"><RecentlyViewedRail excludeSlug={p.slug} /></div></section>
+      <MobileProductBar product={p} />
     </main>
   );
 }

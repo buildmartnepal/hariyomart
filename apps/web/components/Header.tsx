@@ -5,10 +5,11 @@ import { useState } from 'react';
 import {
   ChevronDown,
   Crosshair,
+  Heart,
   LogIn,
   MapPin,
   Menu,
-  Search,
+  Scale,
   ShoppingCart,
   Store,
   UserRound,
@@ -19,9 +20,12 @@ import { ThemeSwitcher } from './ThemeSwitcher';
 import { useAuth } from './AuthProvider';
 import { useMarketLocation } from './LocationProvider';
 import { locationPresets } from '@/lib/marketplace';
+import { useProductExperience } from './ProductExperienceProvider';
+import { MarketplaceSearch } from './MarketplaceSearch';
 export function Header() {
   const cart = useCart(),
     auth = useAuth();
+  const experience = useProductExperience();
   const market = useMarketLocation();
   const [open, setOpen] = useState(false);
   const accountHref =
@@ -92,9 +96,9 @@ export function Header() {
             <Store size={16} /> Sell on Hariyo
           </Link>
           <ThemeSwitcher />
-          <Link className="icon-btn desktop-tool" href="/shop" aria-label="Search">
-            <Search size={19} />
-          </Link>
+          <MarketplaceSearch />
+          <Link className="icon-btn desktop-tool header-count-tool" href="/saved" aria-label="Saved products"><Heart size={19}/>{experience.saved.length > 0 && <span>{Math.min(experience.saved.length, 99)}</span>}</Link>
+          <Link className="icon-btn desktop-tool header-count-tool" href="/compare" aria-label="Compare products"><Scale size={19}/>{experience.compare.length > 0 && <span>{experience.compare.length}</span>}</Link>
           <Link
             className="icon-btn desktop-tool account-tool"
             href={accountHref}
@@ -144,9 +148,9 @@ export function Header() {
                 Sign in / register <span>→</span>
               </Link>
             )}
-            <Link href="/shop" onClick={() => setOpen(false)}>
-              Marketplace <span>→</span>
-            </Link>
+            <Link href="/shop" onClick={() => setOpen(false)}>Marketplace <span>→</span></Link>
+            <Link href="/saved" onClick={() => setOpen(false)}>Saved products <span>{experience.saved.length || '→'}</span></Link>
+            <Link href="/compare" onClick={() => setOpen(false)}>Compare products <span>{experience.compare.length || '→'}</span></Link>
             <Link href="/how-it-works" onClick={() => setOpen(false)}>
               How it works <span>→</span>
             </Link>
@@ -158,6 +162,12 @@ export function Header() {
             </Link>
             <Link href="/blog" onClick={() => setOpen(false)}>
               Stories <span>→</span>
+            </Link>
+            <Link href="/info/about" onClick={() => setOpen(false)}>
+              About Hariyo <span>→</span>
+            </Link>
+            <Link href="/info/contact" onClick={() => setOpen(false)}>
+              Contact & support <span>→</span>
             </Link>
             {auth.user && (
               <button
