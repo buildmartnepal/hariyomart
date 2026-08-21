@@ -38,7 +38,7 @@ export function getPublicRuntimeConfig() {
 
   return {
     appEnv,
-    releaseVersion: text(env.RELEASE_VERSION, '9.0.0'),
+    releaseVersion: text(env.RELEASE_VERSION, '10.0.1'),
     siteUrl,
     apiBase,
     productionTestMode: appEnv === 'production' && productionTestMode,

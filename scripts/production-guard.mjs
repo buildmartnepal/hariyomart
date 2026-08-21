@@ -7,13 +7,15 @@ const services = new Map((config.services || []).map((item) => [item.binding, it
 const failures = [];
 const warnings = [];
 
-if (vars.RELEASE_VERSION !== '9.0.0') failures.push('RELEASE_VERSION must be 9.0.0.');
+if (vars.RELEASE_VERSION !== '10.0.1') failures.push('RELEASE_VERSION must be 10.0.1.');
 if (!fs.existsSync('apps/web/migrations/0010_standalone_auth_runtime_v863.sql'))
   failures.push('v8.6.3 standalone auth migration 0010 is missing.');
 if (!fs.existsSync('apps/web/migrations/0011_demo_identity_repair_v870.sql'))
-  failures.push('v9.0.0 demo identity repair migration 0011 is missing.');
+  failures.push('v10.0.1 demo identity repair migration 0011 is missing.');
 if (!fs.existsSync('apps/web/migrations/0012_demo_lab_saved_baskets_v900.sql'))
-  failures.push('v9.0.0 Demo Lab / saved basket migration 0012 is missing.');
+  failures.push('v10.0.1 Demo Lab / saved basket migration 0012 is missing.');
+if (!fs.existsSync('apps/web/migrations/0013_nepal_origin_export_os_v1000.sql'))
+  failures.push('v10.0.1 Nepal Origin Export OS migration 0013 is missing.');
 
 if (vars.APP_ENV !== 'production') failures.push('APP_ENV must be production.');
 const productionTestMode = String(vars.PRODUCTION_TEST_MODE) === 'true';

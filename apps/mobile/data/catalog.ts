@@ -26323,7 +26323,7 @@ export const catalog = {
     }
   ],
   "meta": {
-    "release": "10.0.0",
+    "release": "10.0.1",
     "catalogMode": "production-sourcing-seed",
     "productCount": 420,
     "baseProductFamilies": 210,
@@ -26392,3 +26392,12 @@ export type Province = {
   district: string;
   specialty: string;
 };
+
+/** Build-safe widened catalog views for optional commerce and export fields. */
+export const productCatalog: readonly Product[] = catalog.products;
+export const categoryCatalog: readonly Category[] = catalog.categories;
+export const provinceCatalog: readonly Province[] = catalog.provinces;
+
+export function getCatalogProduct(slug: string): Product | undefined {
+  return productCatalog.find((product) => product.slug === slug);
+}

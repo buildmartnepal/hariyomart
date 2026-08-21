@@ -8610,3 +8610,35 @@ html{scroll-padding-top:110px}body{background-image:radial-gradient(circle at 8%
 .buyer-order-items { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
 .buyer-order-items span { border:1px solid var(--line); border-radius:999px; padding:4px 7px; font-size:.68rem; color:var(--muted); background:color-mix(in srgb,var(--surface) 94%,var(--primary) 3%); }
 @media(max-width:620px){ .buyer-order-v900{grid-template-columns:1fr!important}.buyer-order-tail{justify-items:start}.buyer-order-tail .btn{width:100%} }
+
+/* Hariyo Mart v10.0.1 — Nepal Origin Export OS production polish */
+:root {
+  --hariyo-forest: #063b2b;
+  --hariyo-leaf: #168a55;
+  --hariyo-lime: #98e342;
+  --hariyo-marigold: #f4b942;
+  --hariyo-rhododendron: #d94f70;
+  --hariyo-sky: #3c8dbc;
+  --hariyo-earth: #a7643b;
+  --hariyo-snow: #f7faf4;
+  --hariyo-cream: #f5f0e7;
+  --hariyo-night: #041f18;
+  --trade-ready: var(--hariyo-leaf);
+  --trade-review: var(--hariyo-marigold);
+  --trade-alert: var(--hariyo-rhododendron);
+  --trade-info: var(--hariyo-sky);
+}
+[data-theme-mode='system'][data-theme='light'] {
+  --primary: var(--hariyo-lime);
+  --primary-strong: var(--hariyo-leaf);
+  --dark: var(--hariyo-forest);
+}
+[data-theme-mode='system'][data-theme='dark'] {
+  --primary: #74e5a1;
+  --primary-strong: #74e5a1;
+  --dark: var(--hariyo-night);
+}
+.export-page .btn-primary, .export-rfq-section .btn-primary {
+  background: linear-gradient(135deg, var(--hariyo-lime), #53c96a 48%, var(--hariyo-leaf));
+  color: #05271c;
+}

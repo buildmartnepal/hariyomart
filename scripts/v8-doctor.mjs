@@ -8,6 +8,7 @@ const required = [
   'apps/web/migrations/0009_marketplace_experience_v860.sql',
   'apps/web/migrations/0011_demo_identity_repair_v870.sql',
   'apps/web/migrations/0012_demo_lab_saved_baskets_v900.sql',
+  'apps/web/migrations/0013_nepal_origin_export_os_v1000.sql',
   'apps/web/server/cloudflare/supply-api.ts',
   'apps/web/server/cloudflare/farmer-os-api.ts',
   'apps/web/server/cloudflare/supply-stack.ts',
@@ -36,6 +37,8 @@ const required = [
   'apps/web/components/SavedBasketsClient.tsx',
   'apps/web/app/saved-baskets/page.tsx',
   'apps/web/components/CartProvider.tsx',
+  'apps/web/components/ExportInquiryForm.tsx',
+  'apps/web/app/export/page.tsx',
   'infra/cloudflare/services/src/index.ts',
   'infra/cloudflare/services/wrangler.jsonc',
   'apps/web/wrangler.jsonc',
@@ -47,10 +50,13 @@ const required = [
   'RELEASE_NOTES_V8.6.md',
   'scripts/cloudflare-connected-deploy.mjs',
   'MISSING_THINGS_DONE_V8.6.md',
-  'DEPLOY-HARIYO-V9.0.0.cmd',
-  'RELEASE_NOTES_V9.0.0.md',
-  'V9_0_0_VALIDATION.md',
-  'UI_UX_SYSTEM_V9.0.0.md',
+  'DEPLOY-HARIYO-V10.0.1.cmd',
+  'RELEASE_NOTES_V10.0.1.md',
+  'V10_0_1_VALIDATION.md',
+  'FEATURE_CATALOG_V10.0.1.md',
+  'UI_UX_SYSTEM_V10.0.1.md',
+  'BUILD_FIX_V10.0.1.md',
+  'MISSING_THINGS_DONE_V10.0.1.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
 if (missing.length) throw new Error(`V8.3 required files missing: ${missing.join(', ')}`);
@@ -112,15 +118,33 @@ for (const marker of ['HariyoDemo', 'buyer@demo.hariyomart.local', "status = 'ac
 }
 const v900Migration = fs.readFileSync('apps/web/migrations/0012_demo_lab_saved_baskets_v900.sql', 'utf8');
 for (const marker of ['saved_baskets', 'idx_saved_baskets_user_updated']) {
-  if (!v900Migration.includes(marker)) throw new Error(`V9.0.0 migration missing ${marker}`);
+  if (!v900Migration.includes(marker)) throw new Error(`V10.0.1 migration missing ${marker}`);
 }
+
+const v100Migration = fs.readFileSync('apps/web/migrations/0013_nepal_origin_export_os_v1000.sql', 'utf8');
+for (const marker of ['export_ready','export_inquiries','export_supplier_profiles','export_documents','idx_products_export_ready']) {
+  if (!v100Migration.includes(marker)) throw new Error(`V10 export migration missing ${marker}`);
+}
+
 const cloudSeed = fs.readFileSync('apps/web/seed/cloudflare.sql', 'utf8');
 const migrationSeed = fs.readFileSync('apps/web/migrations/seed.sql', 'utf8');
 if (cloudSeed !== migrationSeed) throw new Error('V8.6 catalog seed files are out of sync');
-if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 98)
-  throw new Error('V8.6 Cloudflare seed must contain exactly 98 catalog products');
-if (!cloudSeed.includes(`('marketplace.release','"9.0.0"',1)`))
+if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 420)
+  throw new Error('V10.0.1 Cloudflare seed must contain exactly 420 catalog products');
+if ((cloudSeed.match(/INSERT OR IGNORE INTO tenants/g) || []).length !== 28)
+  throw new Error('V10.0.1 Cloudflare seed must contain exactly 28 sourcing tenants');
+if ((cloudSeed.match(/INSERT OR IGNORE INTO export_supplier_profiles/g) || []).length !== 28)
+  throw new Error('V10.0.1 Cloudflare seed must contain exactly 28 export supplier profiles');
+if (!cloudSeed.includes(`('marketplace.release','"10.0.1"',1)`))
   throw new Error('V8.6 seed release marker is stale');
+
+const demoSeed = fs.readFileSync('apps/web/seed/demo-accounts.sql', 'utf8');
+for (const staleTenant of ['seed-tenant-bagmati','seed-tenant-koshi','seed-tenant-lumbini']) {
+  if (demoSeed.includes(staleTenant)) throw new Error(`V10.0.1 demo seed still references removed tenant ${staleTenant}`);
+}
+for (const tenant of ['seed-tenant-kavre-hills','seed-tenant-ilam-highlands','seed-tenant-rupandehi-butwal']) {
+  if (!demoSeed.includes(tenant)) throw new Error(`V10.0.1 demo seed missing current sourcing tenant ${tenant}`);
+}
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
 for (const marker of [
@@ -161,7 +185,7 @@ for (const marker of [
   'commerce/cart','commerce/coupons/validate','commerce/delivery-slots','commerce/returns',
   'commerce/summary','commerce/inventory-alerts','product_price_history',
   'farmer-os/overview','farmer-os/crop-cycles','farmer-os/expenses','farmer-os/profitability',
-  'farmer-os/buyer-demands','farmer-os/buyer-demand-offers','farmer-os/traceability','farmer-os/recommendations','farmer-os/ai-assistant',
+  'farmer-os/buyer-demands','farmer-os/buyer-demand-offers','farmer-os/traceability','farmer-os/recommendations','farmer-os/ai-assistant','export/inquiries',
   'rankMarketplaceProducts','images_json','Hariyo Match v3','matching:','standaloneCheckoutFallback','seed_required','DATABASE_SETUP_REQUIRED','isKnownDemoAccountEmail','getDemoAccountProfile','isSeededDemoIdentity','auth/demo-session','ensureDemoIdentity','demoRuntimeBootstrapReady',
 ]) {
   if (!api.includes(marker)) throw new Error(`V8.3 API dispatcher missing ${marker}`);
@@ -177,15 +201,15 @@ for (const marker of [
 
 const commerceApi = fs.readFileSync('apps/web/server/cloudflare/commerce-api.ts', 'utf8');
 for (const marker of ['savedBasketsApi','deleteSavedBasketApi','saved_baskets'])
-  if (!commerceApi.includes(marker)) throw new Error(`V9.0.0 saved basket API missing ${marker}`);
+  if (!commerceApi.includes(marker)) throw new Error(`V10.0.1 saved basket API missing ${marker}`);
 const demoLaunch = fs.readFileSync('apps/web/components/DemoLaunchCenter.tsx', 'utf8');
 for (const marker of ['auth.demoLogin','demoRuntimeBootstrapReady','One-click role sessions'])
-  if (!demoLaunch.includes(marker)) throw new Error(`V9.0.0 Demo Lab missing ${marker}`);
+  if (!demoLaunch.includes(marker)) throw new Error(`V10.0.1 Demo Lab missing ${marker}`);
 const authProviderV900 = fs.readFileSync('apps/web/components/AuthProvider.tsx', 'utf8');
-if (!authProviderV900.includes('auth/demo-session')) throw new Error('V9.0.0 direct demo session client missing');
+if (!authProviderV900.includes('auth/demo-session')) throw new Error('V10.0.1 direct demo session client missing');
 const savedBasketsUi = fs.readFileSync('apps/web/components/SavedBasketsClient.tsx', 'utf8');
 for (const marker of ['commerce/saved-baskets','Load basket','getCatalogProduct'])
-  if (!savedBasketsUi.includes(marker)) throw new Error(`V9.0.0 saved basket UI missing ${marker}`);
+  if (!savedBasketsUi.includes(marker)) throw new Error(`V10.0.1 saved basket UI missing ${marker}`);
 
 const cart = fs.readFileSync('apps/web/components/CartProvider.tsx', 'utf8');
 for (const marker of ['commerce/cart','cloudSynced','mergeCart','localStorage'])
@@ -216,7 +240,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '9.0.0') throw new Error(`Expected v9.0.0 package, got ${pkg.version}`);
+if (pkg.version !== '10.0.1') throw new Error(`Expected v10.0.1 package, got ${pkg.version}`);
 
 
 const infoExperience = fs.readFileSync('apps/web/components/InfoPageExperience.tsx', 'utf8');
@@ -242,15 +266,40 @@ const comparePage = fs.readFileSync('apps/web/app/compare/page.tsx', 'utf8');
 for (const marker of ['Compare what matters', 'Add to basket', 'compare-facts']) if (!comparePage.includes(marker)) throw new Error(`V8.8 compare page missing ${marker}`);
 
 for (const marker of ['getCatalogProduct', 'minimumOrder || 1']) {
-  if (!comparePage.includes(marker)) throw new Error(`V9.0.0 compare build regression guard missing ${marker}`);
+  if (!comparePage.includes(marker)) throw new Error(`V10.0.1 compare build regression guard missing ${marker}`);
 }
 const marketplaceSearch = fs.readFileSync('apps/web/components/MarketplaceSearch.tsx', 'utf8');
 for (const marker of ['productCatalog', 'categoryCatalog', 'type Product', 'market-search-trigger']) {
-  if (!marketplaceSearch.includes(marker)) throw new Error(`V9.0.0 search build/mobile regression guard missing ${marker}`);
+  if (!marketplaceSearch.includes(marker)) throw new Error(`V10.0.1 search build/mobile regression guard missing ${marker}`);
 }
+
+const catalogSource = fs.readFileSync('apps/web/lib/catalog.ts', 'utf8');
+for (const marker of ['export const productCatalog', 'export const categoryCatalog', 'export function getCatalogProduct']) {
+  if (!catalogSource.includes(marker)) throw new Error(`V10.0.1 catalog compatibility export missing ${marker}`);
+}
+if (!shop.includes(') : null}')) throw new Error('V10.0.1 ShopClient conditional rendering regression guard failed');
+const catalogSync = fs.readFileSync('apps/web/scripts/sync-catalog.mjs', 'utf8');
+for (const marker of ['export const productCatalog', 'export const categoryCatalog', 'export function getCatalogProduct']) {
+  if (!catalogSync.includes(marker)) throw new Error(`V10.0.1 catalog generator would drop compatibility export ${marker}`);
+}
+
+
+const exportPage = fs.readFileSync('apps/web/app/export/page.tsx', 'utf8');
+for (const marker of ['Nepal Origin Supply & Export Desk','ExportInquiryForm','exportReady']) {
+  if (!exportPage.includes(marker)) throw new Error(`V10 export page missing ${marker}`);
+}
+const exportForm = fs.readFileSync('apps/web/components/ExportInquiryForm.tsx', 'utf8');
+for (const marker of ['/export/inquiries','Global buyer RFQ','requiredDocuments']) {
+  if (!exportForm.includes(marker)) throw new Error(`V10 export inquiry form missing ${marker}`);
+}
+const operationsV10 = fs.readFileSync('apps/web/server/cloudflare/operations.ts', 'utf8');
+for (const marker of ['exportInquiries','adminExportInquiry','export_inquiries']) {
+  if (!operationsV10.includes(marker)) throw new Error(`V10 export operations API missing ${marker}`);
+}
+
 const mobileTabs = fs.readFileSync('apps/mobile/app/(tabs)/_layout.tsx', 'utf8');
 for (const marker of ['useMobileColors', 'name="sell" options={{ href: null }}', 'palette.accent']) {
-  if (!mobileTabs.includes(marker)) throw new Error(`V9.0.0 native mobile navigation polish missing ${marker}`);
+  if (!mobileTabs.includes(marker)) throw new Error(`V10.0.1 native mobile navigation polish missing ${marker}`);
 }
 const cartDrawerV88 = fs.readFileSync('apps/web/components/CartDrawer.tsx', 'utf8');
 for (const marker of ['cart-seller-group', 'Guest checkout', 'Review basket']) if (!cartDrawerV88.includes(marker)) throw new Error(`V8.8 cart UX missing ${marker}`);
@@ -261,7 +310,7 @@ const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [
   '--nav-text','--field-text','--footer-text','cross-theme contrast hardening',
   'newsletter-form input:-webkit-autofill','v8.2 commerce control plane','commerce-kpis',
-  'Adaptive brand system',"data-theme-mode='system'",'demo-login-action','password-field','Commerce Experience System','mobile-commerce-nav','compare-tray','market-quick-filters','Hariyo Mart v9.0.0','market-search-trigger',
+  'Adaptive brand system',"data-theme-mode='system'",'demo-login-action','password-field','Commerce Experience System','mobile-commerce-nav','compare-tray','market-quick-filters','Hariyo Mart v10.0.1 — Nepal Origin Export OS production polish','market-search-trigger',
 ]) {
   if (!css.includes(marker)) throw new Error(`Theme/commerce UI hardening missing ${marker}`);
 }

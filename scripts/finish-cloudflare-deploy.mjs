@@ -56,10 +56,10 @@ function bulkSecrets(values, prefix) {
   }
 }
 
-console.log('\n1/8 Validating local production configuration');
+console.log('\n1/9 Validating local production configuration');
 run(npm, ['run', 'cloudflare:config:check']);
 
-console.log('\n2/8 Checking Cloudflare login and required secrets');
+console.log('\n2/9 Checking Cloudflare login and required secrets');
 wrangler(['whoami']);
 const secretList = wrangler(['secret', 'list', '--config', 'apps/web/wrangler.jsonc'], {
   capture: true,
@@ -79,8 +79,8 @@ if (missingJwt.length) {
   console.log('JWT and Turnstile secrets are already configured.');
 }
 
-console.log('\n3/8 Backing up remote D1');
-const backup = path.join(root, `hariyo-pre-v8-6-${new Date().toISOString().slice(0, 10)}.sql`);
+console.log('\n3/9 Backing up remote D1');
+const backup = path.join(root, `hariyo-pre-v10-0-1-${new Date().toISOString().slice(0, 10)}.sql`);
 wrangler([
   'd1', 'export', 'hariyo-mart-production-apac', '--remote', '--output', backup,
 ]);
@@ -103,7 +103,7 @@ if (process.env.ENABLE_HARIYO_SERVICES === '1') {
     '--config',
     'infra/cloudflare/services/wrangler.jsonc',
     '--message',
-    'Hariyo Mart v9.0.0 optional services release',
+    'Hariyo Mart v10.0.1 optional services release',
   ]);
 } else {
   console.log('Skipping optional hariyo-mart-services; the public Worker uses D1/KV/Queue fallbacks.');
@@ -149,5 +149,5 @@ if (!readiness?.adminConfigured) {
   console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart v9.0.0 is live: ${siteUrl}`);
+console.log(`\nHariyo Mart v10.0.1 is live: ${siteUrl}`);
 console.log(`Owner sign-in: ${siteUrl}/login`);

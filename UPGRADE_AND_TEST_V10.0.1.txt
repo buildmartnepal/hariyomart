@@ -1,0 +1,22 @@
+HARIYO MART NEPAL v10.0.1 — UPGRADE / TEST
+
+1. npm ci
+2. npm run v10:preflight
+3. npm run cloudflare:types
+4. npm run typecheck
+5. npm run test
+6. npm run build:cloudflare:production
+7. npm run deploy:cloudflare:production
+
+After deploy verify:
+- /api/health
+- /api/system/readiness
+- /shop
+- /export
+- /login and /demo (when Production Test Mode is intentionally enabled)
+- a product detail with gallery/location/export information
+- compare, saved baskets, cart and checkout
+- farmer/admin workspaces
+
+Expected production seed:
+420 products / 23 categories / 28 sourcing tenants / 190 export-ready products / 28 supplier export profiles.

@@ -24,7 +24,7 @@ if (!web.observability?.enabled) fail(`${webPath} observability must be enabled`
 const vars = web.vars || {};
 if (vars.APP_ENV !== 'production' || vars.DATA_PLATFORM !== 'cloudflare-native')
   fail(`${webPath} must declare the Cloudflare-native production platform`);
-if (vars.RELEASE_VERSION !== '9.0.0') fail(`${webPath} RELEASE_VERSION must be 9.0.0`);
+if (vars.RELEASE_VERSION !== '10.0.1') fail(`${webPath} RELEASE_VERSION must be 10.0.1`);
 if (!vars.NEXT_PUBLIC_SITE_URL || !URL.canParse(vars.NEXT_PUBLIC_SITE_URL) || new URL(vars.NEXT_PUBLIC_SITE_URL).protocol !== 'https:')
   fail(`${webPath} NEXT_PUBLIC_SITE_URL must be a valid production HTTPS URL`);
 if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);
@@ -87,4 +87,4 @@ if ('NEXT_PUBLIC_TURNSTILE_SITE_KEY' in vars)
   fail('NEXT_PUBLIC_TURNSTILE_SITE_KEY must not be committed in wrangler vars; keep it in the Cloudflare Dashboard.');
 console.log('Turnstile public site key: Dashboard-managed (preserved by keep_vars=true).');
 
-console.log('Cloudflare v9.0.0 production configuration PASS');
+console.log('Cloudflare v10.0.1 production configuration PASS');

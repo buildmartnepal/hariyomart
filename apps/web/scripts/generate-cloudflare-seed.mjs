@@ -207,7 +207,7 @@ Object.entries(origins).forEach(([province, origin], index) => {
   ['seed-promo-fresh', null, 'FRESH150', 'Fresh-start credit', 'fixed', 150, 1200, 150, 500],
   [
     'seed-promo-local',
-    'seed-tenant-bagmati',
+    'seed-tenant-kavre-hills',
     'LOCAL10',
     'Kathmandu local harvest',
     'percent',
@@ -387,7 +387,7 @@ lines.push(
 
 lines.push(
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);`,
-  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"10.0.0"',1);`,
+  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"10.0.1"',1);`,
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);`,
 );
 

@@ -1,3 +1,30 @@
+# Hariyo Mart Nepal v10.0.1 — Nepal Origin Supply & Export OS
+
+Hariyo Mart Nepal v10.0.1 is a Cloudflare-native marketplace and multi-tenant producer SaaS connecting Nepal farmers, cooperatives and local producers with households, restaurants, hotels, institutions, wholesale buyers and qualified international sourcing inquiries.
+
+## v10.0.1 highlights
+
+- 420 Nepal-origin catalog SKUs across 210 product families, 23 categories, 28 sourcing clusters and all 7 provinces.
+- Fresh produce, fruits, herbs/spices, medicinal botanicals, tea/coffee, honey, heritage grains, lentils, essential oils, specialty foods and other Nepal-origin supply categories.
+- Domestic city supply, wholesale/institutional packs and qualified export RFQ workflows.
+- Export supplier profiles, compliance-document records, trade packs, export MOQ, lead time, destination markets and lot-level compliance notes.
+- Permanent catalog compatibility contract (`productCatalog`, `categoryCatalog`, `getCatalogProduct`) so catalog regeneration cannot break Compare/Search/Saved Baskets.
+- Fixed v10 Shop JSX parser regression and fresh-seed promotion foreign key.
+- Named Hariyo Forest / Nepal Leaf / Fresh Lime / Marigold / Rhododendron / Himalayan Sky production palette.
+- v10 release preflight and standalone Cloudflare production deployment workflow.
+
+## Production commands
+
+```bash
+npm ci
+npm run build:cloudflare:production
+npm run deploy:cloudflare:production
+```
+
+See `RELEASE_NOTES_V10.0.1.md`, `FEATURE_CATALOG_V10.0.1.md`, `V10_0_1_VALIDATION.md` and `CLOUDFLARE_BUILD_SETTINGS_V10.0.1.md`.
+
+---
+
 # Hariyo Mart Nepal v9.0.0 — Demo Lab + Repeat Commerce
 
 Hariyo Mart Nepal is a Cloudflare-native multi-tenant farm-to-market marketplace and Farmer OS for Nepal. v9.0.0 makes Production Test Mode reliable even when a raw OpenNext deploy skips demo seeding, and adds repeat-purchase features for buyers across web and native mobile.

@@ -142,8 +142,8 @@ for (const forbidden of ['CLOUDFLARE_API_TOKEN=', 'CLOUDFLARE_ACCOUNT_ID=', 'CLO
 }
 
 const catalog = JSON.parse(fs.readFileSync('apps/web/server/data/catalog.json', 'utf8'));
-if (!Array.isArray(catalog.products) || catalog.products.length !== 98) {
-  throw new Error(`Expected 98 catalog products, got ${catalog.products?.length}`);
+if (!Array.isArray(catalog.products) || catalog.products.length !== 420) {
+  throw new Error(`Expected 420 catalog products, got ${catalog.products?.length}`);
 }
 if (!Array.isArray(catalog.categories) || catalog.categories.length !== 23) {
   throw new Error(`Expected 23 catalog categories, got ${catalog.categories?.length}`);
@@ -171,6 +171,8 @@ for (const marker of [
   'adminPages',
   'adminMedia',
   'adminAudit',
+  'exportInquiries',
+  'adminExportInquiry',
 ]) {
   if (!operations.includes(marker)) throw new Error(`Operations API missing ${marker}`);
 }
@@ -200,4 +202,4 @@ if (!seed.includes('!seed-account-login-disabled!')) {
   throw new Error('Operational seed identities must remain login-disabled');
 }
 
-console.log('Hariyo Mart Nepal v9.0.0 Cloudflare-native compatibility smoke check PASS');
+console.log('Hariyo Mart Nepal v10.0.1 Cloudflare-native export compatibility smoke check PASS');

@@ -598,7 +598,7 @@ export function ShopClient() {
                 Show the full market
               </button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

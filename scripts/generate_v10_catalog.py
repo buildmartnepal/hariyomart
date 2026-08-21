@@ -291,7 +291,7 @@ assert len({p['slug'] for p in products})==420
 
 cluster_rows=[{'key':k,'province':v[0],'district':v[1],'municipality':v[2],'name':v[3],'lat':v[4],'lng':v[5],'altitude':v[6]} for k,v in clusters.items()]
 catalog={'provinces':provinces,'categories':categories,'sourcingClusters':cluster_rows,'products':products,'meta':{
-  'release':'10.0.0','catalogMode':'production-sourcing-seed','productCount':len(products),'baseProductFamilies':210,'sourcingClusters':len(clusters),
+  'release':'10.0.1','catalogMode':'production-sourcing-seed','productCount':len(products),'baseProductFamilies':210,'sourcingClusters':len(clusters),
   'positioning':'Nepal-origin farm, local-producer, wholesale and export sourcing marketplace',
   'accuracyNote':'Seeded catalog represents authentic product types and sourcing regions, not guaranteed live inventory, certification or export permission. Confirm every commercial lot before sale or export.'
 }}

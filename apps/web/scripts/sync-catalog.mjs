@@ -84,6 +84,15 @@ export type Province = {
   district: string;
   specialty: string;
 };
+
+/** Build-safe widened catalog views for optional commerce and export fields. */
+export const productCatalog: readonly Product[] = catalog.products;
+export const categoryCatalog: readonly Category[] = catalog.categories;
+export const provinceCatalog: readonly Province[] = catalog.provinces;
+
+export function getCatalogProduct(slug: string): Product | undefined {
+  return productCatalog.find((product) => product.slug === slug);
+}
 `;
 await Promise.all([
   writeFile(path.join(webRoot, 'lib/catalog.ts'), generated),
