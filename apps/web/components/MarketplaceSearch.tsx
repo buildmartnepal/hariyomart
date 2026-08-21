@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Search, Sparkles, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { catalog } from '@/lib/catalog';
+import { categoryCatalog, productCatalog, type Product } from '@/lib/catalog';
 
 const RECENT_KEY = 'hariyo-market-searches-v1';
 
-function safeImage(product: (typeof catalog.products)[number]) {
-  return product.image || `/products/${product.category}.svg`;
+function safeImage(product: Product) {
+  return product.image?.trim() || `/products/${product.category}.svg`;
 }
 
 export function MarketplaceSearch() {
@@ -46,8 +46,8 @@ export function MarketplaceSearch() {
 
   const normalized = query.trim().toLowerCase();
   const productResults = useMemo(() => {
-    if (!normalized) return catalog.products.filter((product) => product.featured).slice(0, 6);
-    return catalog.products
+    if (!normalized) return productCatalog.filter((product) => product.featured).slice(0, 6);
+    return productCatalog
       .filter((product) =>
         `${product.name} ${product.shortDescription} ${product.category} ${product.district} ${product.provinceName}`
           .toLowerCase()
@@ -56,8 +56,8 @@ export function MarketplaceSearch() {
       .slice(0, 7);
   }, [normalized]);
   const categoryResults = useMemo(() => {
-    if (!normalized) return catalog.categories.slice(0, 5);
-    return catalog.categories
+    if (!normalized) return categoryCatalog.slice(0, 5);
+    return categoryCatalog
       .filter((category) => `${category.name} ${category.description}`.toLowerCase().includes(normalized))
       .slice(0, 4);
   }, [normalized]);
@@ -84,7 +84,7 @@ export function MarketplaceSearch() {
 
   return (
     <>
-      <button className="icon-btn desktop-tool" type="button" aria-label="Search marketplace" onClick={() => setOpen(true)}>
+      <button className="icon-btn market-search-trigger" type="button" aria-label="Search marketplace" onClick={() => setOpen(true)}>
         <Search size={19} />
       </button>
       {open && (

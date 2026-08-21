@@ -15,7 +15,7 @@ export type PublicRuntimeConfig = {
 
 const fallbackConfig: PublicRuntimeConfig = {
   appEnv: 'production',
-  releaseVersion: '8.9.0',
+  releaseVersion: '8.9.1',
   siteUrl: '',
   apiBase: '/api',
   demoEnabled: false,

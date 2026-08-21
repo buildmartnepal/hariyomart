@@ -39,10 +39,12 @@ export function ThemeSwitcher() {
   const label = theme === 'system' ? `Auto · ${resolvedDark ? 'Night' : 'Day'}` : theme === 'dark' ? 'Dark' : 'Light';
   return (
     <button
+      type="button"
       className="icon-btn theme-button"
       onClick={cycle}
       aria-label={`Theme is ${label}. Switch theme`}
       title={`${label} theme · click to change`}
+      aria-live="polite"
     >
       <Icon size={18} />
       <span>{label}</span>

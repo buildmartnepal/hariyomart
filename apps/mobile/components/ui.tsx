@@ -5,20 +5,12 @@ import { catalog } from '@/data/catalog';
 import { useCart } from '@/context/CartContext';
 type Product = (typeof catalog.products)[number] & { images?: readonly string[]; farmName?: string; farmerVerified?: boolean; farmSameDay?: boolean; deliveryRadiusKm?: number };
 export const colors = {
-  dark: '#062D22',
-  green: '#88D92F',
-  bg: '#F6F9F1',
-  card: '#FFFFFF',
-  muted: '#65776F',
-  line: '#DDE7D8',
+  dark: '#0A3024', green: '#63D45A', accent: '#D8EF5B', bg: '#F3F8F1',
+  card: '#FFFFFF', muted: '#5E746A', line: '#D8E6D9', soft: '#EAF5E5',
 };
 const darkColors = {
-  dark: '#F1FBF5',
-  green: '#9BEA4D',
-  bg: '#07130F',
-  card: '#10241C',
-  muted: '#A8BBB1',
-  line: '#29473B',
+  dark: '#F1FBF5', green: '#70E3A0', accent: '#D4EF68', bg: '#06120D',
+  card: '#0D2118', muted: '#A6BDB1', line: '#28453A', soft: '#132B21',
 };
 export function useMobileColors() {
   return useColorScheme() === 'dark' ? darkColors : colors;
@@ -28,7 +20,11 @@ export function Screen({ children }: { children: React.ReactNode }) {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: palette.bg }}
-      contentContainerStyle={{ padding: 18, paddingBottom: 110 }}
+      contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 8, paddingBottom: 112 }}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardDismissMode="on-drag"
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
@@ -38,7 +34,7 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
   const palette = useMobileColors();
   return (
     <View style={{ marginTop: 20, marginBottom: 18 }}>
-      <Text style={s.eyebrow}>HARIYO MART NEPAL</Text>
+      <Text style={[s.eyebrow, { color: palette.green }]}>HARIYO MART NEPAL</Text>
       <Text style={[s.title, { color: palette.dark }]}>{title}</Text>
       {subtitle && <Text style={[s.copy, { color: palette.muted }]}>{subtitle}</Text>}
     </View>
@@ -158,10 +154,10 @@ export const s = StyleSheet.create({
     padding: 13,
     marginBottom: 14,
   },
-  cardCompact: { width: '48.5%', padding: 9, borderRadius: 18 },
+  cardCompact: { width: '48.5%', padding: 10, borderRadius: 20 },
   productGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  mobileImageShell: { position: 'relative', overflow: 'hidden', borderRadius: 14 },
-  image: { width: '100%', aspectRatio: 1, borderRadius: 14, backgroundColor: '#EDF5E6' },
+  mobileImageShell: { position: 'relative', overflow: 'hidden', borderRadius: 16 },
+  image: { width: '100%', aspectRatio: 1, borderRadius: 16, backgroundColor: '#EDF5E6' },
   mobileImageBadges: {
     position: 'absolute',
     left: 7,
@@ -246,7 +242,7 @@ export const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addActive: { backgroundColor: '#DDF5C6', borderWidth: 1, borderColor: '#88D92F' },
+  addActive: { backgroundColor: '#DDF5C6', borderWidth: 1, borderColor: colors.green },
   addDisabled: { opacity: 0.45 },
   mobileAddText: { fontSize: 10, fontWeight: '900', color: colors.dark },
   mobileStockRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
@@ -276,8 +272,10 @@ export const s = StyleSheet.create({
   heroGreen: { color: colors.green },
   button: {
     backgroundColor: colors.green,
-    padding: 15,
-    borderRadius: 14,
+    minHeight: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 15,
     alignItems: 'center',
     marginTop: 18,
   },

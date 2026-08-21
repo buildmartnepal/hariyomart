@@ -1,4 +1,4 @@
-# Missing Things Done — v8.9.0
+# Missing Things Done — v8.9.1
 
 - [x] About page expanded beyond two paragraphs.
 - [x] About marketplace/system graphic added.

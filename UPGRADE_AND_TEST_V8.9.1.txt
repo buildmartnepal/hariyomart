@@ -1,0 +1,14 @@
+HARIYO MART NEPAL v8.9.1 — UPGRADE & TEST
+
+1. Replace the repository with this v8.9.1 package or commit its changes.
+2. Keep Cloudflare Build command: npx @opennextjs/cloudflare build
+3. Keep Deploy command: npm run deploy:cloudflare:production
+4. Confirm Cloudflare secrets JWT_SECRET, JWT_REFRESH_SECRET and TURNSTILE_SECRET_KEY exist.
+5. Deploy.
+6. Verify /api/health and /api/system/readiness.
+7. Test Marketplace Search on desktop and mobile.
+8. Add 2–3 products to Compare and confirm Minimum displays without build/runtime errors.
+9. Test Shop → product → basket → checkout on mobile width.
+10. Test native Expo tabs: Home, Nearby, Shop, Cart, Account; Sell remains reachable from Home.
+11. Test Auto Day/Night plus manual Light/Dark on web.
+12. Test Production Test Mode demo identities only while the explicit test flags are enabled.

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeCheck, Leaf, MapPin, Scale, ShoppingBasket, Star, Truck, X } from 'lucide-react';
-import { catalog } from '@/lib/catalog';
+import { getCatalogProduct } from '@/lib/catalog';
 import { farmForProduct } from '@/lib/marketplace';
 import { useCart } from '@/components/CartProvider';
 import { useProductExperience } from '@/components/ProductExperienceProvider';
@@ -12,7 +12,7 @@ export default function ComparePage() {
   const experience = useProductExperience();
   const cart = useCart();
   const products = experience.compare.flatMap((slug) => {
-    const product = catalog.products.find((item) => item.slug === slug);
+    const product = getCatalogProduct(slug);
     return product ? [product] : [];
   });
 

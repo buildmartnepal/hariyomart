@@ -1,13 +1,17 @@
-# Hariyo Mart Nepal v8.9.0 — Commerce Experience + Farm-to-Market OS
+# Hariyo Mart Nepal v8.9.1 — Cloudflare Build Fix + Unified Website/Mobile UX
+## v8.9.1 — Build-safe commerce + unified mobile experience
 
-## v8.9.0 — Public Story & Trust Experience
+v8.9.1 fixes the two strict TypeScript failures reported by Cloudflare Workers Builds (`minimumOrder` on Compare and `never` narrowing in MarketplaceSearch) at the catalog type boundary, then tightens website/mobile theme consistency, global mobile search, product-card hierarchy, compare UX, safe areas, native navigation and accessibility. v8.9 public content and the complete v8.8 commerce/Farmer OS stack remain intact.
 
-v8.9.0 adds a richer public content system across About, Contact, How It Works and all supporting guide/policy pages: visual story modules, page-specific artwork, metrics, decision cards, contextual FAQs, stronger CTAs, support routing and mobile-responsive system diagrams. The v8.8 commerce/product experience remains intact.
+
+## v8.9.1 — Public Story & Trust Experience
+
+v8.9.1 adds a richer public content system across About, Contact, How It Works and all supporting guide/policy pages: visual story modules, page-specific artwork, metrics, decision cards, contextual FAQs, stronger CTAs, support routing and mobile-responsive system diagrams. The v8.8 commerce/product experience remains intact.
 
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.9.0 adds a complete buyer decision and conversion layer: predictive marketplace search, persistent Save/Compare/Recently Viewed, full-screen gallery zoom, seller-grouped basket UX, guest-first checkout, published reviews and seller replies, mobile commerce navigation and stronger product decision information while retaining v8.7 authentication hardening, adaptive brand, Farmer OS and Cloudflare-native runtime fallbacks.
+v8.9.1 adds a complete buyer decision and conversion layer: predictive marketplace search, persistent Save/Compare/Recently Viewed, full-screen gallery zoom, seller-grouped basket UX, guest-first checkout, published reviews and seller replies, mobile commerce navigation and stronger product decision information while retaining v8.7 authentication hardening, adaptive brand, Farmer OS and Cloudflare-native runtime fallbacks.
 
 ## Production stack
 
@@ -100,7 +104,7 @@ npm run dev:web
 1. Keep the public Turnstile site key in the Cloudflare Dashboard; `keep_vars=true` preserves it.
 2. Set `JWT_SECRET`, `JWT_REFRESH_SECRET` and `TURNSTILE_SECRET_KEY` as Wrangler secrets before real production. Production Test Mode can be used temporarily for verification.
 3. Export/backup the production D1 database.
-4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.9.0.cmd`). The connected deploy applies all D1 migrations through `0011`, refreshes the idempotent seed/test identities when enabled, builds OpenNext when needed and deploys the standalone public Worker.
+4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.9.1.cmd`). The connected deploy applies all D1 migrations through `0011`, refreshes the idempotent seed/test identities when enabled, builds OpenNext when needed and deploys the standalone public Worker.
 5. Verify `/api/health`, `/api/system/readiness`, one-click demo login, `/shop`, `/nearby`, a live product gallery and `/admin/matching-engine`.
 
 See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.
@@ -115,12 +119,12 @@ See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShe
 - Keep `NEXT_PUBLIC_DEMO_MODE=false` for a real production launch and remove demo users with `npm run demo:remove:remote`.
 
 
-## v8.9.0 deployment
+## v8.9.1 deployment
 
 For Cloudflare Workers Builds use `npm run build:cloudflare` followed by `npm run deploy:cloudflare:connected`. The deploy step keeps `hariyo-mart-services` optional, applies D1 migrations and idempotent seed repair before web cutover, and then publishes the standalone `hariyo-mart-nepal` Worker. See `CLOUDFLARE_CONNECTED_DEPLOY.md`.
 
 
-## v8.9.0 commerce experience
+## v8.9.1 commerce experience
 
 - Predictive global search with product/category suggestions, recent-search memory and Shop query handoff.
 - Real signed-in D1 wishlist with guest local fallback and guest-to-account merge.

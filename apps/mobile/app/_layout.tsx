@@ -1,16 +1,20 @@
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { useMobileColors } from '@/components/ui';
 export default function Layout() {
   const dark = useColorScheme() === 'dark';
+  const palette = useMobileColors();
   return (
     <AuthProvider>
       <CartProvider>
+        <StatusBar style={dark ? 'light' : 'dark'} backgroundColor={palette.bg} />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: dark ? '#10241C' : '#062D22' },
-            headerTintColor: '#fff',
+            headerStyle: { backgroundColor: palette.card },
+            headerTintColor: palette.dark,
             headerTitleStyle: { fontWeight: '800' },
           }}
         >

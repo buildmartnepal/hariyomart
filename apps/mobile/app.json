@@ -3,12 +3,12 @@
     "name": "Hariyo Mart Nepal",
     "slug": "hariyo-mart-nepal",
     "scheme": "hariyo",
-    "version": "8.9.0",
+    "version": "8.9.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#062D22"
+      "backgroundColor": "#0A3024"
     },
     "ios": {
       "bundleIdentifier": "com.hariyomart.nepal",
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.hariyomart.nepal",
       "adaptiveIcon": {
-        "backgroundColor": "#062D22"
+        "backgroundColor": "#0A3024"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",

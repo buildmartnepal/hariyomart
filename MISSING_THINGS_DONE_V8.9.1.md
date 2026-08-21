@@ -1,0 +1,25 @@
+# Missing Things Done — v8.9.1
+
+- Fixed Cloudflare TypeScript error: `minimumOrder` missing on generated literal union.
+- Fixed Cloudflare TypeScript error: predictive-search image fallback narrowed product to `never`.
+- Added widened catalog contracts and a typed product lookup helper.
+- Added regression guards so these two build failures cannot silently return.
+- Made global predictive search accessible from mobile header.
+- Improved sticky header, keyboard focus, motion preference and touch targets.
+- Improved product-card consistency and purchase hierarchy.
+- Improved Compare desktop/mobile layouts.
+- Improved predictive search desktop/mobile layouts.
+- Improved mobile menu and fixed commerce dock safe-area behavior.
+- Unified native app colors with web Auto Day/Night brand system.
+- Reduced native bottom navigation from six crowded tabs to five primary buyer destinations.
+- Improved native screen insets, keyboard behavior and status/header colors.
+- Added mobile Home trust strip and corrected dark-mode CTA contrast.
+- Preserved complete v8.9 content pages and v8.8 commerce/Farmer OS capabilities.
+- Production guard PASS.
+- Cloudflare configuration PASS.
+- v8.9.1 doctor PASS.
+- Catalog validation PASS: 98 products, 23 categories, 7 provinces.
+- Cloudflare compatibility smoke PASS.
+- Authored TS/TSX syntax parse PASS.
+- Targeted strict TypeScript regression check for Compare/Search PASS.
+- Fresh SQLite/D1-compatible migration + seed execution PASS; release marker 8.9.1.

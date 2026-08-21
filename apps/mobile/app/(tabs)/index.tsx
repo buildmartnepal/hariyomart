@@ -46,13 +46,21 @@ export default function Home() {
               borderRadius: 14,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: palette.dark,
+              backgroundColor: palette.green,
             }}
             accessibilityRole="button"
           >
-            <Text style={{ color: 'white', fontWeight: '900', fontSize: 12 }}>Sell fresh</Text>
+            <Text style={{ color: '#062D22', fontWeight: '900', fontSize: 12 }}>Sell fresh</Text>
           </Pressable>
         </Link>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 22 }}>
+        {[['✓', 'Verified sellers'], ['◎', 'Location match'], ['↺', 'Order support']].map(([icon, label]) => (
+          <View key={label} style={{ flex: 1, minHeight: 70, borderRadius: 16, padding: 10, backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line, justifyContent: 'center' }}>
+            <Text style={{ color: palette.green, fontSize: 18, fontWeight: '900' }}>{icon}</Text>
+            <Text style={{ color: palette.dark, fontSize: 10, lineHeight: 14, fontWeight: '900', marginTop: 5 }}>{label}</Text>
+          </View>
+        ))}
       </View>
       <Text style={{ fontSize: 22, fontWeight: '900', marginBottom: 12, color: palette.dark }}>
         Shop by category
