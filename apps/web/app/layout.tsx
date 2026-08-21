@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </PublicConfigProvider>
       </body>
       <Script id="hariyo-theme" strategy="beforeInteractive">
-        {`try{var m=localStorage.getItem('hariyo-theme')||'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m}catch(e){}`}
+        {`try{var m=localStorage.getItem('hariyo-theme')||'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themeMode=m;document.documentElement.dataset.brand=m==='system'?(d?'night':'day'):'classic'}catch(e){}`}
       </Script>
     </html>
   );

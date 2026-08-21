@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   return json(req, {
     service: 'Hariyo Mart Nepal API',
-    version: '8.6.3-cloudflare-native',
+    version: '8.7.0-cloudflare-native',
     platform: 'Cloudflare Workers, D1, Durable Objects, R2, KV, Queues, Workflows, Turnstile and Analytics Engine',
     health: '/api/health',
     readiness: '/api/system/readiness',

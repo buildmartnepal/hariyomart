@@ -1,0 +1,26 @@
+HARIYO MART v8.7.0 — PRODUCTION TEST LOGIN
+
+Shared password:
+  HariyoDemo@2026
+
+Recommended: open /login and click a role card. It performs one-click test sign-in.
+
+Primary roles:
+  Buyer          buyer@demo.hariyomart.local
+  Farmer owner   farmer@demo.hariyomart.local
+  Manager        manager@demo.hariyomart.local
+  Vendor         vendor@demo.hariyomart.local
+  Platform admin admin@demo.hariyomart.local
+
+Additional seeded roles:
+  cooperative@demo.hariyomart.local
+  tenantadmin@demo.hariyomart.local
+  procurement@demo.hariyomart.local
+  inventory@demo.hariyomart.local
+  sales@demo.hariyomart.local
+  delivery@demo.hariyomart.local
+  accounting@demo.hariyomart.local
+  fieldfarmer@demo.hariyomart.local
+  viewer@demo.hariyomart.local
+
+If an older deployment had a stale password hash, migration 0011 refreshes it. A valid known demo identity can also self-heal its stored hash during Production Test Mode.

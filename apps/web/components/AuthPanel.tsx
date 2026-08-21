@@ -13,6 +13,9 @@ import {
   Sprout,
   Store,
   UserRound,
+  Eye,
+  EyeOff,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { TurnstileWidget } from './TurnstileWidget';
@@ -32,6 +35,8 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [demoConfig, setDemoConfig] = useState<DemoConfig | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [demoBusy, setDemoBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!demoEnabled || mode !== 'login') {
@@ -81,12 +86,36 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
     }
   }
 
-  function loadDemo(emailValue: string) {
-    if (!demoConfig) return;
+  async function startDemo(emailValue: string) {
+    if (!demoConfig || busy || demoBusy) return;
     setEmail(emailValue);
     setPassword(demoConfig.password);
-    setMessage('Demo credentials loaded. Complete the security challenge if it is enabled, then sign in.');
+    setMessage('');
+    setDemoBusy(emailValue);
+    try {
+      const user = await auth.login(emailValue, demoConfig.password);
+      router.push(
+        user.role === 'admin'
+          ? '/admin/overview'
+          : ['farmer', 'vendor'].includes(user.role)
+            ? '/farmer/overview'
+            : '/account/overview',
+      );
+      router.refresh();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Unable to open the demo workspace');
+    } finally {
+      setDemoBusy(null);
+    }
   }
+
+  const demoCredentialSelected =
+    mode === 'login' &&
+    Boolean(
+      demoConfig &&
+        password === demoConfig.password &&
+        demoConfig.accounts.some((account) => account.email.toLowerCase() === email.trim().toLowerCase()),
+    );
 
   return (
     <div className="auth-shell">
@@ -177,16 +206,27 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
         )}
         <label>
           Password
-          <input
-            name="password"
-            required
-            type="password"
-            minLength={mode === 'register' ? 10 : 1}
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            placeholder={mode === 'register' ? '10+ chars with upper, lower & number' : 'Your password'}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
+          <span className="password-field">
+            <input
+              name="password"
+              required
+              type={showPassword ? 'text' : 'password'}
+              minLength={mode === 'register' ? 10 : 1}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              placeholder={mode === 'register' ? '10+ chars with upper, lower & number' : 'Your password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button
+              type="button"
+              className="password-reveal"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </span>
         </label>
         {mode === 'register' && (
           <div className="password-hint">Use 10+ characters with uppercase, lowercase and a number.</div>
@@ -203,11 +243,17 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
                 <button
                   type="button"
                   key={account.email}
-                  onClick={() => loadDemo(account.email)}
-                  title={`${account.workspace} — ${account.email}`}
+                  onClick={() => void startDemo(account.email)}
+                  disabled={Boolean(demoBusy)}
+                  title={`Open ${account.workspace} as ${account.email}`}
                 >
-                  <b>{account.label}</b>
-                  <span>{account.workspace}</span>
+                  <span className="demo-login-copy">
+                    <b>{account.label}</b>
+                    <span>{account.workspace}</span>
+                  </span>
+                  <span className="demo-login-action">
+                    {demoBusy === account.email ? 'Opening…' : 'Use & sign in'} <ArrowRight size={14} />
+                  </span>
                 </button>
               ))}
             </div>
@@ -222,7 +268,7 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
         {message && <div className="auth-error" role="alert" aria-live="polite">{message}</div>}
         <button
           className="btn btn-primary btn-full"
-          disabled={busy || (turnstileEnabled && !turnstileToken)}
+          disabled={busy || (turnstileEnabled && !turnstileToken && !demoCredentialSelected)}
           type="submit"
         >
           <Sprout size={17} />

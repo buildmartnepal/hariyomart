@@ -6,6 +6,7 @@ const required = [
   'apps/web/migrations/0005_commerce_control_plane.sql',
   'apps/web/migrations/0006_farmer_os_growth.sql',
   'apps/web/migrations/0009_marketplace_experience_v860.sql',
+  'apps/web/migrations/0011_demo_identity_repair_v870.sql',
   'apps/web/server/cloudflare/supply-api.ts',
   'apps/web/server/cloudflare/farmer-os-api.ts',
   'apps/web/server/cloudflare/supply-stack.ts',
@@ -20,6 +21,8 @@ const required = [
   'apps/web/components/TraceabilityPublicView.tsx',
   'apps/web/components/CommerceControlPanel.tsx',
   'apps/web/components/TurnstileWidget.tsx',
+  'apps/web/components/ThemeSwitcher.tsx',
+  'apps/web/components/AuthPanel.tsx',
   'apps/web/components/CartProvider.tsx',
   'infra/cloudflare/services/src/index.ts',
   'infra/cloudflare/services/wrangler.jsonc',
@@ -31,7 +34,7 @@ const required = [
   'RELEASE_NOTES_V8.3.md',
   'RELEASE_NOTES_V8.6.md',
   'scripts/cloudflare-connected-deploy.mjs',
-  'DEPLOY-HARIYO-V8.6.3.cmd',
+  'DEPLOY-HARIYO-V8.7.0.cmd',
   'MISSING_THINGS_DONE_V8.6.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
@@ -86,14 +89,18 @@ for (const marker of ['Hariyo Match v3', 'radiusKm: radius']) {
 }
 const hardeningMigration = fs.readFileSync('apps/web/migrations/0010_standalone_auth_runtime_v863.sql', 'utf8');
 for (const marker of ['runtime_test_secrets','idx_sessions_user_expires']) {
-  if (!hardeningMigration.includes(marker)) throw new Error(`V8.6.3 auth hardening migration missing ${marker}`);
+  if (!hardeningMigration.includes(marker)) throw new Error(`V8.7.0 auth hardening migration missing ${marker}`);
+}
+const demoRepairMigration = fs.readFileSync('apps/web/migrations/0011_demo_identity_repair_v870.sql', 'utf8');
+for (const marker of ['HariyoDemo', 'buyer@demo.hariyomart.local', "status = 'active'"]) {
+  if (!demoRepairMigration.includes(marker)) throw new Error(`V8.7.0 demo identity repair missing ${marker}`);
 }
 const cloudSeed = fs.readFileSync('apps/web/seed/cloudflare.sql', 'utf8');
 const migrationSeed = fs.readFileSync('apps/web/migrations/seed.sql', 'utf8');
 if (cloudSeed !== migrationSeed) throw new Error('V8.6 catalog seed files are out of sync');
 if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 98)
   throw new Error('V8.6 Cloudflare seed must contain exactly 98 catalog products');
-if (!cloudSeed.includes(`('marketplace.release','"8.6.3"',1)`))
+if (!cloudSeed.includes(`('marketplace.release','"8.7.0"',1)`))
   throw new Error('V8.6 seed release marker is stale');
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
@@ -136,7 +143,7 @@ for (const marker of [
   'commerce/summary','commerce/inventory-alerts','product_price_history',
   'farmer-os/overview','farmer-os/crop-cycles','farmer-os/expenses','farmer-os/profitability',
   'farmer-os/buyer-demands','farmer-os/buyer-demand-offers','farmer-os/traceability','farmer-os/recommendations','farmer-os/ai-assistant',
-  'rankMarketplaceProducts','images_json','Hariyo Match v3','matching:','standaloneCheckoutFallback','seed_required','DATABASE_SETUP_REQUIRED',
+  'rankMarketplaceProducts','images_json','Hariyo Match v3','matching:','standaloneCheckoutFallback','seed_required','DATABASE_SETUP_REQUIRED','isKnownDemoAccountEmail','isSeededDemoIdentity',
 ]) {
   if (!api.includes(marker)) throw new Error(`V8.3 API dispatcher missing ${marker}`);
 }
@@ -178,17 +185,24 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.6.3') throw new Error(`Expected v8.6.3 package, got ${pkg.version}`);
+if (pkg.version !== '8.7.0') throw new Error(`Expected v8.7.0 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [
   '--nav-text','--field-text','--footer-text','cross-theme contrast hardening',
   'newsletter-form input:-webkit-autofill','v8.2 commerce control plane','commerce-kpis',
+  'Adaptive brand system',"data-theme-mode='system'",'demo-login-action','password-field',
 ]) {
   if (!css.includes(marker)) throw new Error(`Theme/commerce UI hardening missing ${marker}`);
 }
 for (const marker of ['sessionResponsePayload','auth:login','accountPassword','An account already exists for this email']) {
   if (!api.includes(marker)) throw new Error(`Auth hardening missing ${marker}`);
 }
+const authPanel = fs.readFileSync('apps/web/components/AuthPanel.tsx', 'utf8');
+for (const marker of ['startDemo', 'Use & sign in', 'password-reveal']) {
+  if (!authPanel.includes(marker)) throw new Error(`V8.7.0 auth UX missing ${marker}`);
+}
+const demoAccounts = fs.readFileSync('apps/web/lib/demo-accounts.ts', 'utf8');
+if (!demoAccounts.includes('isKnownDemoAccountEmail')) throw new Error('V8.7.0 known demo account guard missing');
 
 console.log(`Hariyo Mart Nepal ${pkg.version} Cloudflare-native commerce doctor PASS`);

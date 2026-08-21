@@ -1,6 +1,6 @@
 {
   "name": "@hariyo/mobile",
-  "version": "8.6.3",
+  "version": "8.7.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {

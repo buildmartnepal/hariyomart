@@ -8,7 +8,7 @@ PRAGMA foreign_keys = ON;
 
 INSERT INTO users (id,tenant_id,active_tenant_id,name,email,phone,password_hash,role,is_verified,language,marketing_opt_in,reward_points,addresses,updated_at)
 VALUES ('demo-user-buyer',NULL,NULL,'Hariyo Demo Buyer','buyer@demo.hariyomart.local','9801000001','$2b$12$EeX82.Uhb3E0CHWzGIIIY.UAeXm60MhHxg6QT5b2wrvHSjXyLKum6','customer',1,'en',0,650,'[{"label":"Demo Home","province":"bagmati","district":"Kathmandu","municipality":"Kathmandu","ward":"10","street":"New Baneshwor","phone":"9801000001","isDefault":true}]',datetime('now'))
-ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash,role=excluded.role,is_verified=1,updated_at=datetime('now');
+ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash,role=excluded.role,is_verified=1,status='active',updated_at=datetime('now');
 
 INSERT INTO users (id,tenant_id,active_tenant_id,name,email,phone,password_hash,role,is_verified,language,updated_at)
 VALUES
@@ -25,7 +25,7 @@ VALUES
 ('demo-user-tenant-admin','seed-tenant-bagmati','seed-tenant-bagmati','Hariyo Demo Tenant Admin','tenantadmin@demo.hariyomart.local','9801000012','$2b$12$EeX82.Uhb3E0CHWzGIIIY.UAeXm60MhHxg6QT5b2wrvHSjXyLKum6','farmer',1,'en',datetime('now')),
 ('demo-user-field-farmer','seed-tenant-bagmati','seed-tenant-bagmati','Hariyo Demo Field Farmer','fieldfarmer@demo.hariyomart.local','9801000013','$2b$12$EeX82.Uhb3E0CHWzGIIIY.UAeXm60MhHxg6QT5b2wrvHSjXyLKum6','farmer',1,'ne',datetime('now')),
 ('demo-user-viewer','seed-tenant-bagmati','seed-tenant-bagmati','Hariyo Demo Viewer','viewer@demo.hariyomart.local','9801000014','$2b$12$EeX82.Uhb3E0CHWzGIIIY.UAeXm60MhHxg6QT5b2wrvHSjXyLKum6','farmer',1,'en',datetime('now'))
-ON CONFLICT(email) DO UPDATE SET tenant_id=excluded.tenant_id,active_tenant_id=excluded.active_tenant_id,password_hash=excluded.password_hash,role=excluded.role,is_verified=1,updated_at=datetime('now');
+ON CONFLICT(email) DO UPDATE SET tenant_id=excluded.tenant_id,active_tenant_id=excluded.active_tenant_id,password_hash=excluded.password_hash,role=excluded.role,is_verified=1,status='active',updated_at=datetime('now');
 
 INSERT INTO tenant_members (tenant_id,user_id,role,status,joined_at,created_at) VALUES
 ('seed-tenant-bagmati','demo-user-farmer','owner','active',datetime('now'),datetime('now')),

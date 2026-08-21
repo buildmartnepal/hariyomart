@@ -17,6 +17,20 @@ type AuthResponse = {
   user: HariyoUser & { _id?: string };
   error?: string;
 };
+
+async function readAuthResponse(response: Response): Promise<AuthResponse> {
+  const text = await response.text();
+  if (!text) return { user: {} as AuthResponse['user'], error: response.ok ? undefined : `Request failed (${response.status})` };
+  try {
+    return JSON.parse(text) as AuthResponse;
+  } catch {
+    return {
+      user: {} as AuthResponse['user'],
+      error: response.ok ? undefined : text.slice(0, 220) || `Request failed (${response.status})`,
+    };
+  }
+}
+
 type AuthContextValue = {
   user: HariyoUser | null;
   ready: boolean;
@@ -123,8 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password, turnstileToken }),
       });
-      const data = (await r.json()) as AuthResponse;
-      if (!r.ok) throw new Error(data.error || 'Unable to sign in');
+      const data = await readAuthResponse(r);
+      if (!r.ok) throw new Error(data.error || `Unable to sign in (${r.status})`);
       setUser(data.user);
       return data.user as HariyoUser;
     },
@@ -138,8 +152,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = (await r.json()) as AuthResponse;
-      if (!r.ok) throw new Error(data.error || 'Unable to create account');
+      const data = await readAuthResponse(r);
+      if (!r.ok) throw new Error(data.error || `Unable to create account (${r.status})`);
       setUser(data.user);
       return data.user as HariyoUser;
     },

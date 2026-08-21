@@ -68,3 +68,8 @@ NEXT_PUBLIC_DEMO_MODE=false
 and redeploy.
 
 The SQL demo seed stores a bcrypt hash for the shared demo password. The plaintext value is intentionally present only in the demo UI/config helper because it is a published test credential, not a production secret.
+
+
+## v8.7 one-click login
+
+Open `/login` and choose a demo role card. **Use & sign in** submits the known test credential directly in Production Test Mode. Migration 0011 repairs stale credentials on upgrade, and the login path can self-heal a stale stored hash.

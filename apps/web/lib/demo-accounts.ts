@@ -24,3 +24,10 @@ export const productionTestAccounts = [
   { label: 'Vendor', email: 'vendor@demo.hariyomart.local', workspace: 'Vendor workspace' },
   { label: 'Platform admin', email: 'admin@demo.hariyomart.local', workspace: 'Platform admin test workspace' },
 ] as const;
+
+const demoAccountEmailSet = new Set(demoAccounts.map((account) => account.email.toLowerCase()));
+
+export function isKnownDemoAccountEmail(email: string) {
+  return demoAccountEmailSet.has(email.trim().toLowerCase());
+}
+

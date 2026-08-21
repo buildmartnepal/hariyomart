@@ -1,0 +1,24 @@
+# Missing Things Done — v8.7.0
+
+- Fixed demo password reported as invalid on upgraded databases.
+- Added migration 0011 to repair stale test password hashes and suspended demo identities.
+- Made known test logins self-healing even if an old/malformed bcrypt value survives.
+- Changed demo identity matching from broad demo-domain matching to an exact allow-list.
+- Added one-click **Use & sign in** demo workspace cards.
+- Allowed manual known demo credentials to submit without waiting for Turnstile during explicit Production Test Mode.
+- Kept Turnstile/password verification unchanged for real accounts.
+- Added password show/hide control.
+- Added robust non-JSON auth error handling.
+- Added `DEMO_LOGIN` / `demoCredentialReady` readiness diagnostics.
+- Added adaptive Auto Day brand palette (lime → emerald).
+- Added adaptive Auto Night brand palette (mint → forest).
+- Kept stable manual Light and Dark themes.
+- Improved primary CTA branding, header depth, focus states and control consistency.
+- Improved auth card/story visual hierarchy.
+- Improved product-card depth and interaction feedback.
+- Improved mobile header density, touch targets, form/card spacing and menu scrolling.
+- Kept multi-photo product galleries, Hariyo Match v3, location matching, Farmer OS, admin and mobile features intact.
+- Kept standalone Cloudflare web deployment; optional `hariyo-mart-services` is not a hard dependency.
+- Kept Dashboard-managed Turnstile site key protected by `keep_vars=true`.
+- Operational seed remains 98 products and is repeatable.
+- Demo seed remains 14 role accounts / 12 tenant memberships and is repeatable.

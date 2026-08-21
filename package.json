@@ -1,7 +1,7 @@
 {
   "name": "hariyo-mart-nepal",
   "private": true,
-  "version": "8.6.3",
+  "version": "8.7.0",
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/web",
@@ -64,6 +64,7 @@
     "deploy:cloudflare:production": "node scripts/cloudflare-connected-deploy.mjs",
     "v8.4.4:doctor": "node scripts/v8-doctor.mjs",
     "v8.6:doctor": "node scripts/v8-doctor.mjs",
+    "v8.7:doctor": "node scripts/v8-doctor.mjs",
     "deploy:cloudflare:full": "npm run cloudflare:config:check && npm run cloudflare:types && npm run typecheck && npm run deploy:cloudflare:services && npm run deploy:cloudflare:web",
     "seed:cloudflare:remote": "npm --workspace apps/web run cf:seed:remote",
     "prepare:cloudflare:test": "node scripts/prepare-cloudflare-test.mjs"

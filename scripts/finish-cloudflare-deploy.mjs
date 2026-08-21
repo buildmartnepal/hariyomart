@@ -103,7 +103,7 @@ if (process.env.ENABLE_HARIYO_SERVICES === '1') {
     '--config',
     'infra/cloudflare/services/wrangler.jsonc',
     '--message',
-    'Hariyo Mart v8.6.3 optional services release',
+    'Hariyo Mart v8.7.0 optional services release',
   ]);
 } else {
   console.log('Skipping optional hariyo-mart-services; the public Worker uses D1/KV/Queue fallbacks.');
@@ -149,5 +149,5 @@ if (!readiness?.adminConfigured) {
   console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart v8.6.3 is live: ${siteUrl}`);
+console.log(`\nHariyo Mart v8.7.0 is live: ${siteUrl}`);
 console.log(`Owner sign-in: ${siteUrl}/login`);

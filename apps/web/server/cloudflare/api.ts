@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import catalog from '../data/catalog.json';
 import { rankMarketplaceProducts } from '../../lib/matching';
-import { DEMO_PASSWORD } from '../../lib/demo-accounts';
+import { DEMO_PASSWORD, isKnownDemoAccountEmail } from '../../lib/demo-accounts';
 import { checkoutCore, type CheckoutPayload } from './checkout';
 import {
   apiJson,
@@ -492,7 +492,7 @@ async function login(req: NextRequest) {
   const isProductionTestBuyer =
     productionTestMode && email === 'buyer@demo.hariyomart.local' && input.password === DEMO_PASSWORD;
   const isSeededDemoIdentity =
-    productionTestMode && email.endsWith('@demo.hariyomart.local') && input.password === DEMO_PASSWORD;
+    productionTestMode && isKnownDemoAccountEmail(email) && input.password === DEMO_PASSWORD;
 
   // Explicit production-test identities may bypass Turnstile only while PRODUCTION_TEST_MODE=true.
   // Real customer/farmer/admin identities always follow the configured Turnstile policy.
@@ -525,8 +525,24 @@ async function login(req: NextRequest) {
       .first<CloudflareUserRow>();
   }
 
-  if (!user || !(await verifyPassword(input.password, user.password_hash)))
+  if (!user) throw new CloudflareApiError(401, 'Invalid email or password');
+
+  // Known Production Test Mode identities use a published shared credential. If an older
+  // deployment left a stale bcrypt hash in D1, accept only the exact known test identity +
+  // shared password, then self-heal the stored hash. Real accounts always require bcrypt.
+  let passwordMatches = false;
+  try {
+    passwordMatches = await verifyPassword(input.password, user.password_hash);
+  } catch {
+    passwordMatches = false;
+  }
+  if (!passwordMatches && !isSeededDemoIdentity)
     throw new CloudflareApiError(401, 'Invalid email or password');
+  if (!passwordMatches && isSeededDemoIdentity) {
+    await env.HARIYO_DB.prepare('UPDATE users SET password_hash=?,updated_at=? WHERE id=?')
+      .bind(await hashPassword(DEMO_PASSWORD), new Date().toISOString(), user.id)
+      .run();
+  }
   if (user.status === 'suspended')
     throw new CloudflareApiError(403, 'This account is suspended');
   const now = new Date().toISOString();
@@ -1614,9 +1630,10 @@ async function readiness() {
   let database = 'connected';
   let adminConfigured = false;
   let seed = { tenants: 0, products: 0, orders: 0, demoUsers: 0 };
+  let demoBuyerHash = '';
   try {
     await env.HARIYO_DB.prepare('SELECT 1 AS ok').first();
-    const [admin, tenantCount, productCount, orderCount, demoUserCount] = await Promise.all([
+    const [admin, tenantCount, productCount, orderCount, demoUserCount, demoBuyer] = await Promise.all([
       env.HARIYO_DB.prepare("SELECT COUNT(*) AS count FROM users WHERE role='admin'").first<{
         count: number;
       }>(),
@@ -1624,8 +1641,10 @@ async function readiness() {
       env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM products').first<{ count: number }>(),
       env.HARIYO_DB.prepare('SELECT COUNT(*) AS count FROM orders').first<{ count: number }>(),
       env.HARIYO_DB.prepare("SELECT COUNT(*) AS count FROM users WHERE email LIKE '%@demo.hariyomart.local'").first<{ count: number }>(),
+      env.HARIYO_DB.prepare("SELECT password_hash FROM users WHERE email='buyer@demo.hariyomart.local' COLLATE NOCASE").first<{ password_hash: string }>(),
     ]);
     adminConfigured = Number(admin?.count || 0) > 0;
+    demoBuyerHash = String(demoBuyer?.password_hash || '');
     seed = {
       tenants: Number(tenantCount?.count || 0),
       products: Number(productCount?.count || 0),
@@ -1643,6 +1662,14 @@ async function readiness() {
       Boolean(turnstileSiteKey && !/REPLACE_WITH|PLACEHOLDER/i.test(turnstileSiteKey)));
   const envRecord = env as unknown as Record<string, unknown>;
   const productionTestMode = String(env.APP_ENV) === 'production' && String(envRecord.PRODUCTION_TEST_MODE) === 'true';
+  let demoCredentialReady = !productionTestMode;
+  if (productionTestMode && demoBuyerHash) {
+    try {
+      demoCredentialReady = await verifyPassword(DEMO_PASSWORD, demoBuyerHash);
+    } catch {
+      demoCredentialReady = false;
+    }
+  }
   const required = {
     D1: database === 'connected',
     R2: Boolean(env.HARIYO_MEDIA),
@@ -1652,10 +1679,11 @@ async function readiness() {
     JWT_REFRESH_SECRET: Boolean(env.JWT_REFRESH_SECRET && env.JWT_REFRESH_SECRET.length >= 32) || productionTestMode,
     TURNSTILE: turnstileConfigured || productionTestMode,
     DEMO_CLEAN: String(env.APP_ENV) !== 'production' || productionTestMode || seed.demoUsers === 0,
+    DEMO_LOGIN: demoCredentialReady,
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.6.3',
+    version: '8.7.0',
     status:
       Object.values(required).every(Boolean) && (adminConfigured || productionTestMode)
         ? seed.products >= 98 && seed.tenants >= 7
@@ -1671,6 +1699,7 @@ async function readiness() {
       demoFallbackEnabled: String(env.NEXT_PUBLIC_DEMO_MODE) === 'true' && (String(env.APP_ENV) !== 'production' || productionTestMode),
       productionTestMode,
       demoUsersPresent: seed.demoUsers > 0,
+      demoCredentialReady,
       turnstileConfigured,
       standaloneRateLimitFallback: 'KV',
       standaloneCheckoutFallback: 'D1',

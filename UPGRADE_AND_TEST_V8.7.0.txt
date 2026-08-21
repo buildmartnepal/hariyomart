@@ -1,0 +1,31 @@
+HARIYO MART NEPAL v8.7.0 — UPGRADE & TEST
+
+Cloudflare Workers Build command:
+  npx @opennextjs/cloudflare build
+
+Recommended deploy command:
+  npm run deploy:cloudflare:production
+
+The deploy command applies all D1 migrations including 0011, refreshes the operational seed, refreshes Production Test Mode identities when enabled, and deploys the standalone OpenNext Worker.
+
+ONE-CLICK TEST LOGIN
+  Open /login and click any demo role card.
+
+Manual shared test password:
+  HariyoDemo@2026
+
+Primary test accounts:
+  buyer@demo.hariyomart.local
+  farmer@demo.hariyomart.local
+  manager@demo.hariyomart.local
+  vendor@demo.hariyomart.local
+  admin@demo.hariyomart.local
+
+If an older deployment had a stale demo hash, migration 0011 repairs it and a valid known demo login can self-heal it again at runtime.
+
+Before real production:
+  Set strong JWT_SECRET, JWT_REFRESH_SECRET, TURNSTILE_SECRET_KEY
+  Keep the real public Turnstile site key in Cloudflare Dashboard
+  Set NEXT_PUBLIC_DEMO_MODE=false
+  Set PRODUCTION_TEST_MODE=false
+  Run npm run production:demo:remove
