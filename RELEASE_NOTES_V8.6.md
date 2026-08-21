@@ -1,6 +1,6 @@
-# Hariyo Mart Nepal v8.6.0 — Marketplace Experience
+# Hariyo Mart Nepal v8.6.1 — Marketplace Experience
 
-v8.6.0 upgrades the Cloudflare-native marketplace without regressing the v8.4.4 production deployment guard, Farmer OS, commerce control plane or real-photo catalog.
+v8.6.1 upgrades the Cloudflare-native marketplace without regressing the v8.4.4 production deployment guard, Farmer OS, commerce control plane or real-photo catalog.
 
 ## Buyer experience
 
@@ -24,7 +24,7 @@ v8.6.0 upgrades the Cloudflare-native marketplace without regressing the v8.4.4 
 - Product create/update/public API now persists and returns gallery arrays.
 - Nearby API uses the shared explainable ranking engine instead of a distance-only sort.
 - Production remains Cloudflare-native: Workers/OpenNext, D1, R2, KV, Queues, Workers AI and the internal services Worker.
-- v8.4.4 connected-deploy ordering and production guard are retained and versioned for v8.6.0.
+- v8.4.4 connected-deploy ordering and production guard are retained and versioned for v8.6.1.
 
 ## Mobile
 

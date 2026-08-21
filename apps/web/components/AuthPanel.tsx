@@ -41,9 +41,9 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
     const controller = new AbortController();
     fetch('/api/demo-config', { cache: 'no-store', signal: controller.signal })
       .then((response) =>
-        response.ok ? response.json() : Promise.reject(new Error('Demo configuration unavailable')),
+        response.ok ? (response.json() as Promise<DemoConfig>) : Promise.reject(new Error('Demo configuration unavailable')),
       )
-      .then((config: DemoConfig) => setDemoConfig(config))
+      .then((config) => setDemoConfig(config))
       .catch(() => setDemoConfig(null));
     return () => controller.abort();
   }, [demoEnabled, mode]);

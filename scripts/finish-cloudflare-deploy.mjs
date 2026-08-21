@@ -92,7 +92,7 @@ wrangler([
   '--config',
   'infra/cloudflare/services/wrangler.jsonc',
   '--message',
-  'Hariyo Mart v8.6.0 Cloudflare marketplace production release',
+  'Hariyo Mart v8.6.1 Cloudflare marketplace production release',
 ]);
 
 console.log('\n6/8 Building and deploying the OpenNext web Worker');
@@ -135,5 +135,5 @@ if (!readiness?.adminConfigured) {
   console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart v8.6.0 is live: ${siteUrl}`);
+console.log(`\nHariyo Mart v8.6.1 is live: ${siteUrl}`);
 console.log(`Owner sign-in: ${siteUrl}/login`);

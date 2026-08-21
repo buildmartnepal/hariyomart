@@ -69,8 +69,8 @@ export function LiveProductGrid({
     if (category) query.set('category', category);
     if (province) query.set('province', province);
     fetch(`/api/products?${query}`, { cache: 'no-store', signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('live marketplace unavailable'))))
-      .then((payload: { data?: Record<string, unknown>[] }) => {
+      .then((response) => (response.ok ? (response.json() as Promise<{ data?: Record<string, unknown>[] }>) : Promise.reject(new Error('live marketplace unavailable'))))
+      .then((payload) => {
         setLive(Array.isArray(payload.data) ? payload.data.map(normalize) : []);
         setError(false);
       })
@@ -83,7 +83,7 @@ export function LiveProductGrid({
   }, [category, province, limit]);
 
   const items = useMemo(() => {
-    const source = live ?? (demoEnabled ? (catalog.products as Product[]) : []);
+    const source: readonly Product[] = live ?? (demoEnabled ? catalog.products : []);
     let filtered = source.filter(
       (product) =>
         (!category || product.category === category) &&

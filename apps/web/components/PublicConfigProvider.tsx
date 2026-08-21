@@ -8,16 +8,18 @@ export type PublicRuntimeConfig = {
   siteUrl: string;
   apiBase: string;
   demoEnabled: boolean;
+  productionTestMode: boolean;
   turnstileSiteKey: string;
   turnstileEnabled: boolean;
 };
 
 const fallbackConfig: PublicRuntimeConfig = {
   appEnv: 'production',
-  releaseVersion: '8.6.0',
+  releaseVersion: '8.6.1',
   siteUrl: '',
   apiBase: '/api',
   demoEnabled: false,
+  productionTestMode: false,
   turnstileSiteKey: '',
   turnstileEnabled: false,
 };
@@ -30,8 +32,8 @@ export function PublicConfigProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/public-config', { cache: 'no-store', signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('config unavailable'))))
-      .then((next: PublicRuntimeConfig) => setConfig({ ...fallbackConfig, ...next }))
+      .then((response) => (response.ok ? (response.json() as Promise<Partial<PublicRuntimeConfig>>) : Promise.reject(new Error('config unavailable'))))
+      .then((next) => setConfig({ ...fallbackConfig, ...next }))
       .catch(() => undefined);
     return () => controller.abort();
   }, []);

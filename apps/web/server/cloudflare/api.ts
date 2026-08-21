@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import catalog from '../data/catalog.json';
 import { rankMarketplaceProducts } from '../../lib/matching';
+import { DEMO_PASSWORD } from '../../lib/demo-accounts';
 import { checkoutCore, type CheckoutPayload } from './checkout';
 import {
   apiJson,
@@ -241,20 +242,16 @@ const addressInput = z.object({
 });
 
 type ProductRow = Record<string, unknown> & {
-  id: string;
-  tenant_id: string;
-  slug: string;
-  image_url?: string | null;
-  image_key?: string | null;
-  images_json?: string | null;
-  benefits?: string;
-  organic?: number;
-  featured?: number;
-  wholesale?: number;
-  subscription?: number;
-  farm_name?: string;
-  farm_slug?: string;
-  tenant_status?: string;
+  id: string; tenant_id: string; slug: string;
+  name?: string; category?: string; province?: string; district?: string; municipality?: string; unit?: string;
+  price?: number; old_price?: number; stock?: number; minimum_order?: number; grade?: string | null;
+  harvest_date?: string | null; harvest_window?: string | null; unique_story?: string | null;
+  short_description?: string | null; description?: string | null;
+  image_url?: string | null; image_key?: string | null; images_json?: string | null; benefits?: string;
+  organic?: number; featured?: number; wholesale?: number; subscription?: number;
+  lat?: number; lng?: number; delivery_radius_km?: number; status?: string; rating?: number;
+  farm_name?: string; farm_slug?: string; tenant_status?: string; farm_same_day?: number; farm_pickup?: number;
+  created_at?: string; updated_at?: string;
 };
 
 type TenantRow = Record<string, unknown> & {
@@ -289,24 +286,24 @@ function productPublic(row: ProductRow) {
     id: row.id,
     tenantId: row.tenant_id,
     slug: row.slug,
-    name: row.name,
+    name: String(row.name || ''),
     category,
-    province: row.province,
-    provinceName: provinces.get(String(row.province)) || row.province,
-    district: row.district,
-    municipality: row.municipality,
-    unit: row.unit,
+    province: String(row.province || ''),
+    provinceName: provinces.get(String(row.province)) || String(row.province || ''),
+    district: String(row.district || ''),
+    municipality: String(row.municipality || ''),
+    unit: String(row.unit || 'unit'),
     price: Number(row.price || 0),
     oldPrice: Number(row.old_price || row.price || 0),
     stock: Number(row.stock || 0),
     minimumOrder: Number(row.minimum_order || 1),
     organic: Boolean(row.organic),
-    grade: row.grade,
-    harvestDate: row.harvest_date,
-    harvestWindow: row.harvest_window,
-    uniqueStory: row.unique_story,
-    shortDescription: row.short_description,
-    description: row.description,
+    grade: row.grade ? String(row.grade) : null,
+    harvestDate: row.harvest_date ? String(row.harvest_date) : null,
+    harvestWindow: row.harvest_window ? String(row.harvest_window) : null,
+    uniqueStory: row.unique_story ? String(row.unique_story) : null,
+    shortDescription: row.short_description ? String(row.short_description) : null,
+    description: row.description ? String(row.description) : null,
     benefits: parseJson(row.benefits, [] as string[]),
     image:
       row.image_url ||
@@ -319,16 +316,16 @@ function productPublic(row: ProductRow) {
     deliveryRadiusKm: Number(row.delivery_radius_km || 35),
     wholesale: Boolean(row.wholesale),
     subscription: Boolean(row.subscription),
-    status: row.status,
+    status: String(row.status || 'active'),
     rating: Number(row.rating || 4.8),
     featured: Boolean(row.featured),
-    farmName: row.farm_name,
-    farmSlug: row.farm_slug,
+    farmName: row.farm_name ? String(row.farm_name) : null,
+    farmSlug: row.farm_slug ? String(row.farm_slug) : null,
     farmerVerified: row.tenant_status === 'verified',
     farmSameDay: Boolean(row.farm_same_day),
     farmPickup: Boolean(row.farm_pickup),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: row.created_at ? String(row.created_at) : null,
+    updatedAt: row.updated_at ? String(row.updated_at) : null,
   };
 }
 
@@ -337,15 +334,15 @@ function tenantPublic(row: TenantRow) {
     _id: row.id,
     id: row.id,
     slug: row.slug,
-    name: row.name,
+    name: String(row.name || ''),
     ownerName: row.owner_name,
     type: row.type,
     plan: row.plan,
-    status: row.status,
+    status: String(row.status || 'active'),
     location: {
-      province: row.province,
-      district: row.district,
-      municipality: row.municipality,
+      province: String(row.province || ''),
+      district: String(row.district || ''),
+      municipality: String(row.municipality || ''),
       ward: row.ward,
       lat: Number(row.lat),
       lng: Number(row.lng),
@@ -357,8 +354,8 @@ function tenantPublic(row: TenantRow) {
       sameDay: Boolean(row.same_day_enabled),
     },
     commissionRate: Number(row.commission_rate || 0.08),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: row.created_at ? String(row.created_at) : null,
+    updatedAt: row.updated_at ? String(row.updated_at) : null,
   };
 }
 
@@ -488,10 +485,45 @@ async function login(req: NextRequest) {
   await enforceRateLimit(req, 12, 60, 'auth:login');
   const env = cloudflareEnv();
   const input = validation(loginInput, await requestBody(req));
-  await verifyTurnstile(req, input.turnstileToken, 'login');
-  const user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
-    .bind(input.email.toLowerCase())
+  const email = input.email.toLowerCase();
+  const envRecord = env as unknown as Record<string, unknown>;
+  const productionTestMode =
+    String(env.APP_ENV) === 'production' && String(envRecord.PRODUCTION_TEST_MODE) === 'true';
+  const isProductionTestBuyer =
+    productionTestMode && email === 'buyer@demo.hariyomart.local' && input.password === DEMO_PASSWORD;
+
+  // The scoped production-test buyer is intentionally allowed through without Turnstile so
+  // a new deployment can always be smoke-tested even before the real widget keys are installed.
+  // All real production accounts still require the configured Turnstile policy.
+  if (!isProductionTestBuyer) await verifyTurnstile(req, input.turnstileToken, 'login');
+
+  let user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
+    .bind(email)
     .first<CloudflareUserRow>();
+
+  if (isProductionTestBuyer && !user) {
+    const now = new Date().toISOString();
+    await env.HARIYO_DB.prepare(
+      `INSERT INTO users (id,tenant_id,active_tenant_id,name,email,phone,password_hash,role,is_verified,language,marketing_opt_in,reward_points,addresses,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,'customer',1,'en',0,0,'[]',?,?)`,
+    )
+      .bind(
+        'production-test-buyer',
+        null,
+        null,
+        'Hariyo Production Test Buyer',
+        email,
+        null,
+        await hashPassword(DEMO_PASSWORD),
+        now,
+        now,
+      )
+      .run();
+    user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
+      .bind(email)
+      .first<CloudflareUserRow>();
+  }
+
   if (!user || !(await verifyPassword(input.password, user.password_hash)))
     throw new CloudflareApiError(401, 'Invalid email or password');
   const tokens = await issueSession(user);
@@ -1605,6 +1637,8 @@ async function readiness() {
     turnstileMode === 'off' ||
     (Boolean(env.TURNSTILE_SECRET_KEY && env.TURNSTILE_SECRET_KEY.length >= 20) &&
       Boolean(turnstileSiteKey && !/REPLACE_WITH|PLACEHOLDER/i.test(turnstileSiteKey)));
+  const envRecord = env as unknown as Record<string, unknown>;
+  const productionTestMode = String(env.APP_ENV) === 'production' && String(envRecord.PRODUCTION_TEST_MODE) === 'true';
   const required = {
     D1: database === 'connected',
     R2: Boolean(env.HARIYO_MEDIA),
@@ -1614,11 +1648,11 @@ async function readiness() {
     JWT_SECRET: Boolean(env.JWT_SECRET && env.JWT_SECRET.length >= 32),
     JWT_REFRESH_SECRET: Boolean(env.JWT_REFRESH_SECRET && env.JWT_REFRESH_SECRET.length >= 32),
     TURNSTILE: turnstileConfigured,
-    DEMO_CLEAN: env.APP_ENV !== 'production' || seed.demoUsers === 0,
+    DEMO_CLEAN: String(env.APP_ENV) !== 'production' || productionTestMode || seed.demoUsers === 0,
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.6.0',
+    version: '8.6.1',
     status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues + Workflows + Turnstile',
     database,
@@ -1626,7 +1660,8 @@ async function readiness() {
     adminConfigured,
     seed,
     productionGuard: {
-      demoFallbackEnabled: env.APP_ENV !== 'production' && env.NEXT_PUBLIC_DEMO_MODE === 'true',
+      demoFallbackEnabled: String(env.NEXT_PUBLIC_DEMO_MODE) === 'true' && (String(env.APP_ENV) !== 'production' || productionTestMode),
+      productionTestMode,
       demoUsersPresent: seed.demoUsers > 0,
       turnstileConfigured,
     },

@@ -33,7 +33,7 @@ type ApiProduct = Partial<Product> & {
   stock: number;
   organic?: boolean;
   image?: string;
-  images?: string[];
+  images?: readonly string[];
   matchScore?: number;
   matchReasons?: string[];
   wholesale?: boolean;
@@ -208,7 +208,7 @@ export function LocationMarket() {
     })
       .then((r) =>
         r.ok
-          ? (r.json() as Promise<{ data?: Product[] }>)
+          ? (r.json() as Promise<{ data?: ApiProduct[] }>)
           : Promise.reject(new Error('Marketplace API unavailable')),
       )
       .then((data) => {

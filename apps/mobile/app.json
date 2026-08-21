@@ -3,7 +3,7 @@
     "name": "Hariyo Mart Nepal",
     "slug": "hariyo-mart-nepal",
     "scheme": "hariyo",
-    "version": "8.6.0",
+    "version": "8.6.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

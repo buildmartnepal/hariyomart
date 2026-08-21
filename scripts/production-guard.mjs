@@ -7,12 +7,14 @@ const services = new Map((config.services || []).map((item) => [item.binding, it
 const failures = [];
 const warnings = [];
 
-if (vars.RELEASE_VERSION !== '8.6.0') failures.push('RELEASE_VERSION must be 8.6.0.');
+if (vars.RELEASE_VERSION !== '8.6.1') failures.push('RELEASE_VERSION must be 8.6.1.');
 if (!fs.existsSync('apps/web/migrations/0009_marketplace_experience_v860.sql'))
   failures.push('v8.6 marketplace migration 0009 is missing.');
 
 if (vars.APP_ENV !== 'production') failures.push('APP_ENV must be production.');
-if (String(vars.NEXT_PUBLIC_DEMO_MODE) !== 'false') failures.push('NEXT_PUBLIC_DEMO_MODE must be false.');
+const productionTestMode = String(vars.PRODUCTION_TEST_MODE) === 'true';
+const demoRequested = String(vars.NEXT_PUBLIC_DEMO_MODE) === 'true';
+if (demoRequested && !productionTestMode) failures.push('NEXT_PUBLIC_DEMO_MODE may be true in production only when PRODUCTION_TEST_MODE=true.');
 if (services.get('WORKER_SELF_REFERENCE') !== config.name)
   failures.push('WORKER_SELF_REFERENCE must point to the web Worker itself.');
 if (services.get('HARIYO_SERVICES') !== 'hariyo-mart-services')
@@ -32,4 +34,5 @@ if (failures.length) {
 }
 console.log('Hariyo Mart production guard PASS');
 warnings.forEach((item) => console.warn(`WARNING: ${item}`));
-console.log('Demo fallback is disabled in production and the private services Worker binding is intact.');
+console.log(productionTestMode ? 'Production Test Mode is explicitly enabled with a scoped test buyer identity.' : 'Demo fallback is disabled in production.');
+console.log('The private services Worker binding is intact.');

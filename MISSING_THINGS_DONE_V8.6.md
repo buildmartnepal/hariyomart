@@ -1,4 +1,4 @@
-# Hariyo Mart Nepal v8.6.0 — Missing Things Closed
+# Hariyo Mart Nepal v8.6.1 — Missing Things Closed
 
 This release closes the main marketplace-experience gaps identified after v8.4.4.
 

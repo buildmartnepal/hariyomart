@@ -1,0 +1,16 @@
+HARIYO MART NEPAL v8.6.1 — PRODUCTION TEST LOGIN
+
+Production Test Mode is explicitly enabled in apps/web/wrangler.jsonc.
+It does NOT reuse the real production administrator.
+
+Test buyer login
+Email: buyer@demo.hariyomart.local
+Password: HariyoDemo@2026
+
+Behavior:
+- The scoped test buyer is auto-provisioned in D1 on the first successful login.
+- Production admin credentials remain separate and are never included here.
+- To disable after testing, set NEXT_PUBLIC_DEMO_MODE=false and PRODUCTION_TEST_MODE=false, rebuild and redeploy.
+- Remove test/demo identities with: npm run demo:remove:remote
+
+Do not use the test identity for real customer transactions.

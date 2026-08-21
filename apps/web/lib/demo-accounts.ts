@@ -16,3 +16,7 @@ export const demoAccounts = [
   { label: 'Field farmer', email: 'fieldfarmer@demo.hariyomart.local', workspace: 'Field farmer role' },
   { label: 'Viewer', email: 'viewer@demo.hariyomart.local', workspace: 'Read-only tenant role' },
 ] as const;
+
+export const productionTestAccounts = [
+  { label: 'Production test buyer', email: 'buyer@demo.hariyomart.local', workspace: 'Customer account (isolated test identity)' },
+] as const;

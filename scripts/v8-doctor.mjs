@@ -31,7 +31,7 @@ const required = [
   'RELEASE_NOTES_V8.3.md',
   'RELEASE_NOTES_V8.6.md',
   'scripts/cloudflare-connected-deploy.mjs',
-  'DEPLOY-HARIYO-V8.6.0.cmd',
+  'DEPLOY-HARIYO-V8.6.1.cmd',
   'MISSING_THINGS_DONE_V8.6.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
@@ -89,7 +89,7 @@ const migrationSeed = fs.readFileSync('apps/web/migrations/seed.sql', 'utf8');
 if (cloudSeed !== migrationSeed) throw new Error('V8.6 catalog seed files are out of sync');
 if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 98)
   throw new Error('V8.6 Cloudflare seed must contain exactly 98 catalog products');
-if (!cloudSeed.includes(`('marketplace.release','"8.6.0"',1)`))
+if (!cloudSeed.includes(`('marketplace.release','"8.6.1"',1)`))
   throw new Error('V8.6 seed release marker is stale');
 
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
@@ -171,7 +171,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.6.0') throw new Error(`Expected v8.6.0 package, got ${pkg.version}`);
+if (pkg.version !== '8.6.1') throw new Error(`Expected v8.6.1 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

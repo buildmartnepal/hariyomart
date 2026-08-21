@@ -18,6 +18,7 @@ export function getPublicRuntimeConfig() {
   const env = readRuntimeEnv();
   const appEnv = text(env.APP_ENV, process.env.NODE_ENV || 'development');
   const requestedDemo = text(env.NEXT_PUBLIC_DEMO_MODE, process.env.NEXT_PUBLIC_DEMO_MODE) === 'true';
+  const productionTestMode = text(env.PRODUCTION_TEST_MODE, process.env.PRODUCTION_TEST_MODE) === 'true';
   const siteKey = text(
     env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
@@ -37,10 +38,11 @@ export function getPublicRuntimeConfig() {
 
   return {
     appEnv,
-    releaseVersion: text(env.RELEASE_VERSION, '8.6.0'),
+    releaseVersion: text(env.RELEASE_VERSION, '8.6.1'),
     siteUrl,
     apiBase,
-    demoEnabled: appEnv !== 'production' && requestedDemo,
+    productionTestMode: appEnv === 'production' && productionTestMode,
+    demoEnabled: requestedDemo && (appEnv !== 'production' || productionTestMode),
     turnstileSiteKey: validSiteKey ? siteKey : '',
     turnstileEnabled: turnstileMode !== 'off' && validSiteKey,
   } as const;
