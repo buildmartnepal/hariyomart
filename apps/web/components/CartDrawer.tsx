@@ -1,13 +1,16 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { BadgeCheck, Minus, Plus, ShoppingBasket, Store, Trash2, X } from 'lucide-react';
-import { useMemo } from 'react';
+import { BadgeCheck, BookmarkPlus, Minus, Plus, ShoppingBasket, Store, Trash2, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useCart } from './CartProvider';
 import { farmForProduct } from '@/lib/marketplace';
+import { useAuth } from './AuthProvider';
 
 export function CartDrawer() {
   const c = useCart();
+  const auth = useAuth();
+  const [saveState, setSaveState] = useState('');
   const groups = useMemo(() => {
     const map = new Map<string, typeof c.lines>();
     for (const line of c.lines) {
@@ -16,6 +19,26 @@ export function CartDrawer() {
     }
     return [...map.entries()].map(([slug, lines]) => ({ slug, farm: farmForProduct(lines[0].product), lines }));
   }, [c.lines]);
+
+  async function saveBasket() {
+    if (!auth.user || !c.lines.length) return;
+    setSaveState('Saving…');
+    try {
+      const now = new Date();
+      await auth.apiRequest('/commerce/saved-baskets', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: `Basket ${now.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
+          lines: c.lines.map((line) => ({ productSlug: line.product.slug, quantity: line.quantity })),
+        }),
+      });
+      setSaveState('Saved');
+      window.setTimeout(() => setSaveState(''), 1800);
+    } catch (error) {
+      setSaveState(error instanceof Error ? error.message : 'Could not save');
+    }
+  }
+
   if (!c.open) return null;
   return <>
     <button type="button" className="cart-drawer-backdrop" aria-label="Close basket" onClick={() => c.setOpen(false)} />
@@ -35,6 +58,8 @@ export function CartDrawer() {
         <div><span>Product total</span><strong>NPR {c.total.toLocaleString()}</strong></div>
         <small>Delivery is calculated per seller service zone at checkout.</small>
         <Link href="/checkout" onClick={() => c.setOpen(false)} className={`btn btn-primary btn-full${c.lines.length ? '' : ' disabled'}`} aria-disabled={!c.lines.length} tabIndex={c.lines.length ? 0 : -1}>Guest checkout</Link>
+        {auth.user ? <button type="button" className="btn btn-soft btn-full" disabled={!c.lines.length || saveState === 'Saving…'} onClick={() => void saveBasket()}><BookmarkPlus size={15}/>{saveState || 'Save basket'}</button> : <Link href="/login?next=/cart" onClick={() => c.setOpen(false)} className="btn btn-soft btn-full"><BookmarkPlus size={15}/>Sign in to save basket</Link>}
+        {auth.user && <Link href="/saved-baskets" onClick={() => c.setOpen(false)} className="cart-saved-link">Saved baskets →</Link>}
         <Link href="/cart" onClick={() => c.setOpen(false)} className="btn btn-soft btn-full">Review basket</Link>
       </div>
     </aside>

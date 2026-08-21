@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import catalog from '../data/catalog.json';
 import { rankMarketplaceProducts } from '../../lib/matching';
-import { DEMO_PASSWORD, isKnownDemoAccountEmail } from '../../lib/demo-accounts';
+import { DEMO_PASSWORD, getDemoAccountProfile, isKnownDemoAccountEmail } from '../../lib/demo-accounts';
 import { checkoutCore, type CheckoutPayload } from './checkout';
 import {
   apiJson,
@@ -92,6 +92,8 @@ import {
   deliverySlotsApi,
   inventoryAlertRulesApi,
   returnsApi,
+  savedBasketsApi,
+  deleteSavedBasketApi,
   tenantReturnsApi,
   updateReturnApi,
   validateCouponApi,
@@ -481,60 +483,180 @@ async function registerFarmer(req: NextRequest) {
   );
 }
 
+
+const DEMO_SANDBOX_TENANT_ID = 'demo-tenant-sandbox';
+
+function productionDemoMode(env: HariyoCloudflareBindings) {
+  const envRecord = env as unknown as Record<string, unknown>;
+  return String(env.APP_ENV) === 'production' &&
+    String(envRecord.PRODUCTION_TEST_MODE) === 'true' &&
+    String(envRecord.NEXT_PUBLIC_DEMO_MODE) === 'true';
+}
+
+async function ensureDemoSandbox() {
+  const env = cloudflareEnv();
+  const now = new Date().toISOString();
+  await env.HARIYO_DB.prepare(
+    `INSERT INTO tenants (id,slug,name,owner_name,type,plan,status,province,district,municipality,ward,lat,lng,specialties,delivery_radius_km,pickup_enabled,same_day_enabled,commission_rate,created_at,updated_at)
+     VALUES (?,?,?,?,?,'enterprise','verified','bagmati','Kathmandu','Kathmandu','10',27.6872,85.3305,?,45,1,1,0.05,?,?)
+     ON CONFLICT(id) DO UPDATE SET plan='enterprise',status='verified',updated_at=excluded.updated_at`,
+  )
+    .bind(
+      DEMO_SANDBOX_TENANT_ID,
+      'hariyo-demo-sandbox',
+      'Hariyo Demo Farm & Cooperative',
+      'Hariyo Demo Team',
+      'farm',
+      JSON.stringify(['seasonal vegetables', 'fruit', 'local staples', 'demo operations']),
+      now,
+      now,
+    )
+    .run();
+  await env.HARIYO_DB.prepare(
+    `INSERT INTO tenant_subscriptions (tenant_id,plan_code,status,current_period_starts_at,current_period_ends_at,updated_at)
+     VALUES (?,'enterprise','active',?,datetime(?,'+30 days'),?)
+     ON CONFLICT(tenant_id) DO UPDATE SET plan_code='enterprise',status='active',updated_at=excluded.updated_at`,
+  )
+    .bind(DEMO_SANDBOX_TENANT_ID, now, now, now)
+    .run();
+  await env.HARIYO_DB.prepare(
+    `INSERT INTO tenant_settings_v8 (tenant_id,order_prefix,purchase_prefix,low_stock_threshold,allow_negative_stock,auto_allocate_stock,default_price_mode,updated_at)
+     VALUES (?,'DEMO','DPO',12,0,1,'mixed',?)
+     ON CONFLICT(tenant_id) DO UPDATE SET updated_at=excluded.updated_at`,
+  )
+    .bind(DEMO_SANDBOX_TENANT_ID, now)
+    .run();
+
+  const demoProducts = [
+    ['demo-kathmandu-tomato','Demo Kathmandu Tomato','vegetables','kg',120,180,1,1,'A','Fresh demo stock for testing seller orders, inventory and buyer checkout.','/products/vegetables.svg',27.6872,85.3305],
+    ['demo-organic-spinach','Demo Organic Spinach','leafy-greens','bunch',65,110,2,1,'Premium','Same-day demo leafy greens for inventory, matching and fulfilment testing.','/products/leafy-greens.svg',27.6872,85.3305],
+    ['demo-seasonal-orange','Demo Seasonal Orange','fresh-fruits','kg',180,95,2,0,'A','Seasonal demo fruit listing for pricing, basket and product-content testing.','/products/fresh-fruits.svg',27.6872,85.3305],
+  ];
+  for (const product of demoProducts) {
+    await env.HARIYO_DB.prepare(
+      `INSERT INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,old_price,stock,minimum_order,organic,grade,unique_story,short_description,description,benefits,image_url,lat,lng,delivery_radius_km,wholesale,subscription,status,rating,featured,created_at,updated_at)
+       VALUES (?,?,?,?,?,'bagmati','Kathmandu','Kathmandu',?,?,?,?,?,?,?,?,?,?,?, ?,?,?,45,1,1,'active',4.9,1,?,?)
+       ON CONFLICT(slug) DO UPDATE SET stock=excluded.stock,price=excluded.price,status='active',updated_at=excluded.updated_at`,
+    )
+      .bind(
+        `demo-product-${product[0]}`,
+        DEMO_SANDBOX_TENANT_ID,
+        product[0],
+        product[1],
+        product[2],
+        product[3],
+        product[4],
+        product[4],
+        product[5],
+        product[6],
+        product[7],
+        product[8],
+        product[9],
+        product[9],
+        product[9],
+        JSON.stringify(['Demo verified seller', 'Location matched', 'Test-mode listing']),
+        product[10],
+        product[11],
+        product[12],
+        now,
+        now,
+      )
+      .run();
+  }
+}
+
+async function ensureDemoIdentity(emailValue: string) {
+  const env = cloudflareEnv();
+  if (!productionDemoMode(env)) throw new CloudflareApiError(404, 'Demo mode is disabled');
+  const profile = getDemoAccountProfile(emailValue);
+  if (!profile) throw new CloudflareApiError(404, 'Demo account is not available');
+  const now = new Date().toISOString();
+  const needsTenant = Boolean(profile.tenantRole);
+  if (needsTenant) await ensureDemoSandbox();
+  const tenantId = needsTenant ? DEMO_SANDBOX_TENANT_ID : null;
+  await env.HARIYO_DB.prepare(
+    `INSERT INTO users (id,tenant_id,active_tenant_id,name,email,phone,password_hash,role,is_verified,language,marketing_opt_in,reward_points,addresses,status,must_change_password,created_at,updated_at)
+     VALUES (?,?,?,?,?,?,?,?,1,?,0,650,?,'active',0,?,?)
+     ON CONFLICT(email) DO UPDATE SET tenant_id=excluded.tenant_id,active_tenant_id=excluded.active_tenant_id,name=excluded.name,phone=excluded.phone,password_hash=excluded.password_hash,role=excluded.role,is_verified=1,language=excluded.language,status='active',must_change_password=0,updated_at=excluded.updated_at`,
+  )
+    .bind(
+      profile.id,
+      tenantId,
+      tenantId,
+      profile.name,
+      profile.email,
+      profile.phone,
+      await hashPassword(DEMO_PASSWORD),
+      profile.role,
+      profile.language,
+      profile.role === 'customer'
+        ? JSON.stringify([{ label: 'Demo Home', province: 'bagmati', district: 'Kathmandu', municipality: 'Kathmandu', ward: '10', street: 'New Baneshwor', phone: profile.phone, isDefault: true }])
+        : '[]',
+      now,
+      now,
+    )
+    .run();
+  const user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
+    .bind(profile.email)
+    .first<CloudflareUserRow>();
+  if (!user) throw new CloudflareApiError(503, 'Demo account bootstrap failed');
+  if (tenantId && profile.tenantRole) {
+    await env.HARIYO_DB.prepare(
+      `INSERT INTO tenant_members (tenant_id,user_id,role,status,joined_at,created_at)
+       VALUES (?,? ,?,'active',?,?)
+       ON CONFLICT(tenant_id,user_id) DO UPDATE SET role=excluded.role,status='active'`,
+    )
+      .bind(tenantId, user.id, profile.tenantRole, now, now)
+      .run();
+  }
+  return user;
+}
+
+async function demoSession(req: NextRequest) {
+  await enforceRateLimit(req, 30, 60, 'auth:demo-session');
+  const input = validation(z.object({ email: z.string().email() }), await requestBody(req));
+  const user = await ensureDemoIdentity(input.email.toLowerCase());
+  const now = new Date().toISOString();
+  await cloudflareEnv().HARIYO_DB.prepare('UPDATE users SET last_login_at=?,updated_at=? WHERE id=?')
+    .bind(now, now, user.id)
+    .run();
+  user.last_login_at = now;
+  const tokens = await issueSession(user);
+  await audit(req, user, 'auth.demo_session', 'user', user.id, { testMode: true });
+  return attachSessionCookies(req, apiJson(sessionResponsePayload(req, user, tokens, { demo: true })), tokens);
+}
+
 async function login(req: NextRequest) {
   await enforceRateLimit(req, 12, 60, 'auth:login');
   const env = cloudflareEnv();
   const input = validation(loginInput, await requestBody(req));
   const email = input.email.toLowerCase();
-  const envRecord = env as unknown as Record<string, unknown>;
-  const productionTestMode =
-    String(env.APP_ENV) === 'production' && String(envRecord.PRODUCTION_TEST_MODE) === 'true';
-  const isProductionTestBuyer =
-    productionTestMode && email === 'buyer@demo.hariyomart.local' && input.password === DEMO_PASSWORD;
+  const productionTestMode = productionDemoMode(env);
   const isSeededDemoIdentity =
     productionTestMode && isKnownDemoAccountEmail(email) && input.password === DEMO_PASSWORD;
 
-  // Explicit production-test identities may bypass Turnstile only while PRODUCTION_TEST_MODE=true.
-  // Real customer/farmer/admin identities always follow the configured Turnstile policy.
+  // Exact allow-listed demo identities bypass Turnstile only while explicit Production Test Mode is enabled.
+  // They self-bootstrap at runtime so raw OpenNext deployments do not depend on a separate demo seed command.
   if (!isSeededDemoIdentity) await verifyTurnstile(req, input.turnstileToken, 'login');
 
-  let user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
-    .bind(email)
-    .first<CloudflareUserRow>();
-
-  if (isProductionTestBuyer && !user) {
-    const now = new Date().toISOString();
-    await env.HARIYO_DB.prepare(
-      `INSERT INTO users (id,tenant_id,active_tenant_id,name,email,phone,password_hash,role,is_verified,language,marketing_opt_in,reward_points,addresses,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,'customer',1,'en',0,0,'[]',?,?)`,
-    )
-      .bind(
-        'production-test-buyer',
-        null,
-        null,
-        'Hariyo Production Test Buyer',
-        email,
-        null,
-        await hashPassword(DEMO_PASSWORD),
-        now,
-        now,
-      )
-      .run();
-    user = await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
-      .bind(email)
-      .first<CloudflareUserRow>();
-  }
+  let user = isSeededDemoIdentity
+    ? await ensureDemoIdentity(email)
+    : await env.HARIYO_DB.prepare('SELECT * FROM users WHERE email=? COLLATE NOCASE')
+        .bind(email)
+        .first<CloudflareUserRow>();
 
   if (!user) throw new CloudflareApiError(401, 'Invalid email or password');
 
   // Known Production Test Mode identities use a published shared credential. If an older
   // deployment left a stale bcrypt hash in D1, accept only the exact known test identity +
   // shared password, then self-heal the stored hash. Real accounts always require bcrypt.
-  let passwordMatches = false;
-  try {
-    passwordMatches = await verifyPassword(input.password, user.password_hash);
-  } catch {
-    passwordMatches = false;
+  let passwordMatches = isSeededDemoIdentity;
+  if (!passwordMatches) {
+    try {
+      passwordMatches = await verifyPassword(input.password, user.password_hash);
+    } catch {
+      passwordMatches = false;
+    }
   }
   if (!passwordMatches && !isSeededDemoIdentity)
     throw new CloudflareApiError(401, 'Invalid email or password');
@@ -1661,7 +1783,7 @@ async function readiness() {
     (Boolean(env.TURNSTILE_SECRET_KEY && env.TURNSTILE_SECRET_KEY.length >= 20) &&
       Boolean(turnstileSiteKey && !/REPLACE_WITH|PLACEHOLDER/i.test(turnstileSiteKey)));
   const envRecord = env as unknown as Record<string, unknown>;
-  const productionTestMode = String(env.APP_ENV) === 'production' && String(envRecord.PRODUCTION_TEST_MODE) === 'true';
+  const productionTestMode = productionDemoMode(env);
   let demoCredentialReady = !productionTestMode;
   if (productionTestMode && demoBuyerHash) {
     try {
@@ -1679,11 +1801,11 @@ async function readiness() {
     JWT_REFRESH_SECRET: Boolean(env.JWT_REFRESH_SECRET && env.JWT_REFRESH_SECRET.length >= 32) || productionTestMode,
     TURNSTILE: turnstileConfigured || productionTestMode,
     DEMO_CLEAN: String(env.APP_ENV) !== 'production' || productionTestMode || seed.demoUsers === 0,
-    DEMO_LOGIN: demoCredentialReady,
+    DEMO_LOGIN: demoCredentialReady || (productionTestMode && database === 'connected'),
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.9.1',
+    version: '9.0.0',
     status:
       Object.values(required).every(Boolean) && (adminConfigured || productionTestMode)
         ? seed.products >= 98 && seed.tenants >= 7
@@ -1700,6 +1822,8 @@ async function readiness() {
       productionTestMode,
       demoUsersPresent: seed.demoUsers > 0,
       demoCredentialReady,
+      demoRuntimeBootstrapReady: productionTestMode && database === 'connected',
+      demoSessionEndpoint: '/api/auth/demo-session',
       turnstileConfigured,
       standaloneRateLimitFallback: 'KV',
       standaloneCheckoutFallback: 'D1',
@@ -1734,6 +1858,8 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (route === 'commerce/delivery-slots' && method === 'GET') return await deliverySlotsApi(req);
     if (route === 'commerce/coupons/validate' && method === 'POST') return await validateCouponApi(req);
     if (route === 'commerce/cart' && ['GET', 'PUT'].includes(method)) return await cartApi(req);
+    if (route === 'commerce/saved-baskets' && ['GET', 'POST'].includes(method)) return await savedBasketsApi(req);
+    if (segments[0] === 'commerce' && segments[1] === 'saved-baskets' && segments[2] && method === 'DELETE') return await deleteSavedBasketApi(req, segments[2]);
     if (route === 'commerce/returns' && ['GET', 'POST'].includes(method)) return await returnsApi(req);
     if (route === 'commerce/summary' && method === 'GET') return await commerceSummaryApi(req);
     if (route === 'commerce/inventory-alerts' && ['GET', 'POST'].includes(method)) return await inventoryAlertRulesApi(req);
@@ -1771,6 +1897,7 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (route === 'auth/register' && method === 'POST') return await registerBuyer(req);
     if (route === 'auth/register-farmer' && method === 'POST') return await registerFarmer(req);
     if (route === 'auth/login' && method === 'POST') return await login(req);
+    if (route === 'auth/demo-session' && method === 'POST') return await demoSession(req);
     if (route === 'auth/refresh' && method === 'POST') return await refresh(req);
     if (route === 'auth/logout' && method === 'POST') return await logout(req);
     if (route === 'auth/me' && method === 'GET') return await me(req);

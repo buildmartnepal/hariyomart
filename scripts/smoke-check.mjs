@@ -200,4 +200,4 @@ if (!seed.includes('!seed-account-login-disabled!')) {
   throw new Error('Operational seed identities must remain login-disabled');
 }
 
-console.log('Hariyo Mart Nepal v8 Cloudflare-native compatibility smoke check PASS');
+console.log('Hariyo Mart Nepal v9.0.0 Cloudflare-native compatibility smoke check PASS');

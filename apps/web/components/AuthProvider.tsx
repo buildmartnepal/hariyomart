@@ -35,6 +35,7 @@ type AuthContextValue = {
   user: HariyoUser | null;
   ready: boolean;
   login: (email: string, password: string, turnstileToken?: string) => Promise<HariyoUser>;
+  demoLogin: (email: string) => Promise<HariyoUser>;
   registerBuyer: (payload: {
     name: string;
     email: string;
@@ -144,6 +145,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [api],
   );
+  const demoLogin = useCallback(
+    async (email: string) => {
+      const r = await fetch(`${api}/auth/demo-session`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await readAuthResponse(r);
+      if (!r.ok) throw new Error(data.error || `Unable to open demo workspace (${r.status})`);
+      setUser(data.user);
+      return data.user as HariyoUser;
+    },
+    [api],
+  );
   const registerBuyer = useCallback(
     async (payload: { name: string; email: string; password: string; phone?: string; turnstileToken?: string }) => {
       const r = await fetch(`${api}/auth/register`, {
@@ -160,8 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [api],
   );
   const value = useMemo(
-    () => ({ user, ready, login, registerBuyer, logout, refreshMe, apiRequest }),
-    [user, ready, login, registerBuyer, logout, refreshMe, apiRequest],
+    () => ({ user, ready, login, demoLogin, registerBuyer, logout, refreshMe, apiRequest }),
+    [user, ready, login, demoLogin, registerBuyer, logout, refreshMe, apiRequest],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

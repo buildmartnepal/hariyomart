@@ -1,62 +1,23 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BadgeCheck, KeyRound, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
-import { DEMO_PASSWORD, demoAccounts } from '@/lib/demo-accounts';
+import { ShieldCheck, Sparkles } from 'lucide-react';
+import { demoAccounts } from '@/lib/demo-accounts';
 import { getPublicRuntimeConfig } from '@/server/cloudflare/public-config';
+import { DemoLaunchCenter } from '@/components/DemoLaunchCenter';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
-  title: 'Demo Accounts | Hariyo Mart Nepal',
-  description: 'Role-based Hariyo Mart demo workspaces for controlled staging environments.',
+  title: 'Demo Lab | Hariyo Mart Nepal',
+  description: 'One-click role-based Hariyo Mart test workspaces with runtime readiness diagnostics.',
+  robots: { index: false, follow: false },
 };
 
 export default function DemoAccountsPage() {
   if (!getPublicRuntimeConfig().demoEnabled) notFound();
-
   return (
     <main>
-      <section className="page-hero">
-        <div className="container">
-          <span className="eyebrow"><Sparkles size={15} /> Guided product demo</span>
-          <h1>Test Hariyo Mart from every role.</h1>
-          <p className="section-copy">
-            Demo identities are available only on a deployment explicitly configured for demo mode.
-          </p>
-        </div>
-      </section>
-      <section className="section">
-        <div className="container demo-directory-shell">
-          <div className="demo-password-card">
-            <KeyRound />
-            <div>
-              <span>Shared demo password</span>
-              <strong>{DEMO_PASSWORD}</strong>
-            </div>
-            <Link className="btn btn-primary" href="/login">Open sign in</Link>
-          </div>
-          <div className="demo-account-directory">
-            {demoAccounts.map((account) => (
-              <article key={account.email}>
-                <div className="demo-role-icon"><UsersRound /></div>
-                <div>
-                  <span className="demo-role-label">{account.label}</span>
-                  <h3>{account.workspace}</h3>
-                  <code>{account.email}</code>
-                </div>
-                <BadgeCheck className="demo-role-check" />
-              </article>
-            ))}
-          </div>
-          <div className="security-note">
-            <ShieldCheck />
-            <p>
-              <b>Demo-only identities:</b> remove them before a real launch with{' '}
-              <code>npm run production:demo:remove</code>.
-            </p>
-          </div>
-        </div>
-      </section>
+      <section className="page-hero demo-lab-hero"><div className="container"><span className="eyebrow"><Sparkles size={15}/> Hariyo Test Mode</span><h1>Test the full marketplace without fighting demo credentials.</h1><p className="section-copy">Buyer, farmer, operations and platform roles can be launched directly. Test identities are repaired or created at runtime inside the dedicated demo sandbox.</p><div className="security-note"><ShieldCheck/><p><b>Test-only:</b> disable <code>PRODUCTION_TEST_MODE</code> and <code>NEXT_PUBLIC_DEMO_MODE</code> before real customer launch.</p></div></div></section>
+      <section className="section"><div className="container"><DemoLaunchCenter accounts={demoAccounts}/></div></section>
     </main>
   );
 }

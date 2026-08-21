@@ -71,7 +71,7 @@ function assertWorkerDeployed(name) {
 if (!fs.existsSync(path.join(root, serviceConfig))) throw new Error(`${serviceConfig} not found`);
 if (!fs.existsSync(path.join(root, webConfig))) throw new Error(`${webConfig} not found`);
 
-console.log('\nHariyo Mart Cloudflare services bootstrap v8.9.1');
+console.log('\nHariyo Mart Cloudflare services bootstrap v9.0.0');
 console.log('The internal service Worker is deployed and verified before the public web Worker.');
 
 console.log('\n1/6 Checking Cloudflare authentication');
@@ -86,7 +86,7 @@ run(npm, ['run', 'cloudflare:types']);
 run(npm, ['run', 'typecheck:services']);
 
 console.log('\n4/6 Deploying private target Worker FIRST');
-wrangler(['deploy', '--config', serviceConfig, '--message', 'Hariyo Mart v8.9.1 services bootstrap']);
+wrangler(['deploy', '--config', serviceConfig, '--message', 'Hariyo Mart v9.0.0 services bootstrap']);
 
 console.log('\n5/6 Verifying target Worker exists before public web deployment');
 assertWorkerDeployed('hariyo-mart-services');

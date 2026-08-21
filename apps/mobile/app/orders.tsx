@@ -3,8 +3,12 @@ import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Header, colors } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
+import { catalog, type Product } from '@/data/catalog';
+const mobileProducts: readonly Product[] = catalog.products;
 export default function Orders() {
   const { user, apiRequest } = useAuth();
+  const cart = useCart();
   const [orders, setOrders] = useState<any[]>([]);
   const [message, setMessage] = useState('');
   useEffect(() => {
@@ -41,6 +45,23 @@ export default function Orders() {
             <Text style={[copy, { marginTop: 8 }]}>
               {o.deliveryAddress?.municipality}, {o.deliveryAddress?.district}
             </Text>
+            {!!o.items?.length && (
+              <Pressable
+                style={{ backgroundColor: '#EAF7DF', borderRadius: 12, paddingVertical: 11, paddingHorizontal: 13, marginTop: 10 }}
+                onPress={() => {
+                  let restored = 0;
+                  for (const item of o.items) {
+                    const product = mobileProducts.find((p) => p.slug === item.productSlug);
+                    if (!product) continue;
+                    cart.add(product, Number(item.quantity || product.minimumOrder || 1));
+                    restored += 1;
+                  }
+                  setMessage(restored ? `${restored} product${restored === 1 ? '' : 's'} added to cart.` : 'Those products are not currently available.');
+                }}
+              >
+                <Text style={{ color: '#153D2B', fontWeight: '900', textAlign: 'center' }}>↻ Reorder this basket</Text>
+              </Pressable>
+            )}
             <View style={{ marginTop: 10 }}>
               {(o.fulfillments || []).map((f: any) => (
                 <View

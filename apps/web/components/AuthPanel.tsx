@@ -93,7 +93,7 @@ export function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
     setMessage('');
     setDemoBusy(emailValue);
     try {
-      const user = await auth.login(emailValue, demoConfig.password);
+      const user = await auth.demoLogin(emailValue);
       router.push(
         user.role === 'admin'
           ? '/admin/overview'

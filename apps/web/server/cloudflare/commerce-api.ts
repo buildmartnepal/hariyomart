@@ -492,3 +492,60 @@ export async function commerceSummaryApi(req: NextRequest) {
     expiringLots: Number(first(expiringLots).count || 0),
   });
 }
+
+const savedBasketInput = z.object({
+  name: z.string().trim().min(2).max(80),
+  lines: z
+    .array(
+      z.object({
+        productSlug: z.string().min(2).max(120),
+        quantity: z.coerce.number().positive().max(1_000_000),
+      }),
+    )
+    .min(1)
+    .max(60),
+});
+
+export async function savedBasketsApi(req: NextRequest) {
+  const user = await requireAuth(req);
+  const env = cloudflareEnv();
+  if (req.method === 'GET') {
+    const result = await env.HARIYO_DB.prepare(
+      `SELECT id,name,lines_json,created_at,updated_at FROM saved_baskets
+       WHERE user_id=? ORDER BY updated_at DESC LIMIT 30`,
+    )
+      .bind(user.id)
+      .all<{ id: string; name: string; lines_json: string; created_at: string; updated_at: string }>();
+    return apiJson({
+      baskets: (result.results || []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        lines: parseJson<Array<{ productSlug: string; quantity: number }>>(row.lines_json, []),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })),
+    });
+  }
+  if (req.method !== 'POST') throw new CloudflareApiError(405, 'Method not allowed');
+  const input = parse(savedBasketInput, await requestBody(req));
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await env.HARIYO_DB.prepare(
+    `INSERT INTO saved_baskets (id,user_id,name,lines_json,created_at,updated_at) VALUES (?,?,?,?,?,?)`,
+  )
+    .bind(id, user.id, input.name, JSON.stringify(input.lines), now, now)
+    .run();
+  await audit(req, user, 'commerce.basket_saved', 'saved_basket', id, { lines: input.lines.length });
+  return apiJson({ id, name: input.name, lines: input.lines, createdAt: now, updatedAt: now }, 201);
+}
+
+export async function deleteSavedBasketApi(req: NextRequest, basketId: string) {
+  const user = await requireAuth(req);
+  const env = cloudflareEnv();
+  const result = await env.HARIYO_DB.prepare('DELETE FROM saved_baskets WHERE id=? AND user_id=?')
+    .bind(basketId, user.id)
+    .run();
+  if (!result.meta.changes) throw new CloudflareApiError(404, 'Saved basket not found');
+  await audit(req, user, 'commerce.basket_deleted', 'saved_basket', basketId);
+  return apiJson({ ok: true });
+}

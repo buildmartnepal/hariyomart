@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { catalog } from '@/data/catalog';
-type Product = (typeof catalog.products)[number];
+import type { Product } from '@/data/catalog';
 type Line = { product: Product; quantity: number };
 type CartContextValue = {
   lines: Line[];
@@ -13,8 +12,10 @@ type CartContextValue = {
 const C = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<Line[]>([]);
-  const add = (product: Product, quantity = 1) =>
+  const add = (product: Product, quantity = Number(product.minimumOrder || 1)) =>
     setLines((p) => {
+      const minimum = Math.max(1, Number(product.minimumOrder || 1));
+      quantity = Math.max(minimum, quantity);
       const f = p.find((x) => x.product.slug === product.slug);
       return f
         ? p.map((x) =>
@@ -22,7 +23,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               ? { ...x, quantity: Math.min(x.quantity + quantity, product.stock) }
               : x,
           )
-        : [...p, { product, quantity: Math.min(Math.max(quantity, 1), product.stock) }];
+        : [...p, { product, quantity: Math.min(Math.max(quantity, minimum), product.stock) }];
     });
   const update = (slug: string, quantity: number) =>
     setLines((current) =>

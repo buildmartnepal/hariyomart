@@ -20,7 +20,7 @@ function run(args, extraEnv = {}) {
   if (result.status !== 0) throw new Error(`npm ${args.join(' ')} failed with exit code ${result.status}`);
 }
 
-console.log('\nHariyo Mart v8.9.1 connected production deployment');
+console.log('\nHariyo Mart v9.0.0 connected production deployment');
 console.log('Order: guard -> config -> optional services -> D1 migrations -> idempotent seed -> OpenNext build -> public standalone web Worker.');
 
 console.log('\n1/7 Running production safety guard');
@@ -61,5 +61,5 @@ if (!fs.existsSync(openNextWorker) || !fs.existsSync(openNextAssets)) {
 console.log('\n7/7 Deploying public OpenNext Worker');
 run(['--workspace', 'apps/web', 'run', 'cf:deploy:built']);
 
-console.log('\nHariyo Mart v8.9.1 deployment completed.');
+console.log('\nHariyo Mart v9.0.0 deployment completed.');
 console.log('Verify /api/health, /api/system/readiness, login/register, multi-photo product listing, Nearby matching, mobile flow and checkout.');

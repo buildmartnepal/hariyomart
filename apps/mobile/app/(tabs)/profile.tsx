@@ -4,7 +4,7 @@ import { Link } from 'expo-router';
 import { Screen, Header, colors, s } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 export default function Profile() {
-  const { user, ready, login, registerBuyer, logout, apiRequest } = useAuth();
+  const { user, ready, login, demoLogin, registerBuyer, logout, apiRequest } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -13,6 +13,7 @@ export default function Profile() {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [demoAvailable, setDemoAvailable] = useState(false);
   useEffect(() => {
     if (user)
       apiRequest('/account/me')
@@ -20,6 +21,13 @@ export default function Profile() {
         .catch(() => {});
     else setProfile(null);
   }, [apiRequest, user]);
+  useEffect(() => {
+    if (user) { setDemoAvailable(false); return; }
+    const base = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+    fetch(`${base}/demo-config`, { headers: { 'x-client-platform': 'mobile' } })
+      .then((response) => setDemoAvailable(response.ok))
+      .catch(() => setDemoAvailable(false));
+  }, [user]);
   async function submit() {
     setBusy(true);
     setMessage('');
@@ -74,6 +82,29 @@ export default function Profile() {
               </Pressable>
             </View>
           </View>
+          {demoAvailable && mode === 'login' && (
+            <View style={demoCard}>
+              <Text style={demoEyebrow}>DEMO LAB</Text>
+              <Text style={demoTitle}>Open a test workspace instantly</Text>
+              <Text style={demoCopy}>No demo password is required for one-click Test Mode sessions.</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                {[
+                  ['Buyer','buyer@demo.hariyomart.local'],
+                  ['Farmer','farmer@demo.hariyomart.local'],
+                  ['Admin','admin@demo.hariyomart.local'],
+                ].map(([label, demoEmail]) => (
+                  <Pressable key={demoEmail} style={demoPill} disabled={busy} onPress={async () => {
+                    setBusy(true); setMessage('');
+                    try { const opened = await demoLogin(demoEmail); setMessage(`Opened ${opened.name}.`); }
+                    catch (e) { setMessage(e instanceof Error ? e.message : 'Demo unavailable'); }
+                    finally { setBusy(false); }
+                  }}>
+                    <Text style={demoPillText}>{label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
           <View style={card}>
             {mode === 'register' && <Field label="Full name" value={name} set={setName} />}
             <Field label="Email" value={email} set={setEmail} keyboard="email-address" />
@@ -186,6 +217,13 @@ function Field({
     </View>
   );
 }
+const demoCard = { backgroundColor: '#EAF7DF', borderWidth: 1, borderColor: '#B9DCA0', borderRadius: 20, padding: 16, marginTop: 14 } as const;
+const demoEyebrow = { color: '#24733D', fontWeight: '900', fontSize: 11, letterSpacing: 1.2 } as const;
+const demoTitle = { color: colors.dark, fontWeight: '900', fontSize: 20, marginTop: 4 } as const;
+const demoCopy = { color: colors.muted, marginTop: 4, lineHeight: 19 } as const;
+const demoPill = { backgroundColor: '#153D2B', borderRadius: 999, paddingVertical: 10, paddingHorizontal: 14 } as const;
+const demoPillText = { color: 'white', fontWeight: '900', fontSize: 12 } as const;
+
 const card = {
     backgroundColor: 'white',
     borderWidth: 1,

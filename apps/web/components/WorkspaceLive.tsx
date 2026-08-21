@@ -22,8 +22,9 @@ import {
   Truck,
   UsersRound,
 } from 'lucide-react';
-import { catalog } from '@/lib/catalog';
+import { catalog, getCatalogProduct } from '@/lib/catalog';
 import { useAuth } from './AuthProvider';
+import { useCart } from './CartProvider';
 
 type Props = { role: 'Farmer' | 'Admin' | 'Account'; section: string };
 type Bundle = {
@@ -785,6 +786,8 @@ function AdminView({ section, data, action, run, auth }: any) {
 }
 
 function BuyerView({ section, data, auth, run, action }: any) {
+  const cart = useCart();
+  const [reorderMessage, setReorderMessage] = useState('');
   const d = data.dash || {},
     m = d.metrics || {},
     p = d.profile || {};
@@ -862,18 +865,19 @@ function BuyerView({ section, data, auth, run, action }: any) {
           title="Order history"
           subtitle="Track the overall order and seller-level fulfillment status."
         >
+          {reorderMessage && <div className="notice-card">{reorderMessage}</div>}
           {(d.orders || []).map((o: any) => (
-            <div className="buyer-order" key={o._id}>
+            <div className="buyer-order buyer-order-v900" key={o._id}>
               <div>
                 <small>{o.orderNumber}</small>
                 <h3>{new Date(o.createdAt).toLocaleDateString()}</h3>
-                <p>
-                  {o.deliveryAddress?.street}, {o.deliveryAddress?.municipality}
-                </p>
+                <p>{o.deliveryAddress?.street}, {o.deliveryAddress?.municipality}</p>
+                {!!o.items?.length && <div className="buyer-order-items">{o.items.slice(0,4).map((item:any)=><span key={item.id || item.productSlug}>{item.productName || item.productSlug} × {item.quantity}</span>)}{o.items.length>4 && <span>+{o.items.length-4} more</span>}</div>}
               </div>
-              <div>
+              <div className="buyer-order-tail">
                 <strong>{money(o.total)}</strong>
                 <Status value={o.status} />
+                {!!o.items?.length && <button type="button" className="btn btn-soft compact-action" onClick={() => { let restored=0; for (const item of o.items){ const product=getCatalogProduct(String(item.productSlug||'')); if(!product) continue; cart.add(product, Number(item.quantity||product.minimumOrder||1)); restored++; } setReorderMessage(restored ? `${restored} product${restored===1?'':'s'} added to your basket.` : 'Those products are not currently available to reorder.'); }}>Reorder basket</button>}
               </div>
             </div>
           ))}

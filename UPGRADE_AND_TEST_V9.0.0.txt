@@ -1,0 +1,12 @@
+Hariyo Mart Nepal v9.0.0 upgrade / test
+
+1. Replace repository with the v9.0.0 package.
+2. Cloudflare Build command: npx @opennextjs/cloudflare build
+3. Cloudflare Deploy command: npm run deploy:cloudflare:production
+4. After deploy open /api/system/readiness.
+5. Open /demo and use one-click Buyer/Farmer/Admin or any role.
+6. Manual demo password remains HariyoDemo@2026 for allow-listed demo accounts.
+7. Test Saved Baskets: add products -> basket drawer -> Save basket -> /saved-baskets -> Load basket.
+8. Test Quick Reorder from /account/orders and the native mobile Orders screen.
+9. Test product gallery, location matching, checkout, seller dashboard and admin dashboard.
+10. Before real launch disable NEXT_PUBLIC_DEMO_MODE and PRODUCTION_TEST_MODE and remove demo identities.

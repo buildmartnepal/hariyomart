@@ -5,6 +5,7 @@ type Ctx = {
   user: User | null;
   ready: boolean;
   login: (email: string, password: string) => Promise<User>;
+  demoLogin: (email: string) => Promise<User>;
   registerBuyer: (p: {
     name: string;
     email: string;
@@ -113,6 +114,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [persist],
   );
+  const demoLogin = useCallback(
+    async (email: string) => {
+      const r = await fetch(`${api}/auth/demo-session`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...mobileHeaders },
+        body: JSON.stringify({ email }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Demo workspace is unavailable');
+      return persist(data);
+    },
+    [persist],
+  );
   const registerBuyer = useCallback(
     async (p: { name: string; email: string; password: string; phone?: string }) => {
       const r = await fetch(`${api}/auth/register`, {
@@ -127,8 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [persist],
   );
   const value = useMemo(
-    () => ({ user, ready, login, registerBuyer, logout, apiRequest }),
-    [user, ready, login, registerBuyer, logout, apiRequest],
+    () => ({ user, ready, login, demoLogin, registerBuyer, logout, apiRequest }),
+    [user, ready, login, demoLogin, registerBuyer, logout, apiRequest],
   );
   return <C.Provider value={value}>{children}</C.Provider>;
 }

@@ -66,7 +66,7 @@ export async function supplyStackStatus() {
   const [d1, services] = await Promise.all([probeV8Schema(), probeServices()]);
   return apiJson({
     service: 'hariyo-mart-cloudflare-native-produce-saas',
-    version: '8.9.1',
+    version: '9.0.0',
     mode: 'cloudflare-native',
     sourceOfTruth: 'cloudflare-d1-with-durable-object-coordination',
     d1,

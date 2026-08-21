@@ -1,3 +1,18 @@
+# Hariyo Mart Nepal v9.0.0 — Demo Lab + Repeat Commerce
+
+Hariyo Mart Nepal is a Cloudflare-native multi-tenant farm-to-market marketplace and Farmer OS for Nepal. v9.0.0 makes Production Test Mode reliable even when a raw OpenNext deploy skips demo seeding, and adds repeat-purchase features for buyers across web and native mobile.
+
+## v9.0.0 highlights
+
+- Runtime self-bootstrapping Demo Lab with direct one-click role sessions.
+- Manual shared demo password now uses the same bootstrap path, eliminating stale/missing demo-row failures.
+- Dedicated verified Enterprise demo tenant with role memberships and sample listings.
+- Live demo readiness diagnostics.
+- Saved Baskets persisted in D1 and restorable across devices.
+- Quick Reorder on web and native mobile order history.
+- Native mobile cart now respects product minimum-order quantities.
+- All v8.9.1 build fixes, v8.9 content, v8.8 commerce, v8.7 adaptive branding and standalone Cloudflare fallbacks remain.
+
 # Hariyo Mart Nepal v8.9.1 — Cloudflare Build Fix + Unified Website/Mobile UX
 ## v8.9.1 — Build-safe commerce + unified mobile experience
 
@@ -119,7 +134,7 @@ See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShe
 - Keep `NEXT_PUBLIC_DEMO_MODE=false` for a real production launch and remove demo users with `npm run demo:remove:remote`.
 
 
-## v8.9.1 deployment
+## v9.0.0 deployment
 
 For Cloudflare Workers Builds use `npm run build:cloudflare` followed by `npm run deploy:cloudflare:connected`. The deploy step keeps `hariyo-mart-services` optional, applies D1 migrations and idempotent seed repair before web cutover, and then publishes the standalone `hariyo-mart-nepal` Worker. See `CLOUDFLARE_CONNECTED_DEPLOY.md`.
 

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   ChevronDown,
   Crosshair,
+  FlaskConical,
   Heart,
   LogIn,
   MapPin,
@@ -22,10 +23,12 @@ import { useMarketLocation } from './LocationProvider';
 import { locationPresets } from '@/lib/marketplace';
 import { useProductExperience } from './ProductExperienceProvider';
 import { MarketplaceSearch } from './MarketplaceSearch';
+import { usePublicConfig } from './PublicConfigProvider';
 export function Header() {
   const cart = useCart(),
     auth = useAuth();
   const experience = useProductExperience();
+  const { demoEnabled } = usePublicConfig();
   const market = useMarketLocation();
   const [open, setOpen] = useState(false);
   const accountHref =
@@ -97,6 +100,7 @@ export function Header() {
           </Link>
           <ThemeSwitcher />
           <MarketplaceSearch />
+          {demoEnabled && <Link className="icon-btn desktop-tool demo-lab-tool" href="/demo" aria-label="Open Demo Lab" title="Demo Lab"><FlaskConical size={19}/></Link>}
           <Link className="icon-btn desktop-tool header-count-tool" href="/saved" aria-label="Saved products"><Heart size={19}/>{experience.saved.length > 0 && <span>{Math.min(experience.saved.length, 99)}</span>}</Link>
           <Link className="icon-btn desktop-tool header-count-tool" href="/compare" aria-label="Compare products"><Scale size={19}/>{experience.compare.length > 0 && <span>{experience.compare.length}</span>}</Link>
           <Link
@@ -149,6 +153,7 @@ export function Header() {
               </Link>
             )}
             <Link href="/shop" onClick={() => setOpen(false)}>Marketplace <span>→</span></Link>
+            {demoEnabled && <Link href="/demo" onClick={() => setOpen(false)}>Demo Lab <span>→</span></Link>}
             <Link href="/saved" onClick={() => setOpen(false)}>Saved products <span>{experience.saved.length || '→'}</span></Link>
             <Link href="/compare" onClick={() => setOpen(false)}>Compare products <span>{experience.compare.length || '→'}</span></Link>
             <Link href="/how-it-works" onClick={() => setOpen(false)}>
