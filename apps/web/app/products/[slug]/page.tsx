@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import {
   BadgeCheck,
   Clock3,
+  FileCheck2,
+  Globe2,
   Leaf,
   MapPin,
   PackageCheck,
@@ -11,6 +13,7 @@ import {
   Star,
   Store,
   Truck,
+  Boxes,
 } from 'lucide-react';
 import { catalog, type Product } from '@/lib/catalog';
 import { farmForProduct } from '@/lib/marketplace';
@@ -40,6 +43,23 @@ type LiveProduct = Product & {
   images?: readonly string[];
   lat?: number;
   lng?: number;
+  exportReady?: boolean;
+  exportStatus?: string;
+  hsCodeHint?: string;
+  botanicalName?: string | null;
+  originAltitude?: string;
+  harvestSeason?: string;
+  processingMethod?: string;
+  typicalShelfLifeDays?: number;
+  storageGuidance?: string;
+  tradePack?: string;
+  exportMoq?: number;
+  leadTimeDays?: number;
+  destinationMarkets?: readonly string[];
+  domesticMarkets?: readonly string[];
+  traceabilityLevel?: string;
+  complianceNote?: string;
+  sourceType?: string;
 };
 function normalize(p: any): LiveProduct {
   const province = catalog.provinces.find((x) => x.slug === p.province);
@@ -354,6 +374,31 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       </section>
+      {p.exportReady ? (
+        <section className="section product-export-section">
+          <div className="container product-export-card">
+            <div className="product-export-copy">
+              <span className="eyebrow"><Globe2 size={15}/> Nepal Origin Trade Profile</span>
+              <h2>Qualified for export inquiry — final lot verification required.</h2>
+              <p>This catalog profile carries trade fields for sourcing, but no certification, phytosanitary clearance, laboratory result or final HS classification is implied until Hariyo verifies the actual supplier and shipment lot.</p>
+              <div className="product-export-facts">
+                <div><small>HS CODE HINT</small><b>{p.hsCodeHint || 'Confirm before quotation'}</b></div>
+                <div><small>BOTANICAL / PRODUCT ID</small><b>{p.botanicalName || 'Commercial product name'}</b></div>
+                <div><small>ORIGIN ALTITUDE</small><b>{p.originAltitude || 'Supplier lot specific'}</b></div>
+                <div><small>TRADE PACK</small><b>{p.tradePack || p.unit}</b></div>
+                <div><small>EXPORT MOQ</small><b>{p.exportMoq ? `${p.exportMoq} trade units` : 'By RFQ'}</b></div>
+                <div><small>LEAD TIME</small><b>{p.leadTimeDays ? `${p.leadTimeDays} days indicative` : 'Confirm per lot'}</b></div>
+                <div><small>PROCESSING</small><b>{p.processingMethod || 'Supplier specification'}</b></div>
+                <div><small>STORAGE</small><b>{p.storageGuidance || 'Product-specific'}</b></div>
+              </div>
+              {p.destinationMarkets?.length ? <div className="destination-market-row"><Globe2 size={17}/><span><b>Target buyer markets:</b> {p.destinationMarkets.join(' · ')}</span></div> : null}
+              <div className="product-export-note"><FileCheck2 size={18}/><span>{p.complianceNote || 'Documents and destination admissibility are checked per supplier lot.'}</span></div>
+              <Link href={`/export?product=${encodeURIComponent(p.slug)}`} className="btn btn-primary">Request trade / export quotation <Globe2 size={17}/></Link>
+            </div>
+            <aside className="product-export-flow"><span><Boxes/><b>1. Product & pack</b></span><span><ShieldCheck/><b>2. Supplier + lot</b></span><span><FileCheck2/><b>3. Docs + tests</b></span><span><Truck/><b>4. Quote + logistics</b></span></aside>
+          </div>
+        </section>
+      ) : null}
       <section className="section product-reviews-section">
         <div className="container">
           <ProductReviews slug={p.slug} catalogRating={p.rating} />

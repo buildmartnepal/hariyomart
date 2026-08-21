@@ -129,6 +129,22 @@ export function HarvestPublisher() {
       deliveryRadiusKm: Number(fd.get('deliveryRadiusKm') || 35),
       wholesale: fd.get('wholesale') === 'on',
       subscription: fd.get('subscription') === 'on',
+      exportReady: fd.get('exportReady') === 'on',
+      exportStatus: fd.get('exportReady') === 'on' ? 'supplier-review' : 'domestic-ready',
+      hsCodeHint: String(fd.get('hsCodeHint') || ''),
+      botanicalName: String(fd.get('botanicalName') || ''),
+      originAltitude: String(fd.get('originAltitude') || ''),
+      harvestSeason: String(fd.get('harvestSeason') || ''),
+      processingMethod: String(fd.get('processingMethod') || ''),
+      typicalShelfLifeDays: Number(fd.get('typicalShelfLifeDays') || 0),
+      storageGuidance: String(fd.get('storageGuidance') || ''),
+      tradePack: String(fd.get('tradePack') || ''),
+      exportMoq: Number(fd.get('exportMoq') || 0),
+      leadTimeDays: Number(fd.get('leadTimeDays') || 0),
+      destinationMarkets: String(fd.get('destinationMarkets') || '').split(',').map((item) => item.trim()).filter(Boolean),
+      traceabilityLevel: 'supplier + farm/cluster + lot',
+      complianceNote: 'Export and certification claims require document review for the actual supplier lot before quotation.',
+      sourceType: 'seller-entered farm/local producer listing',
     };
     try {
       if (!auth.user) {
@@ -278,6 +294,27 @@ export function HarvestPublisher() {
               <label>
                 <input type="checkbox" name="subscription" /> Repeat subscription
               </label>
+            </div>
+            <div className="export-listing-panel">
+              <div><span className="eyebrow">Trade & export profile</span><p>Optional. Marking a product export-ready starts document review; it does not publish unverified certification claims.</p></div>
+              <label className="export-ready-toggle"><input type="checkbox" name="exportReady" /> Prepare this listing for wholesale / export RFQs</label>
+              <div className="form-3">
+                <label>HS code hint<input name="hsCodeHint" placeholder="e.g. 0908.30 — confirm before shipment" /></label>
+                <label>Botanical / scientific name<input name="botanicalName" placeholder="Optional for herbs and botanicals" /></label>
+                <label>Origin altitude<input name="originAltitude" placeholder="e.g. 1,400–1,900 m" /></label>
+              </div>
+              <div className="form-3">
+                <label>Trade pack<input name="tradePack" placeholder="10 kg carton / 25 kg bag / 1 L can" /></label>
+                <label>Export MOQ<input name="exportMoq" type="number" min="0" step="0.1" placeholder="100" /></label>
+                <label>Lead time (days)<input name="leadTimeDays" type="number" min="0" max="365" placeholder="7" /></label>
+              </div>
+              <div className="form-2">
+                <label>Harvest / supply season<input name="harvestSeason" placeholder="Seasonal or year-round processing stock" /></label>
+                <label>Typical shelf life (days)<input name="typicalShelfLifeDays" type="number" min="0" placeholder="365" /></label>
+              </div>
+              <label>Processing method<input name="processingMethod" placeholder="Fresh graded / shade dried / steam distilled / roasted" /></label>
+              <label>Storage guidance<input name="storageGuidance" placeholder="Cool, dry, sealed; or cold chain requirements" /></label>
+              <label>Target markets<input name="destinationMarkets" placeholder="Germany, UAE, Japan, United States" /></label>
             </div>
           </section>
           <section>

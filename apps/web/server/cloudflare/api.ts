@@ -78,6 +78,8 @@ import {
   adminSettings,
   adminSupport,
   createSupportTicket,
+  exportInquiries,
+  adminExportInquiry,
   inventoryEvents,
   newsletterSubscribe,
   productReviews,
@@ -180,6 +182,24 @@ const productInput = z.object({
   deliveryRadiusKm: z.coerce.number().min(1).max(1000).default(35),
   wholesale: z.boolean().optional(),
   subscription: z.boolean().optional(),
+  exportReady: z.boolean().optional(),
+  exportStatus: z.string().max(60).optional(),
+  hsCodeHint: z.string().max(40).optional(),
+  botanicalName: z.string().max(160).optional(),
+  originAltitude: z.string().max(80).optional(),
+  harvestSeason: z.string().max(200).optional(),
+  processingMethod: z.string().max(500).optional(),
+  typicalShelfLifeDays: z.coerce.number().int().min(0).max(5000).optional(),
+  storageGuidance: z.string().max(500).optional(),
+  tradePack: z.string().max(160).optional(),
+  exportMoq: z.coerce.number().nonnegative().max(10000000).optional(),
+  leadTimeDays: z.coerce.number().int().min(0).max(365).optional(),
+  destinationMarkets: z.array(z.string().max(80)).max(30).optional(),
+  domesticMarkets: z.array(z.string().max(80)).max(30).optional(),
+  traceabilityLevel: z.string().max(160).optional(),
+  complianceNote: z.string().max(2500).optional(),
+  sourceType: z.string().max(160).optional(),
+  supplierCluster: z.string().max(120).optional(),
 });
 const orderInput = z.object({
   lines: z
@@ -254,6 +274,10 @@ type ProductRow = Record<string, unknown> & {
   lat?: number; lng?: number; delivery_radius_km?: number; status?: string; rating?: number;
   farm_name?: string; farm_slug?: string; tenant_status?: string; farm_same_day?: number; farm_pickup?: number;
   created_at?: string; updated_at?: string;
+  export_ready?: number; export_status?: string | null; hs_code_hint?: string | null; botanical_name?: string | null;
+  origin_altitude?: string | null; harvest_season?: string | null; processing_method?: string | null; typical_shelf_life_days?: number | null;
+  storage_guidance?: string | null; trade_pack?: string | null; export_moq?: number | null; lead_time_days?: number | null;
+  destination_markets?: string | null; domestic_markets?: string | null; traceability_level?: string | null; compliance_note?: string | null; source_type?: string | null; supplier_cluster?: string | null;
 };
 
 type TenantRow = Record<string, unknown> & {
@@ -326,6 +350,24 @@ function productPublic(row: ProductRow) {
     farmerVerified: row.tenant_status === 'verified',
     farmSameDay: Boolean(row.farm_same_day),
     farmPickup: Boolean(row.farm_pickup),
+    exportReady: Boolean(row.export_ready),
+    exportStatus: row.export_status ? String(row.export_status) : null,
+    hsCodeHint: row.hs_code_hint ? String(row.hs_code_hint) : null,
+    botanicalName: row.botanical_name ? String(row.botanical_name) : null,
+    originAltitude: row.origin_altitude ? String(row.origin_altitude) : null,
+    harvestSeason: row.harvest_season ? String(row.harvest_season) : null,
+    processingMethod: row.processing_method ? String(row.processing_method) : null,
+    typicalShelfLifeDays: Number(row.typical_shelf_life_days || 0),
+    storageGuidance: row.storage_guidance ? String(row.storage_guidance) : null,
+    tradePack: row.trade_pack ? String(row.trade_pack) : null,
+    exportMoq: Number(row.export_moq || 0),
+    leadTimeDays: Number(row.lead_time_days || 0),
+    destinationMarkets: parseJson(row.destination_markets, [] as string[]),
+    domesticMarkets: parseJson(row.domestic_markets, [] as string[]),
+    traceabilityLevel: row.traceability_level ? String(row.traceability_level) : null,
+    complianceNote: row.compliance_note ? String(row.compliance_note) : null,
+    sourceType: row.source_type ? String(row.source_type) : null,
+    supplierCluster: row.supplier_cluster ? String(row.supplier_cluster) : null,
     createdAt: row.created_at ? String(row.created_at) : null,
     updatedAt: row.updated_at ? String(row.updated_at) : null,
   };
@@ -758,7 +800,7 @@ async function changePassword(req: NextRequest) {
 async function listProducts(req: NextRequest) {
   const env = cloudflareEnv();
   const url = new URL(req.url);
-  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 40)));
+  const limit = Math.min(500, Math.max(1, Number(url.searchParams.get('limit') || 60)));
   const offset = Math.max(0, Number(url.searchParams.get('offset') || 0));
   const filters = ["p.status='active'", "t.status='verified'"];
   const values: unknown[] = [];
@@ -772,6 +814,7 @@ async function listProducts(req: NextRequest) {
       values.push(value);
     }
   }
+  if (url.searchParams.get('exportReady') === 'true') filters.push('p.export_ready=1');
   const query = url.searchParams.get('q')?.trim();
   if (query) {
     filters.push('(p.name LIKE ? OR p.short_description LIKE ? OR p.district LIKE ?)');
@@ -831,8 +874,8 @@ async function createProduct(req: NextRequest) {
   const slug = `${slugify(input.slug || input.name)}-${id.slice(0, 6)}`;
   const now = new Date().toISOString();
   await env.HARIYO_DB.prepare(
-    `INSERT INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,stock,minimum_order,organic,grade,harvest_date,harvest_window,unique_story,short_description,description,image_url,images_json,lat,lng,delivery_radius_km,wholesale,subscription,status,created_at,updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending_review',?,?)`,
+    `INSERT INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,stock,minimum_order,organic,grade,harvest_date,harvest_window,unique_story,short_description,description,image_url,images_json,lat,lng,delivery_radius_km,wholesale,subscription,export_ready,export_status,hs_code_hint,botanical_name,origin_altitude,harvest_season,processing_method,typical_shelf_life_days,storage_guidance,trade_pack,export_moq,lead_time_days,destination_markets,domestic_markets,traceability_level,compliance_note,source_type,supplier_cluster,status,created_at,updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending_review',?,?)`,
   )
     .bind(
       id, access.tenantId, slug, input.name, input.category, input.province, input.district,
@@ -840,7 +883,12 @@ async function createProduct(req: NextRequest) {
       input.organic ? 1 : 0, input.grade || null, input.harvestDate || null, input.harvestWindow || null,
       input.uniqueStory || null, input.shortDescription || null, input.description || null, input.image || null,
       JSON.stringify(input.images || []), input.lat, input.lng, input.deliveryRadiusKm,
-      input.wholesale ? 1 : 0, input.subscription ? 1 : 0, now, now,
+      input.wholesale ? 1 : 0, input.subscription ? 1 : 0,
+      input.exportReady ? 1 : 0, input.exportStatus || null, input.hsCodeHint || null, input.botanicalName || null,
+      input.originAltitude || null, input.harvestSeason || null, input.processingMethod || null, input.typicalShelfLifeDays ?? null,
+      input.storageGuidance || null, input.tradePack || null, input.exportMoq ?? null, input.leadTimeDays ?? null,
+      JSON.stringify(input.destinationMarkets || []), JSON.stringify(input.domesticMarkets || []), input.traceabilityLevel || null,
+      input.complianceNote || null, input.sourceType || null, input.supplierCluster || null, now, now,
     ).run();
   await audit(req, access.user, 'product.created', 'product', id, { slug, tenantId: access.tenantId });
   const row = await env.HARIYO_DB.prepare(`${productSelect} WHERE p.id=?`).bind(id).first<ProductRow>();
@@ -1993,6 +2041,8 @@ export async function dispatchCloudflareApi(req: NextRequest, segments: string[]
     if (segments[0] === 'content' && segments[1] === 'pages' && segments[2] && method === 'GET')
       return await publicPage(segments[2]);
     if (route === 'support/tickets' && method === 'POST') return await createSupportTicket(req);
+    if (route === 'export/inquiries' && ['GET','POST'].includes(method)) return await exportInquiries(req);
+    if (segments[0] === 'admin' && segments[1] === 'export-inquiries' && segments[2] && method === 'PATCH') return await adminExportInquiry(req, segments[2]);
     if (segments[0] === 'reviews' && segments[1] && ['GET', 'POST'].includes(method))
       return await productReviews(req, segments[1]);
     if (route === 'inventory/events' && ['GET', 'POST'].includes(method))

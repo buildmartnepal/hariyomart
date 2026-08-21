@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Crosshair,
   FlaskConical,
+  Globe2,
   Heart,
   LogIn,
   MapPin,
@@ -89,6 +90,7 @@ export function Header() {
         <nav className="navlinks">
           <Link href="/nearby">Nearby</Link>
           <Link href="/shop">Marketplace</Link>
+          <Link className="nav-export-link" href="/export"><Globe2 size={15}/> Source & Export</Link>
           <Link href="/how-it-works">How it works</Link>
           <Link href="/farmers">Farmers</Link>
           <Link href="/track">Track order</Link>
@@ -153,6 +155,7 @@ export function Header() {
               </Link>
             )}
             <Link href="/shop" onClick={() => setOpen(false)}>Marketplace <span>→</span></Link>
+            <Link href="/export" onClick={() => setOpen(false)}>Nepal sourcing & export <span>→</span></Link>
             {demoEnabled && <Link href="/demo" onClick={() => setOpen(false)}>Demo Lab <span>→</span></Link>}
             <Link href="/saved" onClick={() => setOpen(false)}>Saved products <span>{experience.saved.length || '→'}</span></Link>
             <Link href="/compare" onClick={() => setOpen(false)}>Compare products <span>{experience.compare.length || '→'}</span></Link>

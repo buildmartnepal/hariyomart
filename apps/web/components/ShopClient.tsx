@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Building2,
   CheckCircle2,
   Crosshair,
+  Globe2,
   LayoutGrid,
   MapPin,
   RefreshCw,
@@ -88,6 +90,8 @@ export function ShopClient() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [sameDayOnly, setSameDayOnly] = useState(false);
   const [topRatedOnly, setTopRatedOnly] = useState(false);
+  const [exportReadyOnly, setExportReadyOnly] = useState(false);
+  const [wholesaleOnly, setWholesaleOnly] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
   const [sort, setSort] = useState('best-match');
   const [live, setLive] = useState<MarketProduct[] | null>(null);
@@ -96,6 +100,7 @@ export function ShopClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [density, setDensity] = useState<'grid' | 'roomy'>('grid');
+  const [visibleCount, setVisibleCount] = useState(48);
 
   useEffect(() => {
     const initialQuery = new URLSearchParams(window.location.search).get('query');
@@ -111,7 +116,7 @@ export function ShopClient() {
       controller = new AbortController();
       setLoading(true);
       try {
-        const response = await fetch(`${api}/products?limit=100`, {
+        const response = await fetch(`${api}/products?limit=500`, {
           cache: 'no-store',
           signal: controller.signal,
         });
@@ -204,7 +209,7 @@ export function ShopClient() {
       })
       .filter(({ product, distance, deliveryRadius, sellerVerified, sellerSameDay }) => {
         const searchable =
-          `${product.name} ${product.shortDescription} ${product.district} ${product.provinceName}`.toLowerCase();
+          `${product.name} ${product.shortDescription} ${product.description} ${product.district} ${product.provinceName} ${product.botanicalName || ''} ${product.hsCodeHint || ''} ${product.supplierCluster || ''} ${product.sourceType || ''}`.toLowerCase();
         return (
           (!query || searchable.includes(query)) &&
           (category === 'all' || product.category === category) &&
@@ -215,6 +220,8 @@ export function ShopClient() {
           (!verifiedOnly || sellerVerified) &&
           (!sameDayOnly || sellerSameDay) &&
           (!topRatedOnly || product.rating >= 4.8) &&
+          (!exportReadyOnly || product.exportReady) &&
+          (!wholesaleOnly || product.wholesale) &&
           (!maxPrice || product.price <= maxPrice) &&
           distance <= Math.min(market.radius >= 1000 ? deliveryRadius : market.radius, deliveryRadius)
         );
@@ -239,11 +246,17 @@ export function ShopClient() {
     verifiedOnly,
     sameDayOnly,
     topRatedOnly,
+    exportReadyOnly,
+    wholesaleOnly,
     maxPrice,
     sort,
     market.place,
     market.radius,
   ]);
+
+  useEffect(() => {
+    setVisibleCount(48);
+  }, [q, category, province, district, organicOnly, stockOnly, verifiedOnly, sameDayOnly, topRatedOnly, exportReadyOnly, wholesaleOnly, maxPrice, sort, market.place.name, market.radius]);
 
   function clearFilters() {
     setQ('');
@@ -255,6 +268,8 @@ export function ShopClient() {
     setVerifiedOnly(false);
     setSameDayOnly(false);
     setTopRatedOnly(false);
+    setExportReadyOnly(false);
+    setWholesaleOnly(false);
     setMaxPrice(0);
     setSort('best-match');
     market.setRadius(150);
@@ -269,6 +284,8 @@ export function ShopClient() {
     Number(verifiedOnly) +
     Number(sameDayOnly) +
     Number(topRatedOnly) +
+    Number(exportReadyOnly) +
+    Number(wholesaleOnly) +
     Number(maxPrice > 0) +
     Number(Boolean(q.trim()));
 
@@ -342,6 +359,8 @@ export function ShopClient() {
         <button className={verifiedOnly ? 'is-active' : ''} onClick={() => setVerifiedOnly((value) => !value)} aria-pressed={verifiedOnly}>✓ Verified sellers</button>
         <button className={organicOnly ? 'is-active' : ''} onClick={() => setOrganicOnly((value) => !value)} aria-pressed={organicOnly}>🌱 Organic</button>
         <button className={topRatedOnly ? 'is-active' : ''} onClick={() => setTopRatedOnly((value) => !value)} aria-pressed={topRatedOnly}>★ 4.8+ rated</button>
+        <button className={exportReadyOnly ? 'is-active' : ''} onClick={() => setExportReadyOnly((value) => !value)} aria-pressed={exportReadyOnly}><Globe2 size={14}/> Export RFQ</button>
+        <button className={wholesaleOnly ? 'is-active' : ''} onClick={() => setWholesaleOnly((value) => !value)} aria-pressed={wholesaleOnly}><Building2 size={14}/> Wholesale</button>
         <button className={maxPrice === 500 ? 'is-active' : ''} onClick={() => setMaxPrice((value) => value === 500 ? 0 : 500)} aria-pressed={maxPrice === 500}>Under NPR 500</button>
       </div>
 
@@ -369,7 +388,7 @@ export function ShopClient() {
               id="market-q"
               value={q}
               onChange={(event) => setQ(event.target.value)}
-              placeholder="Tea, apple, honey..."
+              placeholder="Cardamom, timur, tea, apple, HS code..."
             />
           </div>
           <label htmlFor="market-category">Category</label>
@@ -440,6 +459,8 @@ export function ShopClient() {
             <label><input type="checkbox" checked={verifiedOnly} onChange={(event) => setVerifiedOnly(event.target.checked)} />✓ Verified sellers</label>
             <label><input type="checkbox" checked={sameDayOnly} onChange={(event) => setSameDayOnly(event.target.checked)} />⚡ Same-day local</label>
             <label><input type="checkbox" checked={topRatedOnly} onChange={(event) => setTopRatedOnly(event.target.checked)} />★ Rated 4.8+</label>
+            <label><input type="checkbox" checked={exportReadyOnly} onChange={(event) => setExportReadyOnly(event.target.checked)} /><Globe2 size={16}/> Export RFQ catalogue</label>
+            <label><input type="checkbox" checked={wholesaleOnly} onChange={(event) => setWholesaleOnly(event.target.checked)} /><Building2 size={16}/> Wholesale available</label>
           </div>
           <div className="live-inventory-note" aria-live="polite">
             <RefreshCw size={16} className={loading ? 'is-spinning' : ''} />
@@ -456,7 +477,7 @@ export function ShopClient() {
           <div className="market-results-head">
             <div>
               <strong>{items.length} products</strong>
-              <span>serviceable near {market.place.name}</span>
+              <span>{exportReadyOnly ? 'export-profiled' : 'serviceable'} products · {source.length} live catalogue SKUs</span>
             </div>
             <div className="market-view-actions">
               <button
@@ -541,6 +562,8 @@ export function ShopClient() {
               {verifiedOnly && <button onClick={() => setVerifiedOnly(false)}>Verified sellers <X size={13}/></button>}
               {sameDayOnly && <button onClick={() => setSameDayOnly(false)}>Same-day local <X size={13}/></button>}
               {topRatedOnly && <button onClick={() => setTopRatedOnly(false)}>4.8+ rated <X size={13}/></button>}
+              {exportReadyOnly && <button onClick={() => setExportReadyOnly(false)}>Export RFQ <X size={13}/></button>}
+              {wholesaleOnly && <button onClick={() => setWholesaleOnly(false)}>Wholesale <X size={13}/></button>}
               {maxPrice > 0 && <button onClick={() => setMaxPrice(0)}>Up to NPR {maxPrice.toLocaleString()} <X size={13}/></button>}
               <button className="clear-all-filter" onClick={clearFilters}>
                 Clear all
@@ -555,11 +578,18 @@ export function ShopClient() {
           )}
           {items.length ? (
             <div className={`grid product-grid square-product-grid product-grid-${density}`}>
-              {items.map((product) => (
+              {items.slice(0, visibleCount).map((product) => (
                 <ProductCard key={product.slug} product={product} matchScore={product.matchScore} matchReasons={product.matchReasons} />
               ))}
             </div>
-          ) : (
+          ) : null}
+          {items.length > visibleCount ? (
+            <div className="market-load-more">
+              <p>Showing {Math.min(visibleCount, items.length)} of {items.length} matched products.</p>
+              <button className="btn btn-secondary" onClick={() => setVisibleCount((value) => value + 48)}>Load 48 more</button>
+            </div>
+          ) : null}
+          {!items.length ? (
             <div className="market-empty">
               <MapPin size={30} />
               <h3>No serviceable harvest found</h3>

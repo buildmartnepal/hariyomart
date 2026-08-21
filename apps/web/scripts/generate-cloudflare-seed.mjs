@@ -6,85 +6,37 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(here, '..');
 const catalog = JSON.parse(await readFile(path.join(webRoot, 'server/data/catalog.json'), 'utf8'));
 
-const origins = {
-  koshi: [
-    'seed-tenant-koshi',
-    'koshi-farmer-network',
-    'Koshi Farmer Network',
-    'Maya Rai',
-    'Ilam',
-    'Suryodaya',
-    26.9115,
-    88.0495,
-    85,
-  ],
-  madhesh: [
-    'seed-tenant-madhesh',
-    'janakpur-natural-growers',
-    'Janakpur Natural Growers',
-    'Sita Mahato',
-    'Dhanusha',
-    'Janakpurdham',
-    26.7271,
-    85.9407,
-    90,
-  ],
-  bagmati: [
-    'seed-tenant-bagmati',
-    'kathmandu-valley-farm',
-    'Kathmandu Valley Farm',
-    'Ramesh Shrestha',
-    'Kathmandu',
-    'Kageshwori Manohara',
-    27.7286,
-    85.4031,
-    35,
-  ],
-  gandaki: [
-    'seed-tenant-gandaki',
-    'pokhara-hillside-growers',
-    'Pokhara Hillside Growers',
-    'Nabin Gurung',
-    'Kaski',
-    'Pokhara',
-    28.2096,
-    83.9856,
-    120,
-  ],
-  lumbini: [
-    'seed-tenant-lumbini',
-    'rupandehi-green-basket',
-    'Rupandehi Green Basket',
-    'Sarita Tharu',
-    'Rupandehi',
-    'Butwal',
-    27.7006,
-    83.4484,
-    95,
-  ],
-  karnali: [
-    'seed-tenant-karnali',
-    'jumla-heritage-harvest',
-    'Jumla Heritage Harvest',
-    'Kali Bahadur Rokaya',
-    'Jumla',
-    'Chandannath',
-    29.2747,
-    82.1838,
-    160,
-  ],
-  sudurpashchim: [
-    'seed-tenant-sudurpashchim',
-    'dhangadhi-natural-produce',
-    'Dhangadhi Natural Produce',
-    'Hari Rana',
-    'Kailali',
-    'Dhangadhi',
-    28.695,
-    80.5938,
-    100,
-  ],
+const sourceClusters = Object.fromEntries(
+  (catalog.sourcingClusters || []).map((cluster) => [cluster.key, cluster]),
+);
+
+const provinceDefaults = {
+  koshi: 'ilam-highlands',
+  madhesh: 'dhanusha-janakpur',
+  bagmati: 'kavre-hills',
+  gandaki: 'kaski-pokhara',
+  lumbini: 'rupandehi-butwal',
+  karnali: 'jumla-highlands',
+  sudurpashchim: 'kailali-dhangadhi',
 };
+
+const origins = Object.fromEntries(
+  Object.entries(provinceDefaults).map(([province, clusterKey]) => {
+    const cluster = sourceClusters[clusterKey];
+    return [province, [
+      `seed-tenant-${clusterKey}`,
+      `${clusterKey}-market`,
+      cluster.name,
+      `${cluster.district} Sourcing Team`,
+      cluster.district,
+      cluster.municipality,
+      cluster.lat,
+      cluster.lng,
+      province === 'bagmati' ? 60 : 160,
+    ]];
+  }),
+);
+
 
 const sqlString = (value) => `'${String(value ?? '').replaceAll("'", "''")}'`;
 const jsonString = (value) => sqlString(JSON.stringify(value ?? []));
@@ -93,31 +45,29 @@ const lines = [
   'PRAGMA foreign_keys = ON;',
 ];
 
-for (const [province, origin] of Object.entries(origins)) {
-  const [id, slug, name, owner, district, municipality, lat, lng, radius] = origin;
+for (const cluster of Object.values(sourceClusters)) {
+  const id = `seed-tenant-${cluster.key}`;
+  const slug = `${cluster.key}-market`;
+  const owner = `${cluster.district} Sourcing Team`;
+  const radius = cluster.province === 'bagmati' ? 60 : 160;
   lines.push(
     `INSERT OR IGNORE INTO tenants (id,slug,name,owner_name,type,plan,status,province,district,municipality,lat,lng,specialties,delivery_radius_km,pickup_enabled,same_day_enabled,commission_rate) VALUES (${[
-      id,
-      slug,
-      name,
-      owner,
-      'cooperative',
-      'free',
-      'verified',
-      province,
-      district,
-      municipality,
-    ]
-      .map(sqlString)
-      .join(
-        ',',
-      )},${lat},${lng},${jsonString(['Fresh produce', 'Province delivery'])},${radius},1,1,0.08);`,
+      id, slug, cluster.name, owner, 'cooperative', 'growth', 'verified', cluster.province, cluster.district, cluster.municipality,
+    ].map(sqlString).join(',')},${cluster.lat},${cluster.lng},${jsonString(['Nepal origin sourcing', 'Wholesale supply', 'Trade inquiry'])},${radius},1,1,0.08);`,
+  );
+  lines.push(
+    `INSERT OR IGNORE INTO export_supplier_profiles (tenant_id,export_capable,packing_capabilities,certifications,notes) VALUES (${sqlString(id)},0,${jsonString(['Retail packs','Wholesale bags/cartons','Buyer-specific packing after qualification'])},'[]',${sqlString('Seed sourcing cluster. Export capability and certifications must be verified against the actual supplier before quotation.')});`,
   );
 }
 
 catalog.products.forEach((product, index) => {
-  const origin = origins[product.province] || origins.bagmati;
-  const [tenantId, , , , district, municipality, lat, lng, radius] = origin;
+  const cluster = sourceClusters[product.supplierCluster] || sourceClusters[provinceDefaults[product.province]] || sourceClusters['kavre-hills'];
+  const tenantId = `seed-tenant-${cluster.key}`;
+  const district = product.district || cluster.district;
+  const municipality = product.municipality || cluster.municipality;
+  const lat = cluster.lat;
+  const lng = cluster.lng;
+  const radius = product.province === 'bagmati' ? 60 : 160;
   const values = [
     `seed-product-${String(index + 1).padStart(3, '0')}`,
     tenantId,
@@ -130,7 +80,7 @@ catalog.products.forEach((product, index) => {
     product.unit,
   ].map(sqlString);
   lines.push(
-    `INSERT OR IGNORE INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,old_price,stock,minimum_order,organic,short_description,description,benefits,image_url,lat,lng,delivery_radius_km,status,rating,featured) VALUES (${values.join(',')},${Number(product.price)},${Number(product.oldPrice || product.price)},${Number(product.stock || 0)},1,${product.organic ? 1 : 0},${sqlString(product.shortDescription)},${sqlString(product.description)},${jsonString(product.benefits)},${sqlString(product.image)},${lat},${lng},${radius},'active',${Number(product.rating || 4.8)},${product.featured ? 1 : 0});`,
+    `INSERT OR IGNORE INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,old_price,stock,minimum_order,organic,grade,harvest_window,unique_story,short_description,description,benefits,image_url,images_json,lat,lng,delivery_radius_km,wholesale,subscription,status,rating,featured,export_ready,export_status,hs_code_hint,botanical_name,origin_altitude,harvest_season,processing_method,typical_shelf_life_days,storage_guidance,trade_pack,export_moq,lead_time_days,destination_markets,domestic_markets,traceability_level,compliance_note,source_type,supplier_cluster) VALUES (${values.join(',')},${Number(product.price)},${Number(product.oldPrice || product.price)},${Number(product.stock || 0)},${Number(product.minimumOrder || 1)},${product.organic ? 1 : 0},${sqlString(product.exportReady ? 'Trade specification' : 'Marketplace grade')},${sqlString(product.harvestSeason || '')},${sqlString(product.uniqueStory || '')},${sqlString(product.shortDescription)},${sqlString(product.description)},${jsonString(product.benefits)},${sqlString(product.image)},${jsonString(product.images || [])},${lat},${lng},${radius},${product.wholesale ? 1 : 0},${product.subscription ? 1 : 0},'active',${Number(product.rating || 4.8)},${product.featured ? 1 : 0},${product.exportReady ? 1 : 0},${sqlString(product.exportStatus || '')},${sqlString(product.hsCodeHint || '')},${product.botanicalName ? sqlString(product.botanicalName) : 'NULL'},${sqlString(product.originAltitude || '')},${sqlString(product.harvestSeason || '')},${sqlString(product.processingMethod || '')},${Number(product.typicalShelfLifeDays || 0)},${sqlString(product.storageGuidance || '')},${sqlString(product.tradePack || '')},${Number(product.exportMoq || 0)},${Number(product.leadTimeDays || 0)},${jsonString(product.destinationMarkets || [])},${jsonString(product.domesticMarkets || [])},${sqlString(product.traceabilityLevel || '')},${sqlString(product.complianceNote || '')},${sqlString(product.sourceType || '')},${sqlString(product.supplierCluster || '')});`,
   );
 });
 
@@ -437,7 +387,7 @@ lines.push(
 
 lines.push(
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);`,
-  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.6.1"',1);`,
+  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"10.0.0"',1);`,
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);`,
 );
 
@@ -446,5 +396,5 @@ await Promise.all([
   writeFile(path.join(webRoot, 'migrations/seed.sql'), `${lines.join('\n')}\n`),
 ]);
 console.log(
-  `Generated ${catalog.products.length} products, ${Object.keys(origins).length} seller tenants, ${orderIds.length} realistic orders and full operations data.`,
+  `Generated ${catalog.products.length} products, ${Object.keys(sourceClusters).length} sourcing tenants, ${orderIds.length} realistic orders and full operations data.`,
 );

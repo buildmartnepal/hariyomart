@@ -126,6 +126,24 @@ const supportInput = z.object({
   priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
 });
 
+const exportInquiryInput = z.object({
+  companyName: z.string().min(2).max(180),
+  contactName: z.string().min(2).max(120),
+  email: z.string().email().max(240),
+  phone: z.string().max(40).optional(),
+  country: z.string().min(2).max(100),
+  buyerType: z.enum(['importer','distributor','retailer','hospitality','manufacturer','brand','institution','other']).default('importer'),
+  productSlug: z.string().max(160).optional(),
+  productInterest: z.string().min(2).max(1000),
+  quantity: z.coerce.number().positive().max(100000000).optional(),
+  unit: z.string().max(80).optional(),
+  targetPack: z.string().max(240).optional(),
+  incoterm: z.string().max(40).optional(),
+  destinationPort: z.string().max(160).optional(),
+  requiredDocuments: z.array(z.string().max(120)).max(30).default([]),
+  message: z.string().max(5000).optional(),
+});
+
 function validation<T>(schema: z.ZodSchema<T>, input: unknown) {
   const parsed = schema.safeParse(input);
   if (!parsed.success)
@@ -354,6 +372,46 @@ export async function createSupportTicket(req: NextRequest) {
   return apiJson({ id, ticketNumber, status: 'open' }, 201);
 }
 
+
+export async function exportInquiries(req: NextRequest) {
+  const env = cloudflareEnv();
+  if (req.method === 'GET') {
+    await requireAuth(req, ['admin']);
+    const status = new URL(req.url).searchParams.get('status');
+    const statement = status
+      ? env.HARIYO_DB.prepare('SELECT * FROM export_inquiries WHERE status=? ORDER BY created_at DESC LIMIT 300').bind(status)
+      : env.HARIYO_DB.prepare('SELECT * FROM export_inquiries ORDER BY created_at DESC LIMIT 300');
+    const result = await statement.all<Record<string, unknown>>();
+    return apiJson({ data: result.results || [] });
+  }
+  const input = validation(exportInquiryInput, await requestBody(req));
+  const auth = await currentAuth(req);
+  const id = crypto.randomUUID();
+  const inquiryNumber = `HM-EX-${Date.now().toString(36).toUpperCase()}-${id.slice(0, 4).toUpperCase()}`;
+  await env.HARIYO_DB.prepare(
+    `INSERT INTO export_inquiries (id,inquiry_number,buyer_id,company_name,contact_name,email,phone,country,buyer_type,product_slug,product_interest,quantity,unit,target_pack,incoterm,destination_port,required_documents,message,status)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'new')`,
+  ).bind(
+    id,inquiryNumber,auth?.id || null,input.companyName,input.contactName,input.email.toLowerCase(),input.phone || null,input.country,input.buyerType,input.productSlug || null,input.productInterest,input.quantity ?? null,input.unit || null,input.targetPack || null,input.incoterm || null,input.destinationPort || null,JSON.stringify(input.requiredDocuments),input.message || null,
+  ).run();
+  return apiJson({ id, inquiryNumber, status: 'new', message: 'Trade inquiry received. Hariyo will qualify supplier, lot, documents and logistics before quotation.' }, 201);
+}
+
+export async function adminExportInquiry(req: NextRequest, id: string) {
+  const user = await requireAuth(req, ['admin']);
+  const input = validation(z.object({
+    status: z.enum(['new','qualified','sampling','quoted','negotiating','won','lost','closed']).optional(),
+    adminNote: z.string().max(5000).optional(),
+  }), await requestBody(req));
+  const env = cloudflareEnv();
+  const result = await env.HARIYO_DB.prepare(
+    `UPDATE export_inquiries SET status=COALESCE(?,status),admin_note=COALESCE(?,admin_note),updated_at=? WHERE id=?`,
+  ).bind(input.status || null,input.adminNote || null,new Date().toISOString(),id).run();
+  if (!result.meta.changes) throw new CloudflareApiError(404, 'Export inquiry not found');
+  await audit(req, user, 'export.inquiry.updated', 'export_inquiry', id, input);
+  return apiJson({ ok: true, id });
+}
+
 export async function adminOperations(req: NextRequest) {
   await requireAuth(req, ['admin']);
   const env = cloudflareEnv();
@@ -366,7 +424,8 @@ export async function adminOperations(req: NextRequest) {
       (SELECT COUNT(*) FROM service_areas WHERE active=1) AS service_areas,
       (SELECT COUNT(*) FROM promotions WHERE active=1) AS active_promotions,
       (SELECT COUNT(*) FROM products WHERE status='active' AND stock<=10) AS low_stock,
-      (SELECT COUNT(*) FROM orders WHERE status IN ('placed','confirmed','partially_fulfilled')) AS open_orders`,
+      (SELECT COUNT(*) FROM orders WHERE status IN ('placed','confirmed','partially_fulfilled')) AS open_orders,
+      (SELECT COUNT(*) FROM export_inquiries WHERE status IN ('new','qualified','sampling','quoted','negotiating')) AS open_export_inquiries`,
   ).first<Record<string, number>>();
   const recentTickets = await env.HARIYO_DB.prepare(
     'SELECT id,ticket_number,name,subject,priority,status,created_at FROM support_tickets ORDER BY created_at DESC LIMIT 8',
@@ -381,6 +440,7 @@ export async function adminOperations(req: NextRequest) {
       activePromotions: Number(metrics?.active_promotions || 0),
       lowStock: Number(metrics?.low_stock || 0),
       openOrders: Number(metrics?.open_orders || 0),
+      openExportInquiries: Number(metrics?.open_export_inquiries || 0),
     },
     recentTickets: recentTickets.results || [],
   });

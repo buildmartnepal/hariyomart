@@ -107,23 +107,47 @@ const details: Record<string, { sections: InfoSection[]; highlights: string[] }>
   about: {
     sections: [
       {
-        heading: 'A marketplace built around origin',
+        heading: 'Why Hariyo Mart exists',
         paragraphs: [
-          'Hariyo Mart is designed so farm identity, location, available stock and realistic delivery coverage stay visible from discovery through fulfilment.',
-          'The platform serves households and professional buyers while giving each farmer or cooperative an isolated digital store.',
+          'Nepal produces distinctive food, spice, tea, coffee, honey, grain, botanical and craft-food products across very different climates and supply conditions. Small producers often reach buyers through fragmented phone calls, agents, spreadsheets and social posts, while buyers struggle to compare origin, availability, pack size and serviceability.',
+          'Hariyo Mart is designed as the digital operating layer between those two sides: a public marketplace for discovery and a tenant-based SaaS for the operational work that follows.'
         ],
       },
       {
-        heading: 'Made for Nepal’s geography',
+        heading: 'From farms and local producers to major cities',
         paragraphs: [
-          'Seven provinces, changing seasons and difficult routes require local service areas rather than one national delivery promise. Sellers control the radius they can actually operate.',
+          'The domestic model supports nearby retail, restaurant and hotel demand, retailer replenishment, office and institutional procurement, recurring baskets and intercity supply. Seller location, delivery radius, minimum order, live inventory and fulfilment rules remain visible so a national catalogue does not become a national delivery promise.',
+          'The current source catalogue contains 420 retail/trade SKUs representing 210 Nepal-focused product families across 28 sourcing clusters and all seven provinces.'
+        ],
+      },
+      {
+        heading: 'A structured path for international sourcing',
+        paragraphs: [
+          'Trade buyers can discover export-profiled products, review origin and pack information, and submit an RFQ. The next steps are supplier qualification, lot specification, document review, samples or tests where required, final HS classification, packing, Incoterm and logistics planning.',
+          'Hariyo deliberately separates a catalogue profile from a compliance claim: an item being visible in the export catalogue does not by itself prove organic certification, phytosanitary clearance, lab conformity, export permission or destination-country admissibility.'
+        ],
+      },
+      {
+        heading: 'The software is part of the business model',
+        paragraphs: [
+          'Producer workspaces cover products, harvest planning, procurement, lots and quality, inventory, warehouses, customer relationships, delivery, payouts, wholesale and reporting. Platform operators manage tenants, verification, marketplace content, support, trade enquiries and network analytics.',
+          'This makes Hariyo both a demand marketplace and a reusable supply-chain SaaS rather than a static ecommerce website.'
+        ],
+      },
+      {
+        heading: 'What we do not claim automatically',
+        paragraphs: [
+          'Seed data and regional sourcing profiles are designed for a production-ready system demo and catalogue structure. They are not evidence that every named product is currently held by a specific real farm, that every destination is presently served, or that a particular certificate exists.',
+          'Before live commercial use, operators should verify the actual supplier identity, lot, inventory, price, certification, permit and logistics details and replace demo-facing supplier records where necessary.'
         ],
       },
     ],
     highlights: [
-      'Buyer, farmer and admin workspaces',
-      'Seven-province catalogue',
-      'Cloudflare-first operating model',
+      '420 catalogue SKUs · 210 product families',
+      '28 sourcing clusters across all 7 provinces',
+      'Retail, wholesale, institutional and export-RFQ workflows',
+      'Cloudflare-native multi-tenant SaaS operating model',
+      'Supplier- and lot-level verification before compliance claims',
     ],
   },
   farmers: {

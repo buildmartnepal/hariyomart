@@ -97,10 +97,12 @@ export function Footer() {
               <Link href="/farmer/inventory">Manage inventory</Link>
               <Link href="/how-it-works">How Hariyo works</Link>
               <Link href="/info/bulk-orders">Wholesale programme</Link>
+              <Link href="/export">Export & trade desk</Link>
             </div>
             <div>
               <h4>Discover</h4>
               <Link href="/nearby">Nearby market</Link>
+              <Link href="/export">Nepal origin export catalogue</Link>
               <Link href="/farmers">Verified farms</Link>
               <Link href="/blog">Stories & guides</Link>
               <Link href="/campaigns">Campaign studio</Link>
@@ -125,13 +127,13 @@ export function Footer() {
           <div>
             <MapPin size={20} />
             <span>
-              <b>Serving all Nepal</b>Koshi to Sudurpashchim
+              <b>Nepal origin network</b>28 sourcing clusters · 7 provinces
             </span>
           </div>
           <div>
             <Truck size={20} />
             <span>
-              <b>Local fulfilment</b>Delivery or farm pickup
+              <b>City & trade fulfilment</b>Local, intercity, wholesale and export RFQ
             </span>
           </div>
           <div>

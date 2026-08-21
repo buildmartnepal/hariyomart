@@ -7,8 +7,10 @@ import {
   ChefHat,
   CircleCheckBig,
   Clock3,
+  Globe2,
   HeartHandshake,
   LocateFixed,
+  MapPinned,
   PackageCheck,
   QrCode,
   Smartphone,
@@ -81,6 +83,34 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section className="section origin-network-home">
+        <div className="container">
+          <div className="origin-network-panel">
+            <div className="origin-network-copy">
+              <span className="eyebrow"><Globe2 size={16}/> Nepal Origin Supply Network</span>
+              <h2>From distinctive Nepal harvests to major cities and qualified global buyers.</h2>
+              <p>Hariyo Mart combines marketplace discovery with a sourcing and trade desk for fresh produce, spices, tea, coffee, honey, grains, botanicals, essential oils and specialty foods. Every export enquiry is qualified at supplier and lot level before compliance, packing or shipping claims are confirmed.</p>
+              <div className="origin-network-metrics">
+                <span><b>{catalog.meta.productCount}</b><small>catalogue SKUs</small></span>
+                <span><b>{catalog.meta.baseProductFamilies}</b><small>product families</small></span>
+                <span><b>{catalog.meta.sourcingClusters}</b><small>sourcing clusters</small></span>
+                <span><b>7</b><small>provinces</small></span>
+              </div>
+              <div className="origin-network-actions">
+                <Link className="btn btn-primary" href="/export"><Globe2 size={17}/> Source for export</Link>
+                <Link className="btn btn-secondary" href="/shop?query=cardamom">Explore Nepal origin products</Link>
+              </div>
+            </div>
+            <div className="origin-network-map" aria-label="Hariyo Nepal origin sourcing flow">
+              <span className="origin-core"><Sprout/><b>Nepal origin</b><small>farms · local producers</small></span>
+              <span className="origin-node on1"><MapPinned/><b>28 clusters</b><small>regional sourcing</small></span>
+              <span className="origin-node on2"><Building2/><b>Major cities</b><small>retail · HORECA · institutions</small></span>
+              <span className="origin-node on3"><PackageCheck/><b>Lot & pack</b><small>specification before quote</small></span>
+              <span className="origin-node on4"><Globe2/><b>Global RFQ</b><small>documents · logistics · Incoterms</small></span>
+            </div>
+          </div>
+        </div>
+      </section>
       <section className="section campaign-pathways">
         <div className="container">
           <div className="split-heading">
@@ -139,9 +169,7 @@ export default function Home() {
               <h2 className="section-title">Built for the farmer and the buyer.</h2>
             </div>
             <p className="section-copy">
-              A national marketplace should not hide where food comes from. Hariyo Mart turns
-              location, farm identity, harvest availability and delivery distance into the core
-              buying experience.
+              Hariyo Mart keeps origin visible for households and professional buyers while extending the same supply records into wholesale and export enquiries. Location, supplier identity, harvest availability, trade pack and delivery reality stay part of the buying decision.
             </p>
           </div>
           <div className="audience-grid">
@@ -218,8 +246,8 @@ export default function Home() {
         <div className="container">
           <div className="split-heading">
             <div>
-              <span className="eyebrow">Discover Nepal’s harvest</span>
-              <h2 className="section-title">Shop by what grows.</h2>
+              <span className="eyebrow">Discover Nepal origin</span>
+              <h2 className="section-title">Shop what grows, is crafted and can be supplied.</h2>
             </div>
             <Link href="/shop" className="text-link">
               See full marketplace <ArrowRight size={17} />

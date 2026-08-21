@@ -27,6 +27,8 @@ const liveEndpointBySection: Partial<Record<SupplySection, string>> = {
   warehouses: '/api/supply/warehouses',
   pricing: '/api/supply/price-lists',
   wholesale: '/api/supply/customers',
+  'trade-catalog': '/api/products?limit=50&exportReady=true',
+  'trade-desk': '/api/export/inquiries',
   'delivery-routes': '/api/supply/delivery-routes',
   subscriptions: '/api/supply/subscriptions',
   reports: '/api/supply/reports',
@@ -147,7 +149,7 @@ export function SupplySaaSWorkbench({ section, role }: { section: SupplySection;
     <div className="supply-saas-workbench">
       <section className="supply-hero-card">
         <div>
-          <span className="eyebrow">V8.4 FARM-TO-MARKET OPERATING SYSTEM</span>
+          <span className="eyebrow">V10 NEPAL ORIGIN SUPPLY & EXPORT OS</span>
           <h2>{copy.title}</h2>
           <p>{copy.description}</p>
         </div>

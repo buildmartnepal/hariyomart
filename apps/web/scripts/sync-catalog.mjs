@@ -46,6 +46,28 @@ export type Product = {
   image: string;
   images?: readonly string[];
   minimumOrder?: number;
+  wholesale?: boolean;
+  subscription?: boolean;
+  municipality?: string;
+  uniqueStory?: string;
+  supplierCluster?: string;
+  sourceType?: string;
+  exportReady?: boolean;
+  exportStatus?: string;
+  hsCodeHint?: string;
+  botanicalName?: string | null;
+  originAltitude?: string;
+  harvestSeason?: string;
+  processingMethod?: string;
+  typicalShelfLifeDays?: number;
+  storageGuidance?: string;
+  tradePack?: string;
+  exportMoq?: number;
+  leadTimeDays?: number;
+  destinationMarkets?: readonly string[];
+  domesticMarkets?: readonly string[];
+  traceabilityLevel?: string;
+  complianceNote?: string;
 };
 
 export type Category = {

@@ -6,6 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const fixed = [
     '',
     'shop',
+    'export',
     'compare',
     'saved',
     'nearby',
@@ -27,7 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${base}/${path}`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: path === '' ? 1 : path === 'nearby' || path === 'sell' ? 0.9 : 0.7,
+      priority: path === '' ? 1 : path === 'nearby' || path === 'sell' || path === 'export' ? 0.9 : 0.7,
     })),
     ...catalog.products.map((p) => ({
       url: `${base}/products/${p.slug}`,

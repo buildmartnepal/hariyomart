@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { ArrowUpRight, BadgeCheck, Clock3, MapPin, ShoppingBasket, Star, Truck } from 'lucide-react';
+import { ArrowUpRight, BadgeCheck, Clock3, Globe2, MapPin, ShoppingBasket, Star, Truck } from 'lucide-react';
 import type { Product } from '@/lib/catalog';
 type CardProduct = Product & {
   lat?: number;
@@ -33,13 +33,13 @@ export function ProductCard({ product, matchScore, matchReasons }: { product: Ca
     <div className="product-media-shell">
       <ProductCardGallery name={product.name} slug={product.slug} primary={product.image} images={product.images} />
       <div className="product-photo-topline"><ProductActions slug={product.slug} compact />
-        {product.organic ? <span className="organic-chip">Organic</span> : product.featured ? <span className="featured-chip">Hariyo pick</span> : <span/>}
+        {product.exportReady ? <span className="export-chip"><Globe2 size={12}/> Export RFQ</span> : product.organic ? <span className="organic-chip">Organic</span> : product.featured ? <span className="featured-chip">Hariyo pick</span> : <span/>}
         {discount > 0 && <span className="discount-chip">Save {discount}%</span>}
       </div>
       <div className="product-photo-bottomline"><span className="origin-chip"><MapPin size={12}/>{product.district}</span>{matchScore ? <span className="match-chip">{matchScore}% match</span> : <Link className="quick-view-chip" href={`/products/${product.slug}`}>View <ArrowUpRight size={13}/></Link>}</div>
     </div>
     <div className="product-body">
-      <div className="product-kicker"><span>{category}</span><span className="product-rating"><Star size={12} fill="currentColor"/> {product.rating}</span></div>
+      <div className="product-kicker"><span>{category}</span>{product.hsCodeHint ? <span className="hs-hint">HS {product.hsCodeHint}</span> : null}<span className="product-rating"><Star size={12} fill="currentColor"/> {product.rating}</span></div>
       <Link className="product-name-link" href={`/products/${product.slug}`}><h3>{product.name}</h3></Link>
       {matchReasons?.length ? <div className="match-reasons">{matchReasons.slice(0,2).map((reason) => <span key={reason}>{reason}</span>)}</div> : null}
       <div className="product-meta product-farm-row"><span className="farm-name">{sellerName}{sellerVerified && <BadgeCheck size={13}/>}</span><span className="distance-note">{distance < 999 ? `${distance.toFixed(0)} km` : product.provinceName}</span></div>

@@ -18,6 +18,11 @@ import {
   ThermometerSnowflake,
   Truck,
   UsersRound,
+  Globe2,
+  FileCheck2,
+  PackageSearch,
+  Ship,
+
   Warehouse,
 } from 'lucide-react';
 
@@ -29,6 +34,12 @@ export const farmerSupplySections = [
   'warehouses',
   'pricing',
   'wholesale',
+  'trade-catalog',
+  'export-readiness',
+  'rfq-samples',
+  'compliance-docs',
+  'packing-labels',
+  'shipments',
   'delivery-routes',
   'subscriptions',
   'reports',
@@ -39,6 +50,10 @@ export const adminSupplySections = [
   'saas-tenants',
   'plans-billing',
   'supply-network',
+  'trade-desk',
+  'global-buyers',
+  'export-compliance',
+  'export-analytics',
   'platform-events',
   'data-platform',
 ] as const;
@@ -81,6 +96,36 @@ export const supplyModuleCopy: Record<SupplySection, { title: string; descriptio
     description: 'Serve restaurants, hotels, schools, hospitals, resellers and corporate buyers.',
     bullets: ['Customer-specific terms', 'Credit limits and due days', 'Standing order templates', 'Bulk dispatch workflow'],
   },
+  'trade-catalog': {
+    title: 'Nepal Origin Trade Catalog',
+    description: 'Maintain the buyer-facing trade profile separately from live stock and retail merchandising.',
+    bullets: ['Trade pack, MOQ and lead time', 'Botanical/product identification', 'Target markets and buyer notes', 'Retail vs trade presentation without duplicate masters'],
+  },
+  'export-readiness': {
+    title: 'Export readiness workspace',
+    description: 'Turn an export-oriented listing into a documented supplier-and-lot review instead of a marketing badge.',
+    bullets: ['Supplier identity and source review', 'Lot/grade/specification checklist', 'Permit and certificate evidence status', 'Block quotation until required checks are complete'],
+  },
+  'rfq-samples': {
+    title: 'RFQ, samples & buyer qualification',
+    description: 'Manage commercial enquiries from first requirement through supplier match, sample request and quotation preparation.',
+    bullets: ['Buyer requirement and destination', 'Supplier/lot shortlist', 'Sample and courier tracking', 'Quotation-ready requirement history'],
+  },
+  'compliance-docs': {
+    title: 'Trade compliance documents',
+    description: 'Keep shipment-specific evidence organized without implying that a catalog profile is automatically compliant.',
+    bullets: ['Phytosanitary / origin records where applicable', 'Lab and specification attachments', 'Certification expiry and scope', 'Final HS classification review per shipment'],
+  },
+  'packing-labels': {
+    title: 'Packing, label & private-label control',
+    description: 'Translate buyer requirements into pack sizes, carton rules, labels and production notes.',
+    bullets: ['Bulk and retail pack specifications', 'Private-label requirement capture', 'Lot/label traceability references', 'Carton and pallet planning fields'],
+  },
+  shipments: {
+    title: 'Trade shipment workspace',
+    description: 'Coordinate ready lots, commercial terms and logistics milestones after supplier and destination qualification.',
+    bullets: ['Incoterm and route planning', 'Pickup/consolidation milestones', 'Document checklist before dispatch', 'Shipment status and exception log'],
+  },
   'delivery-routes': {
     title: 'Delivery routing',
     description: 'Turn packed orders into route stops with driver accountability.',
@@ -115,6 +160,26 @@ export const supplyModuleCopy: Record<SupplySection, { title: string; descriptio
     title: 'Network operations',
     description: 'See the platform-wide farmer, supplier, product and delivery network without mixing tenant data.',
     bullets: ['Tenant-safe aggregate metrics', 'Regional supply coverage', 'Verification workflow', 'Cross-tenant marketplace projection'],
+  },
+  'trade-desk': {
+    title: 'Export & sourcing trade desk',
+    description: 'Operate inbound international and wholesale enquiries as a pipeline rather than unmanaged email threads.',
+    bullets: ['RFQ intake and status', 'Product/sourcing-cluster matching', 'Supplier and lot qualification', 'Admin notes and quotation handoff'],
+  },
+  'global-buyers': {
+    title: 'Global buyer CRM',
+    description: 'Keep importers, distributors, ingredient buyers and private-label prospects attached to their requirements and markets.',
+    bullets: ['Country and buyer-type segmentation', 'Product interest history', 'Recurring sourcing requirements', 'Sample, quote and follow-up context'],
+  },
+  'export-compliance': {
+    title: 'Platform export compliance review',
+    description: 'Separate catalog discovery from shipment authorization and make missing evidence visible to operators.',
+    bullets: ['Supplier evidence review', 'Product and destination checklist', 'Document status by inquiry/shipment', 'No automatic certification or permit claims'],
+  },
+  'export-analytics': {
+    title: 'Trade & sourcing analytics',
+    description: 'Measure demand signals across products, countries, sourcing clusters and qualification stages.',
+    bullets: ['RFQs by product/category/country', 'Supplier response and sample conversion', 'Quote pipeline and lead-time trends', 'Export-readiness gaps by sourcing cluster'],
   },
   'platform-events': {
     title: 'Events, queues & audit',
@@ -154,4 +219,8 @@ export const supplyCapabilities = [
   { label: 'Tenant isolation', icon: ShieldCheck },
   { label: 'Realtime ops', icon: Gauge },
   { label: 'Last-mile delivery', icon: Truck },
+  { label: 'Export RFQ desk', icon: Globe2 },
+  { label: 'Compliance evidence', icon: FileCheck2 },
+  { label: 'Trade pack & samples', icon: PackageSearch },
+  { label: 'Shipment coordination', icon: Ship },
 ];

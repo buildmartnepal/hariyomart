@@ -101,24 +101,25 @@ const sharedBuyerFaq: Array<[string, string]> = [
 const experiences: Record<string, Experience> = {
   about: {
     icon: 'leaf',
-    eyebrow: 'Why Hariyo exists',
-    title: 'Digital infrastructure for a shorter, more transparent food chain.',
-    copy: 'Hariyo Mart connects discovery, seller identity, live stock, location fit, fulfilment and payout so a local product stays understandable from farm listing to buyer doorstep.',
+    eyebrow: 'Nepal origin, connected to real demand',
+    title: 'A sourcing, marketplace and supply operating system for products that begin in Nepal.',
+    copy: 'Hariyo Mart is being built to connect farmers, cooperatives and local producers with households, restaurants, retailers, institutions and qualified international buyers. The platform keeps origin, live stock, product specification, delivery fit, trade pack and supplier records connected instead of treating sourcing as a list of anonymous products.',
     image: '/campaigns/fresh-every-corner.webp',
-    imageAlt: 'Hariyo Mart farm-to-market visual',
-    metrics: [['7', 'provinces represented'], ['98', 'seeded marketplace products'], ['3', 'connected workspaces: buyer, farmer, operator']],
+    imageAlt: 'Hariyo Mart Nepal origin farm-to-market visual',
+    metrics: [['420', 'catalogue SKUs across retail and trade packs'], ['210', 'distinct Nepal-focused product families'], ['28', 'regional sourcing clusters across all 7 provinces']],
     cards: [
-      { icon: 'farmers', title: 'Farmer-first operating model', copy: 'Each seller receives an isolated digital store, inventory, orders, customer records, delivery rules and settlement workspace.' },
-      { icon: 'delivery', title: 'Location before promises', copy: 'Distance, seller service radius and route reality influence what a buyer sees and what can actually be delivered.' },
-      { icon: 'quality', title: 'Trust through records', copy: 'Verification, reviews, support history, inventory events and traceability create a stronger evidence trail than marketing claims alone.' },
+      { icon: 'farmers', title: 'Producer identity stays visible', copy: 'The model supports farms, cooperatives, aggregators and local processors with isolated workspaces, product records, inventory, customers, orders and settlement context.' },
+      { icon: 'bulk', title: 'Built beyond household retail', copy: 'Restaurants, hotels, retailers, institutions and trade buyers can use MOQ, wholesale, recurring-order, sourcing and RFQ workflows without creating a separate platform.' },
+      { icon: 'quality', title: 'Claims are qualified per supplier and lot', copy: 'A catalogue profile can describe a product category, but certifications, phytosanitary status, test results, final HS classification and export permissions must be verified for the actual supplier and shipment.' },
     ],
     faq: [
-      ['Is Hariyo Mart a single grocery store?', 'No. Buyers see one marketplace, but products can come from independent farms, cooperatives and suppliers with separate fulfilment and settlement records.'],
-      ['Why does location matter so much?', 'Fresh food is time- and route-sensitive. Hariyo Match uses serviceability and distance so the marketplace can prioritize realistic options instead of presenting every listing as equally reachable.'],
-      ['Who is the platform designed for?', 'Households, farmers, cooperatives, restaurants, hotels, retailers, offices and institutional procurement teams can use role-specific journeys.'],
+      ['Is Hariyo Mart an exporter or only a marketplace?', 'It is designed as a marketplace plus sourcing and export-workflow SaaS. A buyer can discover products and submit an export RFQ, while the actual supplier, lot, documents, packing, Incoterm and logistics are qualified before a trade commitment is made.'],
+      ['Are all 420 catalogue items always in stock?', 'No. The catalogue represents product and pack profiles. Live stock, harvest season, supplier availability and serviceability remain dynamic and must be confirmed before an order or quotation.'],
+      ['Does “export-ready” mean every legal document is already approved?', 'No. It means the profile is suitable for export enquiry and document review. Certifications, permits, lab reports, phytosanitary requirements and final customs classification are shipment-specific.'],
+      ['Who is Hariyo designed for?', 'Nepal farmers and producers, households, restaurants, hotels, retailers, institutional procurement teams, distributors, ingredient buyers and qualified international sourcing teams.'],
     ],
-    cta: ['Explore the marketplace', '/shop'],
-    secondary: ['See how the system works', '/how-it-works'],
+    cta: ['Explore Nepal origin catalogue', '/shop'],
+    secondary: ['Open sourcing & export desk', '/export'],
   },
   farmers: {
     icon: 'farmers', eyebrow: 'Producer network', title: 'A digital storefront that keeps the farm visible.', copy: 'Hariyo Mart is designed to help producers publish harvests, manage stock, define realistic delivery coverage and build buyer trust without losing their own identity.', image: '/campaigns/grow-with-hariyo.webp', imageAlt: 'Farmer growing with Hariyo Mart',
@@ -235,17 +236,17 @@ function AboutSystemGraphic() {
     <section className="about-network-graphic" aria-labelledby="about-network-title">
       <div>
         <span className="eyebrow"><Globe2 size={16} /> Connected marketplace</span>
-        <h2 id="about-network-title">One buyer experience, multiple operating layers.</h2>
-        <p>Hariyo is designed as a connected system rather than a collection of isolated pages. Product, location, seller, inventory, fulfilment, payout and support records can follow the same transaction.</p>
+        <h2 id="about-network-title">One Nepal-origin network, multiple routes to market.</h2>
+        <p>Hariyo connects product origin, supplier, stock, city fulfilment, wholesale demand, lot specification, documents and export RFQs in one operating model. The catalogue creates discovery; the supplier and lot records determine what can actually be quoted and shipped.</p>
       </div>
       <div className="network-diagram" aria-label="Hariyo marketplace system diagram">
         <span className="network-core"><Leaf /><b>Hariyo</b><small>marketplace</small></span>
         <span className="network-node n1"><Store /><b>Seller</b></span>
         <span className="network-node n2"><MapPinned /><b>Location</b></span>
         <span className="network-node n3"><Boxes /><b>Stock</b></span>
-        <span className="network-node n4"><Route /><b>Route</b></span>
+        <span className="network-node n4"><Route /><b>City / Trade</b></span>
         <span className="network-node n5"><ReceiptText /><b>Order</b></span>
-        <span className="network-node n6"><HandCoins /><b>Payout</b></span>
+        <span className="network-node n6"><Globe2 /><b>Export RFQ</b></span>
       </div>
     </section>
   );
