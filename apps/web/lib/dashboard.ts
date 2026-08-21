@@ -17,6 +17,7 @@ export const adminSections = [
   'farmer-onboarding',
   'tenants',
   'users',
+  'matching-engine',
   'products',
   'categories',
   'pages',

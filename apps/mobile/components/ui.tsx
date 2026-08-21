@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } 
 import { Link } from 'expo-router';
 import { catalog } from '@/data/catalog';
 import { useCart } from '@/context/CartContext';
-type Product = (typeof catalog.products)[number];
+type Product = (typeof catalog.products)[number] & { images?: readonly string[] };
 export const colors = {
   dark: '#062D22',
   green: '#88D92F',
@@ -62,7 +62,9 @@ export function ProductCard({ p, compact = false }: { p: Product; compact?: bool
         <Pressable style={s.mobileImageShell} accessibilityLabel={`View ${p.name}`}>
           <Image
             source={{
-              uri: `${process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000'}${p.image}`,
+              uri: p.image.startsWith('http')
+                ? p.image
+                : `${process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000'}${p.image}`,
             }}
             style={s.image}
           />
@@ -76,6 +78,9 @@ export function ProductCard({ p, compact = false }: { p: Product; compact?: bool
             )}
             {discount > 0 && <Text style={s.mobileDiscount}>-{discount}%</Text>}
           </View>
+          {p.images?.length ? (
+            <Text style={s.mobilePhotoCount}>+{p.images.length} photos</Text>
+          ) : null}
         </Pressable>
       </Link>
       <View style={s.mobileProductBadges}>
@@ -163,6 +168,18 @@ export const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  mobilePhotoCount: {
+    position: 'absolute',
+    right: 7,
+    bottom: 7,
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    backgroundColor: 'rgba(6,45,34,.78)',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 99,
   },
   mobileProductBadges: {
     flexDirection: 'row',

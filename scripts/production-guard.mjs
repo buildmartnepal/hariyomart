@@ -7,6 +7,10 @@ const services = new Map((config.services || []).map((item) => [item.binding, it
 const failures = [];
 const warnings = [];
 
+if (vars.RELEASE_VERSION !== '8.6.0') failures.push('RELEASE_VERSION must be 8.6.0.');
+if (!fs.existsSync('apps/web/migrations/0009_marketplace_experience_v860.sql'))
+  failures.push('v8.6 marketplace migration 0009 is missing.');
+
 if (vars.APP_ENV !== 'production') failures.push('APP_ENV must be production.');
 if (String(vars.NEXT_PUBLIC_DEMO_MODE) !== 'false') failures.push('NEXT_PUBLIC_DEMO_MODE must be false.');
 if (services.get('WORKER_SELF_REFERENCE') !== config.name)

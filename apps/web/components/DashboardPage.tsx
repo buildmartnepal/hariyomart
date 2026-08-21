@@ -10,6 +10,7 @@ import { TenantSwitcher } from './TenantSwitcher';
 import { CommerceControlPanel } from './CommerceControlPanel';
 import { BuyerDemandPortal, FarmerOSWorkbench } from './FarmerOSWorkbench';
 import { WorkspaceSecurityGate } from './PasswordChangeGate';
+import { AdminMatchingCenter } from './AdminMatchingCenter';
 const roleCopy = {
   Farmer: {
     kicker: 'SELLER WORKSPACE',
@@ -81,6 +82,8 @@ export function DashboardPage({
             <WorkspaceSecurityGate>
             {farmer && section === 'list-harvest' ? (
               <HarvestPublisher />
+            ) : role === 'Admin' && section === 'matching-engine' ? (
+              <AdminMatchingCenter />
             ) : (
               <>
                 <div className="dash-heading">

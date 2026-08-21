@@ -24,7 +24,7 @@ if (!web.observability?.enabled) fail(`${webPath} observability must be enabled`
 const vars = web.vars || {};
 if (vars.APP_ENV !== 'production' || vars.DATA_PLATFORM !== 'cloudflare-native')
   fail(`${webPath} must declare the Cloudflare-native production platform`);
-if (vars.RELEASE_VERSION !== '8.4.3') fail(`${webPath} RELEASE_VERSION must be 8.4.3`);
+if (vars.RELEASE_VERSION !== '8.6.0') fail(`${webPath} RELEASE_VERSION must be 8.6.0`);
 if (!vars.NEXT_PUBLIC_SITE_URL || !URL.canParse(vars.NEXT_PUBLIC_SITE_URL) || new URL(vars.NEXT_PUBLIC_SITE_URL).protocol !== 'https:')
   fail(`${webPath} NEXT_PUBLIC_SITE_URL must be a valid production HTTPS URL`);
 if (vars.NEXT_PUBLIC_API_URL !== '/api') fail(`${webPath} API URL must remain same-origin (/api)`);
@@ -89,4 +89,4 @@ if (!siteKey || /REPLACE_WITH|PLACEHOLDER/i.test(siteKey)) {
   else fail(message);
 }
 
-console.log('Cloudflare v8.4.3 production configuration PASS');
+console.log('Cloudflare v8.6.0 production configuration PASS');

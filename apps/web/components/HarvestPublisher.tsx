@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { ChangeEvent, FormEvent, useState } from 'react';
 import {
   Camera,
@@ -18,6 +19,7 @@ export function HarvestPublisher() {
   const [status, setStatus] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [photoBusy, setPhotoBusy] = useState(false);
   function locate() {
     navigator.geolocation?.getCurrentPosition(
@@ -68,6 +70,35 @@ export function HarvestPublisher() {
       setPhotoBusy(false);
     }
   }
+  async function uploadGalleryPhotos(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []).slice(0, Math.max(0, 8 - galleryUrls.length));
+    if (!files.length) return;
+    if (!auth.user) {
+      setMessage('Sign in with your farmer account before uploading gallery photos.');
+      e.target.value = '';
+      return;
+    }
+    setPhotoBusy(true);
+    setMessage(`Uploading ${files.length} gallery photo${files.length > 1 ? 's' : ''}…`);
+    try {
+      const uploaded: string[] = [];
+      for (const file of files) {
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024)
+          throw new Error('Gallery photos must be JPEG/PNG/WebP and 8 MB or smaller.');
+        const body = new FormData();
+        body.append('file', file);
+        const result: any = await auth.apiRequest('/uploads', { method: 'POST', body });
+        if (result?.url) uploaded.push(String(result.url));
+      }
+      setGalleryUrls((current) => Array.from(new Set([...current, ...uploaded])).slice(0, 8));
+      setMessage('Gallery photos attached to this harvest.');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Gallery upload failed');
+    } finally {
+      setPhotoBusy(false);
+      e.target.value = '';
+    }
+  }
   async function publish(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('busy');
@@ -92,6 +123,7 @@ export function HarvestPublisher() {
       uniqueStory: String(fd.get('uniqueStory') || ''),
       shortDescription: String(fd.get('shortDescription') || ''),
       image: photoUrl || directImage || undefined,
+      images: galleryUrls,
       lat: coords.lat,
       lng: coords.lng,
       deliveryRadiusKm: Number(fd.get('deliveryRadiusKm') || 35),
@@ -115,6 +147,7 @@ export function HarvestPublisher() {
       });
       setStatus('done');
       setPhotoUrl('');
+      setGalleryUrls([]);
       setMessage(
         `Harvest submitted as ${data.status || 'pending_review'}. Marketplace staff can activate it after seller and listing review.`,
       );
@@ -269,6 +302,13 @@ export function HarvestPublisher() {
                 onChange={uploadPhoto}
               />
             </label>
+            <label className="photo-drop">
+              <Camera />
+              <span><b>{galleryUrls.length ? `${galleryUrls.length} gallery photos attached` : 'Add more product photos'}</b><small>Up to 8 buyer-facing photos · close-up, packaging, origin and size reference.</small></span>
+              <UploadCloud />
+              <input className="photo-input" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={photoBusy || galleryUrls.length >= 8} onChange={uploadGalleryPhotos} />
+            </label>
+            {galleryUrls.length > 0 && <div className="harvest-gallery-preview">{galleryUrls.map((src, index) => <div key={src}><Image src={src} alt={`Product gallery ${index + 1}`} width={180} height={136} sizes="180px" /><button type="button" onClick={() => setGalleryUrls((items) => items.filter((item) => item !== src))} aria-label={`Remove gallery photo ${index + 1}`}>×</button></div>)}</div>}
             <label>
               Or existing Hariyo R2 media path
               <input

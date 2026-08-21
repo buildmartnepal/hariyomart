@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import {
@@ -18,14 +17,24 @@ import { farmForProduct } from '@/lib/marketplace';
 import { AddToCart } from '@/components/AddToCart';
 import { getPublicRuntimeConfig } from '@/server/cloudflare/public-config';
 import { LiveProductGrid } from '@/components/LiveProductGrid';
+import { ProductGallery } from '@/components/ProductGallery';
+import { ProductLocationFit } from '@/components/ProductLocationFit';
 type LiveProduct = Product & {
   farmName?: string;
   farmSlug?: string;
   farmerVerified?: boolean;
+  farmSameDay?: boolean;
+  farmPickup?: boolean;
   deliveryRadiusKm?: number;
   municipality?: string;
   uniqueStory?: string;
   harvestWindow?: string;
+  grade?: string;
+  wholesale?: boolean;
+  subscription?: boolean;
+  images?: readonly string[];
+  lat?: number;
+  lng?: number;
 };
 function normalize(p: any): LiveProduct {
   const province = catalog.provinces.find((x) => x.slug === p.province);
@@ -52,9 +61,18 @@ function normalize(p: any): LiveProduct {
     ],
     image:
       typeof p.image === 'string' &&
-      (p.image.startsWith('/') || p.image.startsWith('https://res.cloudinary.com/'))
+      (p.image.startsWith('/') || p.image.startsWith('https://images.unsplash.com/'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images)
+      ? p.images.filter(
+          (image: unknown): image is string =>
+            typeof image === 'string' &&
+            (image.startsWith('/') || image.startsWith('https://images.unsplash.com/')),
+        ).slice(0, 8)
+      : [],
+    lat: Number.isFinite(Number(p.lat)) ? Number(p.lat) : undefined,
+    lng: Number.isFinite(Number(p.lng)) ? Number(p.lng) : undefined,
   };
 }
 async function getProduct(slug: string): Promise<LiveProduct | null> {
@@ -88,7 +106,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${p.name} from ${farm.name}`,
       description: p.shortDescription,
-      images: [p.image],
+      images: [p.image, ...(p.images || [])].slice(0, 4),
     },
   };
 }
@@ -96,7 +114,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const p = await getProduct(slug);
   if (!p) notFound();
-  const farm = farmForProduct(p);
+  const seedFarm = farmForProduct(p);
+  const farm = {
+    ...seedFarm,
+    name: p.farmName || seedFarm.name,
+    slug: p.farmSlug || seedFarm.slug,
+    verified: p.farmerVerified ?? seedFarm.verified,
+    municipality: p.municipality || seedFarm.municipality,
+    lat: p.lat ?? seedFarm.lat,
+    lng: p.lng ?? seedFarm.lng,
+    deliveryRadiusKm: p.deliveryRadiusKm ?? seedFarm.deliveryRadiusKm,
+    sameDay: p.farmSameDay ?? seedFarm.sameDay,
+    pickup: p.farmPickup ?? seedFarm.pickup,
+  };
   const category = catalog.categories.find((item) => item.slug === p.category);
   const discount =
     p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
@@ -128,15 +158,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="section" style={{ paddingTop: 25 }}>
         <div className="container detail premium-product-detail">
           <div className="detail-gallery">
-            <div className="detail-image">
-              <Image
-                src={p.image}
-                alt={p.name}
-                width={900}
-                height={700}
-                sizes="(max-width: 860px) 100vw, 50vw"
-                priority
-              />
+            <div className="detail-image detail-image-v860">
+              <ProductGallery name={p.name} primary={p.image} images={p.images} priority />
               <div className="detail-image-badges">
                 {p.organic && (
                   <span>
@@ -193,6 +216,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
             {p.harvestWindow && <div className="pill">{p.harvestWindow}</div>}
             <p className="product-detail-summary">{p.shortDescription}</p>
+            <div className="product-fact-grid" aria-label="Product buying details">
+              <div><small>PACK / UNIT</small><b>{p.unit}</b></div>
+              <div><small>MINIMUM ORDER</small><b>{p.minimumOrder || 1} {p.unit}</b></div>
+              <div><small>GRADE</small><b>{p.grade || 'Seller quality checked'}</b></div>
+              <div><small>BUYING OPTIONS</small><b>{[p.wholesale ? 'Wholesale' : '', p.subscription ? 'Subscription' : ''].filter(Boolean).join(' · ') || 'One-time order'}</b></div>
+            </div>
+            <ProductLocationFit
+              productName={p.name}
+              sellerName={farm.name}
+              sellerLat={p.lat ?? farm.lat}
+              sellerLng={p.lng ?? farm.lng}
+              deliveryRadiusKm={p.deliveryRadiusKm ?? farm.deliveryRadiusKm}
+              sameDay={farm.sameDay}
+            />
             <AddToCart product={p} />
             <div className="feature-list">
               {p.benefits.map((b) => (

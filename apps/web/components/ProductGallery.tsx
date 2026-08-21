@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Images } from 'lucide-react';
@@ -11,15 +11,33 @@ function uniqueImages(primary: string, images?: readonly string[]) {
 export function ProductGallery({ name, primary, images, priority = false }: { name: string; primary: string; images?: readonly string[]; priority?: boolean }) {
   const list = useMemo(() => uniqueImages(primary, images), [primary, images]);
   const [active, setActive] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   const current = list[Math.min(active, list.length - 1)] || primary;
-  const move = (delta: number) => setActive((index) => (index + delta + list.length) % list.length);
+  const move = (delta: number) => {
+    if (list.length <= 1) return;
+    setActive((index) => (index + delta + list.length) % list.length);
+  };
   return <div className="product-gallery-v85">
-    <div className="product-gallery-stage">
+    <div
+      className="product-gallery-stage"
+      role="group"
+      aria-roledescription="carousel"
+      aria-label={`${name} product photos`}
+      tabIndex={list.length > 1 ? 0 : -1}
+      onKeyDown={(event) => { if (event.key === 'ArrowLeft') move(-1); if (event.key === 'ArrowRight') move(1); }}
+      onTouchStart={(event) => { touchStartX.current = event.changedTouches[0]?.clientX ?? null; }}
+      onTouchEnd={(event) => {
+        if (touchStartX.current === null) return;
+        const delta = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+        touchStartX.current = null;
+        if (Math.abs(delta) >= 42) move(delta > 0 ? -1 : 1);
+      }}
+    >
       <Image src={current} alt={`${name} photo ${active + 1}`} width={1000} height={780} sizes="(max-width: 860px) 100vw, 52vw" priority={priority} />
       {list.length > 1 && <>
         <button type="button" className="gallery-arrow is-prev" onClick={() => move(-1)} aria-label="Previous product photo"><ChevronLeft /></button>
         <button type="button" className="gallery-arrow is-next" onClick={() => move(1)} aria-label="Next product photo"><ChevronRight /></button>
-        <span className="gallery-count"><Images size={14}/>{active + 1}/{list.length}</span>
+        <span className="gallery-count" aria-live="polite"><Images size={14}/>{active + 1}/{list.length}</span>
       </>}
     </div>
     {list.length > 1 && <div className="product-gallery-thumbs" aria-label="Product photos">

@@ -7,6 +7,8 @@ import {
   Crosshair,
   MapPin,
   Navigation,
+  Search,
+  Leaf,
   ShieldCheck,
   SlidersHorizontal,
   Store,
@@ -31,15 +33,35 @@ type ApiProduct = Partial<Product> & {
   stock: number;
   organic?: boolean;
   image?: string;
+  images?: string[];
+  matchScore?: number;
+  matchReasons?: string[];
+  wholesale?: boolean;
+  subscription?: boolean;
   farmName?: string;
   originName?: string;
   distanceKm?: number;
   deliveryRadiusKm?: number;
   rating?: number;
-  tenantSlug?: string;
+  farmSlug?: string;
+  farmerVerified?: boolean;
+  farmSameDay?: boolean;
+  farmPickup?: boolean;
+  lat?: number;
+  lng?: number;
+};
+type LocationProduct = Product & {
+  farmName?: string;
+  farmSlug?: string;
+  farmerVerified?: boolean;
+  farmSameDay?: boolean;
+  farmPickup?: boolean;
+  lat?: number;
+  lng?: number;
+  deliveryRadiusKm?: number;
 };
 const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
-function normalize(p: ApiProduct): Product {
+function normalize(p: ApiProduct): LocationProduct {
   const province = catalog.provinces.find((x) => x.slug === p.province);
   const provinceName = province?.name ?? catalog.provinces[2].name;
   return {
@@ -63,75 +85,56 @@ function normalize(p: ApiProduct): Product {
     description: String(
       (p as any).description || `Traceable ${p.name} from ${p.district || p.province}.`,
     ),
-    benefits: ['Traceable farm origin', 'Location-matched delivery', 'Seller-managed live stock'],
+    benefits: Array.isArray((p as any).benefits)
+      ? (p as any).benefits.map(String)
+      : ['Traceable farm origin', 'Location-matched delivery', 'Seller-managed live stock'],
     image:
-      p.image && (p.image.startsWith('/') || p.image.startsWith('https://res.cloudinary.com/'))
+      p.image && (p.image.startsWith('/') || p.image.startsWith('https://images.unsplash.com/'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images)
+      ? p.images.filter((image): image is string => typeof image === 'string' && (image.startsWith('/') || image.startsWith('https://images.unsplash.com/'))).slice(0, 8)
+      : [],
+    farmName: p.farmName,
+    farmSlug: p.farmSlug,
+    farmerVerified: p.farmerVerified,
+    farmSameDay: p.farmSameDay,
+    farmPickup: p.farmPickup,
+    lat: Number.isFinite(Number(p.lat)) ? Number(p.lat) : undefined,
+    lng: Number.isFinite(Number(p.lng)) ? Number(p.lng) : undefined,
+    deliveryRadiusKm: Number.isFinite(Number(p.deliveryRadiusKm)) ? Number(p.deliveryRadiusKm) : undefined,
   };
 }
 function LiveProductCard({ item }: { item: ApiProduct }) {
-  const cart = useCart();
-  const product = normalize(item);
   return (
-    <article className="product-card live-market-card">
-      <Link className="product-photo" href={`/products/${product.slug}`}>
-        <Image
-          className="product-image"
-          src={product.image}
-          alt={product.name}
-          width={900}
-          height={700}
-          sizes="(max-width: 680px) 100vw, (max-width: 1100px) 50vw, 25vw"
-        />
-        <span className="origin-chip">
-          <MapPin size={12} />
-          {product.district}
-        </span>
-        {product.organic && <span className="organic-chip">Organic</span>}
-      </Link>
-      <div className="product-body">
-        <div className="product-meta">
-          <span className="farm-name">
-            {item.farmName || 'Verified farmer'}
-            <BadgeCheck size={13} />
-          </span>
-          <span>{item.distanceKm != null ? `${item.distanceKm} km` : `★ ${product.rating}`}</span>
-        </div>
-        <Link href={`/products/${product.slug}`}>
-          <h3>{product.name}</h3>
-        </Link>
-        <small className="harvest-note">Live seller stock · {product.unit}</small>
-        <div className="product-actions">
-          <div>
-            <span className="price">NPR {product.price}</span>
-          </div>
-          <button
-            className="cart-button"
-            onClick={() => cart.add(product)}
-            disabled={product.stock <= 0}
-            aria-label={`Add ${product.name} to cart`}
-          >
-            {product.stock > 0 ? '＋' : '×'}
-          </button>
-        </div>
-      </div>
-    </article>
+    <ProductCard
+      product={normalize(item)}
+      matchScore={item.matchScore}
+      matchReasons={item.matchReasons}
+    />
   );
 }
 export function LocationMarket() {
   const { place, radius, locating, message, setRadius, choosePreset, locate } = useMarketLocation();
   const { demoEnabled } = usePublicConfig();
   const [category, setCategory] = useState('all');
+  const [query, setQuery] = useState('');
+  const [organicOnly, setOrganicOnly] = useState(false);
+  const [wholesaleOnly, setWholesaleOnly] = useState(false);
+  const [subscriptionOnly, setSubscriptionOnly] = useState(false);
   const [liveItems, setLiveItems] = useState<ApiProduct[] | null>(null);
   const [liveFarms, setLiveFarms] = useState<Farm[] | null>(null);
   const [loading, setLoading] = useState(false);
   const fallback = useMemo(
     () =>
-      nearbyProducts(place.lat, place.lng, radius).filter(
-        (p) => category === 'all' || p.category === category,
-      ),
-    [place, radius, category],
+      nearbyProducts(place.lat, place.lng, radius).filter((p) => {
+        const categoryMatch = category === 'all' || p.category === category;
+        const queryText = query.trim().toLowerCase();
+        const queryMatch = !queryText || `${p.name} ${p.category} ${p.district} ${p.shortDescription}`.toLowerCase().includes(queryText);
+        const organicMatch = !organicOnly || p.organic;
+        return categoryMatch && queryMatch && organicMatch;
+      }),
+    [place, radius, category, query, organicOnly],
   );
   const nearFarms = useMemo(
     () =>
@@ -192,9 +195,13 @@ export function LocationMarket() {
       lat: String(place.lat),
       lng: String(place.lng),
       radiusKm: String(radius),
-      category,
       limit: '48',
     });
+    if (category !== 'all') qs.set('category', category);
+    if (query.trim()) qs.set('q', query.trim());
+    if (organicOnly) qs.set('organic', '1');
+    if (wholesaleOnly) qs.set('wholesale', '1');
+    if (subscriptionOnly) qs.set('subscription', '1');
     fetch(`${apiBase}/marketplace/nearby?${qs}`, {
       cache: 'no-store',
       signal: controller.signal,
@@ -217,16 +224,16 @@ export function LocationMarket() {
       active = false;
       controller.abort();
     };
-  }, [place, radius, category]);
+  }, [place, radius, category, query, organicOnly, wholesaleOnly, subscriptionOnly]);
   const items = liveItems ?? (demoEnabled ? fallback : []);
   return (
     <div className="location-market">
       <div className="location-panel">
         <div>
           <span className="eyebrow">Location matching engine</span>
-          <h2>Buy from farmers closest to you.</h2>
+          <h2>Best product, best farmer, best delivery fit.</h2>
           <p>
-            {message}{' '}
+            {message}{' '}Hariyo Match v3 ranks serviceability, distance, freshness, stock, rating and trust.{' '}
             {liveItems !== null
               ? 'Live farmer inventory is connected.'
               : demoEnabled
@@ -277,6 +284,17 @@ export function LocationMarket() {
               ))}
             </select>
           </label>
+        </div>
+        <div className="location-smart-filters">
+          <label className="location-search-field">
+            <Search size={17} />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tomato, tea, honey, farm…" />
+          </label>
+          <div className="location-filter-chips" aria-label="Marketplace match filters">
+            <button type="button" className={organicOnly ? 'is-active' : ''} onClick={() => setOrganicOnly((value) => !value)}><Leaf size={14}/> Organic</button>
+            <button type="button" className={wholesaleOnly ? 'is-active' : ''} onClick={() => setWholesaleOnly((value) => !value)}>Wholesale</button>
+            <button type="button" className={subscriptionOnly ? 'is-active' : ''} onClick={() => setSubscriptionOnly((value) => !value)}>Repeat delivery</button>
+          </div>
         </div>
         <div className="match-summary">
           <strong>{items.length}</strong>

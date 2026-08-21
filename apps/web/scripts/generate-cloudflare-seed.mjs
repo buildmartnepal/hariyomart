@@ -437,11 +437,14 @@ lines.push(
 
 lines.push(
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.owner_email','"greenmandux@gmail.com"',0);`,
-  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.2.0"',1);`,
+  `INSERT OR REPLACE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.release','"8.6.0"',1);`,
   `INSERT OR IGNORE INTO platform_settings (setting_key,value_json,is_public) VALUES ('marketplace.campaign_assets','["/campaigns/trusted-marketplace.webp","/campaigns/fresh-every-corner.webp","/campaigns/sell-from-home.webp","/campaigns/grow-with-hariyo.webp"]',1);`,
 );
 
-await writeFile(path.join(webRoot, 'seed/cloudflare.sql'), `${lines.join('\n')}\n`);
+await Promise.all([
+  writeFile(path.join(webRoot, 'seed/cloudflare.sql'), `${lines.join('\n')}\n`),
+  writeFile(path.join(webRoot, 'migrations/seed.sql'), `${lines.join('\n')}\n`),
+]);
 console.log(
   `Generated ${catalog.products.length} products, ${Object.keys(origins).length} seller tenants, ${orderIds.length} realistic orders and full operations data.`,
 );

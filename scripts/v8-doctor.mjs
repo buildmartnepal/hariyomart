@@ -5,6 +5,7 @@ const required = [
   'apps/web/migrations/0004_cloudflare_native_supply_saas.sql',
   'apps/web/migrations/0005_commerce_control_plane.sql',
   'apps/web/migrations/0006_farmer_os_growth.sql',
+  'apps/web/migrations/0009_marketplace_experience_v860.sql',
   'apps/web/server/cloudflare/supply-api.ts',
   'apps/web/server/cloudflare/farmer-os-api.ts',
   'apps/web/server/cloudflare/supply-stack.ts',
@@ -12,6 +13,10 @@ const required = [
   'apps/web/server/cloudflare/checkout.ts',
   'apps/web/components/SupplySaaSWorkbench.tsx',
   'apps/web/components/FarmerOSWorkbench.tsx',
+  'apps/web/components/ProductGallery.tsx',
+  'apps/web/components/ProductLocationFit.tsx',
+  'apps/web/components/AdminMatchingCenter.tsx',
+  'apps/web/lib/matching.ts',
   'apps/web/components/TraceabilityPublicView.tsx',
   'apps/web/components/CommerceControlPanel.tsx',
   'apps/web/components/TurnstileWidget.tsx',
@@ -24,6 +29,10 @@ const required = [
   'docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md',
   'docs/V8_2_IMPLEMENTATION_STATUS.md',
   'RELEASE_NOTES_V8.3.md',
+  'RELEASE_NOTES_V8.6.md',
+  'scripts/cloudflare-connected-deploy.mjs',
+  'DEPLOY-HARIYO-V8.6.0.cmd',
+  'MISSING_THINGS_DONE_V8.6.md',
 ];
 const missing = required.filter((file) => !fs.existsSync(file));
 if (missing.length) throw new Error(`V8.3 required files missing: ${missing.join(', ')}`);
@@ -54,6 +63,35 @@ for (const table of ['crop_cycles','farm_expenses','buyer_demands','buyer_demand
   if (!farmerOsMigration.includes(`CREATE TABLE IF NOT EXISTS ${table}`)) throw new Error(`V8.4 Farmer OS migration missing ${table}`);
 }
 
+const marketplaceMigration = fs.readFileSync('apps/web/migrations/0009_marketplace_experience_v860.sql', 'utf8');
+for (const marker of ['images_json', 'idx_products_market_match', 'idx_products_delivery_geo']) {
+  if (!marketplaceMigration.includes(marker)) throw new Error(`V8.6 marketplace migration missing ${marker}`);
+}
+
+const matching = fs.readFileSync('apps/web/lib/matching.ts', 'utf8');
+for (const marker of ['rankMarketplaceProducts', 'distance', 'freshness', 'verified seller']) {
+  if (!matching.toLowerCase().includes(marker.toLowerCase())) throw new Error(`V8.6 matching engine missing ${marker}`);
+}
+const gallery = fs.readFileSync('apps/web/components/ProductGallery.tsx', 'utf8');
+for (const marker of ['ProductGallery', 'ProductCardGallery', 'slice(0, 8)', 'onTouchStart', 'ArrowRight']) {
+  if (!gallery.includes(marker)) throw new Error(`V8.6 product gallery missing ${marker}`);
+}
+const shop = fs.readFileSync('apps/web/components/ShopClient.tsx', 'utf8');
+for (const marker of ['scoreMarketplaceProduct', "useState('best-match')", 'matchReasons']) {
+  if (!shop.includes(marker)) throw new Error(`V8.6 shop matching missing ${marker}`);
+}
+const adminMatching = fs.readFileSync('apps/web/components/AdminMatchingCenter.tsx', 'utf8');
+for (const marker of ['Hariyo Match v3', 'radiusKm: radius']) {
+  if (!adminMatching.includes(marker)) throw new Error(`V8.6 admin matching missing ${marker}`);
+}
+const cloudSeed = fs.readFileSync('apps/web/seed/cloudflare.sql', 'utf8');
+const migrationSeed = fs.readFileSync('apps/web/migrations/seed.sql', 'utf8');
+if (cloudSeed !== migrationSeed) throw new Error('V8.6 catalog seed files are out of sync');
+if ((cloudSeed.match(/INSERT OR IGNORE INTO products/g) || []).length !== 98)
+  throw new Error('V8.6 Cloudflare seed must contain exactly 98 catalog products');
+if (!cloudSeed.includes(`('marketplace.release','"8.6.0"',1)`))
+  throw new Error('V8.6 seed release marker is stale');
+
 const service = fs.readFileSync('infra/cloudflare/services/src/index.ts', 'utf8');
 for (const marker of [
   'InventoryCoordinator','TenantSequence','TenantRealtimeHub','OrderFulfillmentWorkflow',
@@ -69,7 +107,7 @@ for (const marker of ['INVENTORY_COORDINATOR','TENANT_REALTIME','analytics_engin
 }
 
 const webConfig = JSON.parse(fs.readFileSync('apps/web/wrangler.jsonc', 'utf8'));
-if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.4.3 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
+if (webConfig.name !== 'hariyo-mart-nepal') throw new Error('V8.6 web Worker must match the connected Cloudflare Worker: hariyo-mart-nepal');
 if (webConfig.services?.find((item) => item.binding === 'WORKER_SELF_REFERENCE')?.service !== webConfig.name)
   throw new Error('WORKER_SELF_REFERENCE does not match Worker name');
 for (const marker of ['HARIYO_DB','HARIYO_KV','HARIYO_MEDIA','NEXT_INC_CACHE_R2_BUCKET','HARIYO_EVENTS','HARIYO_SERVICES','AI']) {
@@ -91,6 +129,7 @@ for (const marker of [
   'commerce/summary','commerce/inventory-alerts','product_price_history',
   'farmer-os/overview','farmer-os/crop-cycles','farmer-os/expenses','farmer-os/profitability',
   'farmer-os/buyer-demands','farmer-os/buyer-demand-offers','farmer-os/traceability','farmer-os/recommendations','farmer-os/ai-assistant',
+  'rankMarketplaceProducts','images_json','Hariyo Match v3','matching:',
 ]) {
   if (!api.includes(marker)) throw new Error(`V8.3 API dispatcher missing ${marker}`);
 }
@@ -132,7 +171,7 @@ for (const root of runtimeDirs) if (fs.existsSync(root)) walk(root);
 if (supabaseHits.length) throw new Error(`Supabase runtime references remain: ${supabaseHits.join(', ')}`);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-if (pkg.version !== '8.4.3') throw new Error(`Expected v8.4.3 package, got ${pkg.version}`);
+if (pkg.version !== '8.6.0') throw new Error(`Expected v8.6.0 package, got ${pkg.version}`);
 
 const css = fs.readFileSync('apps/web/app/globals.css', 'utf8');
 for (const marker of [

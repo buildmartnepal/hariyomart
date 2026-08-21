@@ -32,7 +32,7 @@ export function AdminMatchingCenter() {
   async function runMatch() {
     setLoading(true);
     try {
-      const qs = new URLSearchParams({ lat, lng, radius, limit: '8' });
+      const qs = new URLSearchParams({ lat, lng, radiusKm: radius, limit: '8' });
       if (query.trim()) qs.set('q', query.trim());
       if (category.trim()) qs.set('category', category.trim());
       const response = await fetch(`/api/marketplace/nearby?${qs.toString()}`, { credentials: 'include' });
@@ -57,7 +57,7 @@ export function AdminMatchingCenter() {
 
   return <section className="matching-admin-v85">
     <div className="platform-control-heading">
-      <div><span className="eyebrow">DISCOVERY INTELLIGENCE</span><h2>Hariyo Match v2</h2><p>Test the same explainable ranking engine used by Nearby, the shop and mobile discovery. Hard delivery and stock constraints are applied before ranking.</p></div>
+      <div><span className="eyebrow">DISCOVERY INTELLIGENCE</span><h2>Hariyo Match v3</h2><p>Test the same explainable ranking engine used by Nearby, the shop and mobile discovery. Hard delivery and stock constraints are applied before ranking.</p></div>
       <span className="match-engine-live"><Sparkles size={15}/> Operational</span>
     </div>
     <div className="matching-admin-grid">
@@ -79,7 +79,7 @@ export function AdminMatchingCenter() {
       </div>
     </div>
     {result?.data ? <div className="access-panel matching-results-panel">
-      <div className="access-panel-title"><Truck/><div><h3>Top serviceable products</h3><p>{result.matching?.engine || 'Hariyo Match v2'} returned {result.data.length} ranked results.</p></div></div>
+      <div className="access-panel-title"><Truck/><div><h3>Top serviceable products</h3><p>{result.matching?.engine || 'Hariyo Match v3'} returned {result.data.length} ranked results.</p></div></div>
       <div className="matching-results-list">{result.data.length ? result.data.map((item,index)=><div className="matching-result-row" key={item.slug}>
         <span className="matching-rank">#{index+1}</span><div className="matching-result-main"><b>{item.name}</b><small>{item.district || 'Nepal'} · {item.distanceKm ?? '—'} km · NPR {item.price}{item.unit ? `/${item.unit}` : ''}</small><div className="match-reasons">{item.matchReasons?.map((reason)=><span key={reason}>{reason}</span>)}</div></div><strong>{item.matchScore ?? 0}%</strong>
       </div>) : <p className="muted-copy">No product is serviceable for this location/filter combination.</p>}</div>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { catalog, type Product } from '@/lib/catalog';
 import { distanceKm, farmForProduct, locationPresets } from '@/lib/marketplace';
+import { scoreMarketplaceProduct } from '@/lib/matching';
 import { ProductCard } from './ProductCard';
 import { useMarketLocation } from './LocationProvider';
 import { usePublicConfig } from './PublicConfigProvider';
@@ -22,6 +23,8 @@ import { usePublicConfig } from './PublicConfigProvider';
 const api = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 type MarketProduct = Product & {
+  matchScore?: number;
+  matchReasons?: string[];
   farmName?: string;
   farmSlug?: string;
   farmerVerified?: boolean;
@@ -63,9 +66,12 @@ function normalize(p: Record<string, unknown>): MarketProduct {
       ? p.benefits.map(String)
       : ['Traceable Nepal origin', 'Location-aware marketplace', 'Seller-managed live stock'],
     image:
-      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://'))
+      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://images.unsplash.com/'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images)
+      ? p.images.filter((image): image is string => typeof image === 'string' && (image.startsWith('/') || image.startsWith('https://images.unsplash.com/'))).slice(0, 8)
+      : [],
   };
 }
 
@@ -78,7 +84,7 @@ export function ShopClient() {
   const [district, setDistrict] = useState('all');
   const [organicOnly, setOrganicOnly] = useState(false);
   const [stockOnly, setStockOnly] = useState(true);
-  const [sort, setSort] = useState('nearest');
+  const [sort, setSort] = useState('best-match');
   const [live, setLive] = useState<MarketProduct[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -160,12 +166,31 @@ export function ShopClient() {
     return source
       .map((product) => {
         const farm = farmForProduct(product);
-        return {
-          product,
-          distance: distanceKm(market.place.lat, market.place.lng, farm.lat, farm.lng),
-        };
+        const sellerLat = Number.isFinite(Number(product.lat)) ? Number(product.lat) : farm.lat;
+        const sellerLng = Number.isFinite(Number(product.lng)) ? Number(product.lng) : farm.lng;
+        const deliveryRadius = Number(product.deliveryRadiusKm || farm.deliveryRadiusKm || market.radius);
+        const distance = distanceKm(market.place.lat, market.place.lng, sellerLat, sellerLng);
+        const match = scoreMarketplaceProduct(
+          {
+            ...product,
+            lat: sellerLat,
+            lng: sellerLng,
+            deliveryRadiusKm: deliveryRadius,
+            farmerVerified: product.farmerVerified ?? farm.verified,
+            farmName: product.farmName || farm.name,
+          },
+          {
+            lat: market.place.lat,
+            lng: market.place.lng,
+            radiusKm: market.radius,
+            category,
+            query: q,
+            organicOnly,
+          },
+        );
+        return { product, distance, deliveryRadius, matchScore: match.matchScore, matchReasons: match.matchReasons };
       })
-      .filter(({ product, distance }) => {
+      .filter(({ product, distance, deliveryRadius }) => {
         const searchable =
           `${product.name} ${product.shortDescription} ${product.district} ${product.provinceName}`.toLowerCase();
         return (
@@ -175,17 +200,18 @@ export function ShopClient() {
           (district === 'all' || product.district === district) &&
           (!organicOnly || product.organic) &&
           (!stockOnly || product.stock > 0) &&
-          (market.radius >= 1000 || distance <= market.radius)
+          distance <= Math.min(market.radius >= 1000 ? deliveryRadius : market.radius, deliveryRadius)
         );
       })
       .sort((a, b) => {
+        if (sort === 'best-match') return b.matchScore - a.matchScore || a.distance - b.distance;
         if (sort === 'price-low') return a.product.price - b.product.price;
         if (sort === 'price-high') return b.product.price - a.product.price;
         if (sort === 'rating') return b.product.rating - a.product.rating;
         if (sort === 'fresh') return Number(b.product.featured) - Number(a.product.featured);
         return a.distance - b.distance;
       })
-      .map(({ product }) => product);
+      .map(({ product, matchScore, matchReasons }) => ({ ...product, matchScore, matchReasons }));
   }, [
     source,
     q,
@@ -206,7 +232,7 @@ export function ShopClient() {
     setDistrict('all');
     setOrganicOnly(false);
     setStockOnly(true);
-    setSort('nearest');
+    setSort('best-match');
     market.setRadius(150);
   }
 
@@ -397,6 +423,7 @@ export function ShopClient() {
               <label>
                 <span className="sort-label">Sort by</span>
                 <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                  <option value="best-match">Best match</option>
                   <option value="nearest">Nearest first</option>
                   <option value="fresh">Fresh & featured</option>
                   <option value="rating">Top rated</option>
@@ -478,7 +505,7 @@ export function ShopClient() {
           {items.length ? (
             <div className={`grid product-grid square-product-grid product-grid-${density}`}>
               {items.map((product) => (
-                <ProductCard key={product.slug} product={product} />
+                <ProductCard key={product.slug} product={product} matchScore={product.matchScore} matchReasons={product.matchReasons} />
               ))}
             </div>
           ) : (

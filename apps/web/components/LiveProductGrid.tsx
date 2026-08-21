@@ -41,9 +41,12 @@ function normalize(p: Record<string, unknown>): Product {
       ? p.benefits.map(String)
       : ['Traceable farm origin', 'Live seller stock', 'Location-aware fulfillment'],
     image:
-      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://'))
+      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://images.unsplash.com/'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images)
+      ? p.images.filter((image): image is string => typeof image === 'string' && (image.startsWith('/') || image.startsWith('https://images.unsplash.com/'))).slice(0, 8)
+      : [],
   };
 }
 

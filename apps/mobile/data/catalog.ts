@@ -2565,6 +2565,7 @@ export type Product = {
   description: string;
   benefits: readonly string[];
   image: string;
+  images?: readonly string[];
   minimumOrder?: number;
 };
 

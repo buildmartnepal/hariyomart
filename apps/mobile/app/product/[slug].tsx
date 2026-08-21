@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { catalog } from '@/data/catalog';
 import { Screen, s, useMobileColors } from '@/components/ui';
 import { useCart } from '@/context/CartContext';
@@ -25,9 +25,10 @@ function normalize(p: any) {
       'Location-aware delivery',
     ],
     image:
-      typeof p.image === 'string' && p.image.startsWith('/')
+      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://images.unsplash.com/'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images) ? p.images.filter((image: unknown) => typeof image === 'string') : [],
   };
 }
 
@@ -39,9 +40,10 @@ export default function Product() {
   const [quantity, setQuantity] = useState(1);
   const palette = useMobileColors();
   const cart = useCart();
+  const { width } = useWindowDimensions();
 
   useEffect(() => {
-    if (seed || !slug) return;
+    if (!slug) return;
     let active = true;
     fetch(`${api}/products/${encodeURIComponent(slug)}`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error())))
@@ -55,7 +57,7 @@ export default function Product() {
     return () => {
       active = false;
     };
-  }, [slug, seed]);
+  }, [slug]);
 
   if (loading)
     return (
@@ -88,10 +90,25 @@ export default function Product() {
   return (
     <Screen>
       <View style={{ position: 'relative' }}>
-        <Image
-          source={{ uri: p.image.startsWith('/') ? `${web}${p.image}` : p.image }}
-          style={{ width: '100%', aspectRatio: 1, borderRadius: 26, backgroundColor: '#EDF5E6' }}
-        />
+        <ScrollView
+          horizontal
+          pagingEnabled
+          snapToAlignment="start"
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          style={{ borderRadius: 26 }}
+          accessibilityLabel={`${p.name} photo gallery`}
+        >
+          {Array.from(new Set([p.image, ...(p.images || [])])).map((src: string, index: number) => (
+            <View key={`${src}-${index}`} style={{ width: Math.max(260, width - 36), marginRight: 8 }}>
+              <Image
+                source={{ uri: src.startsWith('/') ? `${web}${src}` : src }}
+                style={{ width: '100%', aspectRatio: 1, borderRadius: 26, backgroundColor: '#EDF5E6' }}
+              />
+              {p.images?.length ? <Text style={{ position: 'absolute', right: 12, bottom: 12, color: '#FFFFFF', backgroundColor: 'rgba(8,28,20,.72)', paddingHorizontal: 9, paddingVertical: 6, borderRadius: 99, fontWeight: '900', fontSize: 10 }}>{index + 1}/{Array.from(new Set([p.image, ...(p.images || [])])).length}</Text> : null}
+            </View>
+          ))}
+        </ScrollView>
         <View
           style={{
             position: 'absolute',
@@ -307,6 +324,27 @@ export default function Product() {
             ✓ {benefit}
           </Text>
         ))}
+      </View>
+
+      <View
+        style={{
+          backgroundColor: palette.card,
+          borderColor: palette.line,
+          borderWidth: 1,
+          borderRadius: 22,
+          padding: 18,
+          marginTop: 18,
+        }}
+      >
+        <Text style={{ color: '#5C9E25', fontSize: 10, letterSpacing: 1.5, fontWeight: '900' }}>
+          PRODUCT STORY & ORIGIN
+        </Text>
+        <Text style={{ marginTop: 12, color: palette.dark, fontSize: 15, lineHeight: 24 }}>
+          {p.description}
+        </Text>
+        <Text style={{ marginTop: 14, color: palette.muted, fontWeight: '800' }}>
+          📍 {p.district}, {p.provinceName} · {p.minimumOrder || 1} {p.unit} minimum order
+        </Text>
       </View>
     </Screen>
   );

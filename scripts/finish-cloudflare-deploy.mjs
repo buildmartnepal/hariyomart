@@ -77,7 +77,7 @@ if (missingJwt.length) {
 }
 
 console.log('\n3/8 Backing up remote D1');
-const backup = path.join(root, `hariyo-pre-v8-2-${new Date().toISOString().slice(0, 10)}.sql`);
+const backup = path.join(root, `hariyo-pre-v8-6-${new Date().toISOString().slice(0, 10)}.sql`);
 wrangler([
   'd1', 'export', 'hariyo-mart-production-apac', '--remote', '--output', backup,
 ]);
@@ -92,7 +92,7 @@ wrangler([
   '--config',
   'infra/cloudflare/services/wrangler.jsonc',
   '--message',
-  'Hariyo Mart v8.2 Cloudflare commerce production release',
+  'Hariyo Mart v8.6.0 Cloudflare marketplace production release',
 ]);
 
 console.log('\n6/8 Building and deploying the OpenNext web Worker');
@@ -135,5 +135,5 @@ if (!readiness?.adminConfigured) {
   console.log('Owner admin already exists; bootstrap was skipped.');
 }
 
-console.log(`\nHariyo Mart v8.2 is live: ${siteUrl}`);
+console.log(`\nHariyo Mart v8.6.0 is live: ${siteUrl}`);
 console.log(`Owner sign-in: ${siteUrl}/login`);

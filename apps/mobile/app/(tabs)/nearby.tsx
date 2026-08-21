@@ -21,7 +21,8 @@ function normalize(p: any) {
       'Location-matched delivery',
       'Live seller stock',
     ],
-    image: p.image || `/products/${p.category}.svg`,
+    image: typeof p.image === 'string' ? p.image : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images) ? p.images.filter((image: unknown) => typeof image === 'string').slice(0, 8) : [],
   };
 }
 export default function Nearby() {
@@ -66,7 +67,7 @@ export default function Nearby() {
     <Screen>
       <Header
         title="Fresh near you"
-        subtitle="Location-first produce from verified farmer stores."
+        subtitle="Hariyo Match v3 ranks delivery fit, freshness, live stock and seller trust."
       />
       <View
         style={{ backgroundColor: colors.dark, borderRadius: 22, padding: 20, marginBottom: 16 }}
@@ -105,7 +106,7 @@ export default function Nearby() {
       {items.slice(0, 14).map((p: any) => (
         <View key={p.slug}>
           <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 3, marginBottom: 4 }}>
-            {p.farmName || 'Verified farmer'} · {Number(p.distanceKm || 0).toFixed(1)} km
+            {p.matchScore ? `${p.matchScore}% match · ` : ''}{p.farmName || 'Verified farmer'} · {Number(p.distanceKm || 0).toFixed(1)} km
           </Text>
           <ProductCard p={p as any} />
         </View>

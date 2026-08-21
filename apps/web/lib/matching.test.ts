@@ -21,7 +21,7 @@ const base = {
   harvestWindow: 'Harvested this week',
 };
 
-describe('Hariyo Match v2', () => {
+describe('Hariyo Match v3', () => {
   it('ranks a close, fresh, verified product above a distant alternative', () => {
     const ranked = rankMarketplaceProducts([
       { ...base, slug: 'near' },

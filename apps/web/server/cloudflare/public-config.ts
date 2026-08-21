@@ -37,7 +37,7 @@ export function getPublicRuntimeConfig() {
 
   return {
     appEnv,
-    releaseVersion: text(env.RELEASE_VERSION, '8.4.3'),
+    releaseVersion: text(env.RELEASE_VERSION, '8.6.0'),
     siteUrl,
     apiBase,
     demoEnabled: appEnv !== 'production' && requestedDemo,

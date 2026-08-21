@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import catalog from '../data/catalog.json';
+import { rankMarketplaceProducts } from '../../lib/matching';
 import { checkoutCore, type CheckoutPayload } from './checkout';
 import {
   apiJson,
@@ -165,6 +166,12 @@ const productInput = z.object({
     .max(500)
     .refine((value) => value.startsWith('/api/media/') || value.startsWith('/products/'))
     .optional(),
+  images: z
+    .array(
+      z.string().max(500).refine((value) => value.startsWith('/api/media/') || value.startsWith('/products/')),
+    )
+    .max(8)
+    .optional(),
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   deliveryRadiusKm: z.coerce.number().min(1).max(1000).default(35),
@@ -239,6 +246,7 @@ type ProductRow = Record<string, unknown> & {
   slug: string;
   image_url?: string | null;
   image_key?: string | null;
+  images_json?: string | null;
   benefits?: string;
   organic?: number;
   featured?: number;
@@ -303,6 +311,9 @@ function productPublic(row: ProductRow) {
     image:
       row.image_url ||
       (row.image_key ? `/api/media/${row.image_key}` : `/products/${category}.svg`),
+    images: parseJson(row.images_json, [] as string[])
+      .filter((image): image is string => typeof image === 'string')
+      .slice(0, 8),
     lat: Number(row.lat),
     lng: Number(row.lng),
     deliveryRadiusKm: Number(row.delivery_radius_km || 35),
@@ -314,6 +325,8 @@ function productPublic(row: ProductRow) {
     farmName: row.farm_name,
     farmSlug: row.farm_slug,
     farmerVerified: row.tenant_status === 'verified',
+    farmSameDay: Boolean(row.farm_same_day),
+    farmPickup: Boolean(row.farm_pickup),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -349,7 +362,7 @@ function tenantPublic(row: TenantRow) {
   };
 }
 
-const productSelect = `SELECT p.*,t.name AS farm_name,t.slug AS farm_slug,t.status AS tenant_status,t.commission_rate
+const productSelect = `SELECT p.*,t.name AS farm_name,t.slug AS farm_slug,t.status AS tenant_status,t.commission_rate,t.same_day_enabled AS farm_same_day,t.pickup_enabled AS farm_pickup
   FROM products p JOIN tenants t ON t.id=p.tenant_id`;
 
 function sessionResponsePayload(
@@ -640,15 +653,16 @@ async function createProduct(req: NextRequest) {
   const slug = `${slugify(input.slug || input.name)}-${id.slice(0, 6)}`;
   const now = new Date().toISOString();
   await env.HARIYO_DB.prepare(
-    `INSERT INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,stock,minimum_order,organic,grade,harvest_date,harvest_window,unique_story,short_description,description,image_url,lat,lng,delivery_radius_km,wholesale,subscription,status,created_at,updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending_review',?,?)`,
+    `INSERT INTO products (id,tenant_id,slug,name,category,province,district,municipality,unit,price,stock,minimum_order,organic,grade,harvest_date,harvest_window,unique_story,short_description,description,image_url,images_json,lat,lng,delivery_radius_km,wholesale,subscription,status,created_at,updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending_review',?,?)`,
   )
     .bind(
       id, access.tenantId, slug, input.name, input.category, input.province, input.district,
       input.municipality || null, input.unit, input.price, input.stock, input.minimumOrder,
       input.organic ? 1 : 0, input.grade || null, input.harvestDate || null, input.harvestWindow || null,
       input.uniqueStory || null, input.shortDescription || null, input.description || null, input.image || null,
-      input.lat, input.lng, input.deliveryRadiusKm, input.wholesale ? 1 : 0, input.subscription ? 1 : 0, now, now,
+      JSON.stringify(input.images || []), input.lat, input.lng, input.deliveryRadiusKm,
+      input.wholesale ? 1 : 0, input.subscription ? 1 : 0, now, now,
     ).run();
   await audit(req, access.user, 'product.created', 'product', id, { slug, tenantId: access.tenantId });
   const row = await env.HARIYO_DB.prepare(`${productSelect} WHERE p.id=?`).bind(id).first<ProductRow>();
@@ -689,6 +703,7 @@ async function patchProduct(req: NextRequest, id: string) {
       shortDescription: z.string().max(500).nullable().optional(),
       description: z.string().max(10000).nullable().optional(),
       image: z.string().max(500).refine((value) => value.startsWith('/api/media/') || value.startsWith('/products/')).nullable().optional(),
+      images: z.array(z.string().max(500).refine((value) => value.startsWith('/api/media/') || value.startsWith('/products/'))).max(8).optional(),
       deliveryRadiusKm: z.coerce.number().min(1).max(1000).optional(),
       wholesale: z.boolean().optional(),
       subscription: z.boolean().optional(),
@@ -706,7 +721,7 @@ async function patchProduct(req: NextRequest, id: string) {
       throw new CloudflareApiError(409, 'Verify the seller tenant before activating products');
   }
 
-  const moderatedFields = ['name','category','province','district','municipality','unit','grade','harvestDate','harvestWindow','uniqueStory','shortDescription','description','image'] as const;
+  const moderatedFields = ['name','category','province','district','municipality','unit','grade','harvestDate','harvestWindow','uniqueStory','shortDescription','description','image','images'] as const;
   const requiresReview = !platformAdmin && product.status === 'active' && moderatedFields.some((field) => field in input);
   const nextStatus = requiresReview ? 'pending_review' : input.status;
   const now = new Date().toISOString();
@@ -718,8 +733,9 @@ async function patchProduct(req: NextRequest, id: string) {
       grade=CASE WHEN ? THEN ? ELSE grade END,harvest_date=CASE WHEN ? THEN ? ELSE harvest_date END,
       harvest_window=CASE WHEN ? THEN ? ELSE harvest_window END,unique_story=CASE WHEN ? THEN ? ELSE unique_story END,
       short_description=CASE WHEN ? THEN ? ELSE short_description END,description=CASE WHEN ? THEN ? ELSE description END,
-      image_url=CASE WHEN ? THEN ? ELSE image_url END,delivery_radius_km=COALESCE(?,delivery_radius_km),
-      wholesale=COALESCE(?,wholesale),subscription=COALESCE(?,subscription),featured=COALESCE(?,featured),updated_at=? WHERE id=?`,
+      image_url=CASE WHEN ? THEN ? ELSE image_url END,images_json=CASE WHEN ? THEN ? ELSE images_json END,
+      delivery_radius_km=COALESCE(?,delivery_radius_km),wholesale=COALESCE(?,wholesale),subscription=COALESCE(?,subscription),
+      featured=COALESCE(?,featured),updated_at=? WHERE id=?`,
   ).bind(
     nextStatus || null, input.name ?? null, input.category ?? null, input.province ?? null, input.district ?? null,
     'municipality' in input ? 1 : 0, input.municipality ?? null, input.unit ?? null, input.price ?? null, input.minimumOrder ?? null,
@@ -727,7 +743,8 @@ async function patchProduct(req: NextRequest, id: string) {
     'grade' in input ? 1 : 0, input.grade ?? null, 'harvestDate' in input ? 1 : 0, input.harvestDate ?? null,
     'harvestWindow' in input ? 1 : 0, input.harvestWindow ?? null, 'uniqueStory' in input ? 1 : 0, input.uniqueStory ?? null,
     'shortDescription' in input ? 1 : 0, input.shortDescription ?? null, 'description' in input ? 1 : 0, input.description ?? null,
-    'image' in input ? 1 : 0, input.image ?? null, input.deliveryRadiusKm ?? null,
+    'image' in input ? 1 : 0, input.image ?? null,
+    'images' in input ? 1 : 0, input.images ? JSON.stringify(input.images) : null, input.deliveryRadiusKm ?? null,
     input.wholesale === undefined ? null : input.wholesale ? 1 : 0,
     input.subscription === undefined ? null : input.subscription ? 1 : 0,
     input.featured === undefined ? null : input.featured ? 1 : 0, now, product.id,
@@ -782,20 +799,46 @@ async function nearby(req: NextRequest) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng))
     throw new CloudflareApiError(400, 'lat and lng are required');
   const rows = await cloudflareEnv()
-    .HARIYO_DB.prepare(`${productSelect} WHERE p.status='active' AND t.status='verified' LIMIT 500`)
+    .HARIYO_DB.prepare(`${productSelect} WHERE p.status='active' AND t.status='verified' LIMIT 750`)
     .all<ProductRow>();
-  const data = (rows.results || [])
-    .map((row) => ({
+  const maxPriceValue = url.searchParams.get('maxPrice');
+  const maxPrice = maxPriceValue ? Number(maxPriceValue) : undefined;
+  const ranked = rankMarketplaceProducts(
+    (rows.results || []).map((row) => ({
       ...productPublic(row),
-      distanceKm: haversineKm(lat, lng, Number(row.lat), Number(row.lng)),
-    }))
-    .filter((product) => product.distanceKm <= Math.min(radius, product.deliveryRadiusKm))
-    .sort((a, b) => a.distanceKm - b.distanceKm)
-    .map((product) => ({ ...product, distanceKm: Math.round(product.distanceKm * 10) / 10 }));
+      lat: Number(row.lat),
+      lng: Number(row.lng),
+    })),
+    {
+      lat,
+      lng,
+      radiusKm: radius,
+      category: url.searchParams.get('category') || undefined,
+      query: url.searchParams.get('q') || undefined,
+      organicOnly: url.searchParams.get('organic') === '1',
+      wholesaleOnly: url.searchParams.get('wholesale') === '1',
+      subscriptionOnly: url.searchParams.get('subscription') === '1',
+      maxPrice: Number.isFinite(maxPrice) ? maxPrice : undefined,
+    },
+  );
+  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 48)));
   return apiJson({
-    data,
+    data: ranked.slice(0, limit),
     center: { lat, lng },
     radiusKm: radius,
+    matching: {
+      engine: 'Hariyo Match v3',
+      factors: [
+        'delivery fit',
+        'freshness',
+        'live stock',
+        'rating',
+        'seller trust',
+        'buyer intent',
+        'quality',
+        'budget',
+      ],
+    },
     serverTime: new Date().toISOString(),
   });
 }
@@ -1575,7 +1618,7 @@ async function readiness() {
   };
   return apiJson({
     service: 'hariyo-mart-cloudflare',
-    version: '8.4.3',
+    version: '8.6.0',
     status: Object.values(required).every(Boolean) && adminConfigured ? 'ready' : 'setup_required',
     architecture: 'Cloudflare Workers + D1 + Durable Objects + R2 + KV + Queues + Workflows + Turnstile',
     database,

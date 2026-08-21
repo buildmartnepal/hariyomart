@@ -21,9 +21,10 @@ function normalize(p: any) {
       'Location-aware delivery',
     ],
     image:
-      typeof p.image === 'string' && p.image.startsWith('/')
+      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images) ? p.images.filter((image: unknown) => typeof image === 'string').slice(0, 8) : [],
   };
 }
 export default function Shop() {

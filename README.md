@@ -1,8 +1,8 @@
-# Hariyo Mart Nepal v8.4 — Farm-to-Market Operating System
+# Hariyo Mart Nepal v8.6.0 — Smart Farm-to-Market Marketplace OS
 
 Hariyo Mart Nepal is a Cloudflare-native marketplace and multi-tenant SaaS for farms, cooperatives, produce suppliers, wholesalers, institutional buyers, retailers and household customers across Nepal.
 
-v8.4 builds on the deploy-fixed v8.3 line and turns Hariyo Mart into a farm-to-market operating system: Farmer OS planning and profitability, buyer-demand matching, QR lot traceability, recommendation signals, SaaS usage metering, the existing produce supply chain, and the consumer marketplace share one Cloudflare-native multi-tenant platform.
+v8.6.0 keeps the Cloudflare-native Farmer OS, commerce, traceability and deployment architecture while adding a buyer-facing marketplace experience layer: real multi-photo product galleries, explainable location-aware ranking, richer product details, seller media tooling and stronger mobile discovery.
 
 ## Production stack
 
@@ -26,7 +26,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
        +-- Analytics Engine
 ```
 
-## v8.4 highlights
+## Core platform + v8.6 highlights
 
 - Farmer command center with 30-day revenue, expenses, contribution, payouts, stock, expiry, harvest and buyer signals
 - crop-cycle planner with area, planting/harvest dates, expected quantity, budget and target price
@@ -39,7 +39,7 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
 - tenant-safe `GET /api/supply/saas-profile`
 - Starter / Growth / Enterprise SaaS plan presentation on the farmer onboarding page
 - Expo Farmer Studio plan/usage/revenue snapshot
-- production Worker name/url aligned to `hariyomart` / `hariyomart.nishrutesh.workers.dev`
+- production Worker name/url aligned to `hariyo-mart-nepal` / `hariyo-mart-nepal.nishrutesh.workers.dev`
 - complete D1, R2, KV, Queue and service bindings retained in Wrangler
 - OpenNext self-reference matches Worker identity
 - source maps + observability enabled
@@ -55,12 +55,23 @@ Cloudflare Edge / DNS / CDN / WAF / Turnstile
 - event Queue with integration-outbox fallback
 - multi-tenant produce supply modules from v8 retained
 - semantic light/dark menu/footer/form contrast from v8.1 retained
+- multi-photo product gallery: primary photo + up to 8 R2-backed gallery photos
+- product-card slider plus product-detail carousel with thumbnails, keyboard navigation and mobile swipe
+- Hariyo Match v3 hard serviceability constraints + explainable ranking reasons
+- Best Match sorting in Shop and location-aware Nearby discovery
+- actual live seller location/verification/fulfilment fields used in product cards and details
+- richer buyer product facts, product story, origin and delivery-zone fit
+- Farmer Product Studio + Harvest Publisher multi-file gallery upload/remove workflow
+- admin Matching Engine simulator
+- mobile gallery paging, real remote-photo handling, match scores and product story
+- D1 `images_json` persistence and matching/location indexes in migration `0009`
+- synchronized 98-product web/mobile/API catalog and Cloudflare seed
 
 ## First local checks
 
 ```powershell
 npm ci
-npm run v8.4:doctor
+npm run v8.6:doctor
 npm run validate
 npm run smoke
 npm run cloudflare:types
@@ -84,10 +95,8 @@ npm run dev:web
 1. Replace `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `apps/web/wrangler.jsonc`.
 2. Set `JWT_SECRET`, `JWT_REFRESH_SECRET` and `TURNSTILE_SECRET_KEY` as Wrangler secrets.
 3. Export/backup the production D1 database.
-4. Apply migration `0005` through the normal D1 migration command.
-5. Deploy the private services Worker first.
-6. Deploy the OpenNext web Worker.
-7. Verify `/api/health`, `/api/system/readiness` and `/api/system/supply-stack`.
+4. Run `npm run deploy:cloudflare:production` (or `DEPLOY-HARIYO-V8.6.0.cmd`). The connected deploy verifies the services Worker, applies D1 migration `0009`, builds OpenNext and deploys the public Worker in the safe order.
+5. Verify `/api/health`, `/api/system/readiness`, `/shop`, `/nearby`, a live product gallery and `/admin/matching-engine`.
 
 See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShell production procedure.
 
@@ -99,3 +108,8 @@ See `docs/V8_2_CLOUDFLARE_PRODUCTION_GUIDE.md` for the complete Windows/PowerShe
 - Shared demo password: `HariyoDemo@2026`.
 - Seed locally with `npm run demo:seed:local`; seed a dedicated staging/demo D1 with `npm run demo:seed:remote`.
 - Keep `NEXT_PUBLIC_DEMO_MODE=false` for a real production launch and remove demo users with `npm run demo:remove:remote`.
+
+
+## v8.6.0 deployment
+
+For Cloudflare Workers Builds use `npm run build:cloudflare` followed by `npm run deploy:cloudflare:connected`. The deploy step verifies `hariyo-mart-services`, applies D1 migrations before web cutover, and then publishes `hariyo-mart-nepal`. See `CLOUDFLARE_CONNECTED_DEPLOY.md`.

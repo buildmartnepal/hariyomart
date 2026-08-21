@@ -23,10 +23,12 @@ function normalizeProduct(p: any, farm: Farm): Product {
       'Location-aware delivery',
     ],
     image:
-      typeof p.image === 'string' &&
-      (p.image.startsWith('/') || p.image.startsWith('https://res.cloudinary.com/'))
+      typeof p.image === 'string' && (p.image.startsWith('/') || p.image.startsWith('https://images.unsplash.com/'))
         ? p.image
         : `/products/${p.category}.svg`,
+    images: Array.isArray(p.images)
+      ? p.images.filter((image: unknown): image is string => typeof image === 'string' && (image.startsWith('/') || image.startsWith('https://images.unsplash.com/'))).slice(0, 8)
+      : [],
     farmName: farm.name,
     farmSlug: farm.slug,
     farmerVerified: farm.verified,

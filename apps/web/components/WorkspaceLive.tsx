@@ -922,6 +922,7 @@ function ProductManager({ products, auth, run, action }: any) {
   const [editing, setEditing] = useState<any | null>(null);
   const [message, setMessage] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [imageBusy, setImageBusy] = useState(false);
   async function uploadProductImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -952,6 +953,31 @@ function ProductManager({ products, auth, run, action }: any) {
       event.target.value = '';
     }
   }
+  async function uploadGalleryImages(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []).slice(0, Math.max(0, 8 - galleryUrls.length));
+    if (!files.length) return;
+    setImageBusy(true);
+    setMessage(`Uploading ${files.length} gallery photo${files.length > 1 ? 's' : ''}…`);
+    try {
+      const uploaded: string[] = [];
+      for (const file of files) {
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type))
+          throw new Error(`${file.name} must be JPEG, PNG or WebP.`);
+        if (file.size > 8 * 1024 * 1024) throw new Error(`${file.name} is larger than 8 MB.`);
+        const body = new FormData();
+        body.append('file', file);
+        const result: any = await auth.apiRequest('/uploads', { method: 'POST', body });
+        if (result?.url) uploaded.push(String(result.url));
+      }
+      setGalleryUrls((current) => Array.from(new Set([...current, ...uploaded])).slice(0, 8));
+      setMessage('Gallery uploaded. Save the product to publish the new photo set.');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Gallery upload failed.');
+    } finally {
+      setImageBusy(false);
+      event.target.value = '';
+    }
+  }
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editing) return;
@@ -974,6 +1000,7 @@ function ProductManager({ products, auth, run, action }: any) {
       uniqueStory: String(fd.get('uniqueStory') || ''),
       description: String(fd.get('description') || ''),
       ...(imageUrl ? { image: imageUrl } : {}),
+      images: galleryUrls,
       deliveryRadiusKm: Number(fd.get('deliveryRadiusKm') || 35),
       organic: fd.get('organic') === 'on',
       wholesale: fd.get('wholesale') === 'on',
@@ -985,6 +1012,7 @@ function ProductManager({ products, auth, run, action }: any) {
       setMessage(response?.status === 'pending_review' ? 'Saved and sent for marketplace review.' : 'Product saved successfully.');
       setEditing(null);
       setImageUrl('');
+      setGalleryUrls([]);
       return response;
     });
   }
@@ -1004,7 +1032,7 @@ function ProductManager({ products, auth, run, action }: any) {
           <form className="product-editor" onSubmit={saveProduct}>
             <div className="product-editor-head">
               <div><span className="eyebrow">EDIT PRODUCT</span><h3>{editing.name}</h3><p>Content changes to a live listing are automatically returned to review where appropriate.</p></div>
-              <button className="icon-btn" type="button" onClick={() => { setEditing(null); setImageUrl(''); }} aria-label="Close editor"><X size={17} /></button>
+              <button className="icon-btn" type="button" onClick={() => { setEditing(null); setImageUrl(''); setGalleryUrls([]); }} aria-label="Close editor"><X size={17} /></button>
             </div>
             <div className="product-image-editor">
               <Image src={imageUrl || editing.image || `/products/${editing.category}.svg`} alt={editing.name} width={150} height={150} />
@@ -1016,6 +1044,11 @@ function ProductManager({ products, auth, run, action }: any) {
                   <input type="file" accept="image/jpeg,image/png,image/webp" disabled={imageBusy} onChange={uploadProductImage} />
                 </label>
               </div>
+            </div>
+            <div className="product-gallery-editor">
+              <div><b>Product gallery · up to 8 photos</b><p>Add hero, close-up, packaging, farm/origin, size reference and preparation views. Buyers can swipe or slide through them.</p></div>
+              <label className="btn btn-soft product-photo-upload"><Camera size={16}/> {imageBusy ? 'Uploading…' : 'Add gallery photos'}<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={imageBusy || galleryUrls.length >= 8} onChange={uploadGalleryImages}/></label>
+              <div className="product-gallery-editor-grid">{galleryUrls.map((src, index) => <div key={src}><Image src={src} alt={`Gallery ${index + 1}`} width={110} height={88}/><button type="button" aria-label={`Remove gallery photo ${index + 1}`} onClick={() => setGalleryUrls((current) => current.filter((item) => item !== src))}><X size={14}/></button></div>)}</div>
             </div>
             <div className="product-edit-grid">
               <label className="wide">Product name<input name="name" defaultValue={editing.name} required /></label>
@@ -1042,7 +1075,7 @@ function ProductManager({ products, auth, run, action }: any) {
             </div>
             <div className="hero-actions">
               <button className="btn btn-primary" disabled={!!action || imageBusy} type="submit"><Save size={16} /> Save product</button>
-              <button className="btn btn-soft" type="button" onClick={() => { setEditing(null); setImageUrl(''); }}>Cancel</button>
+              <button className="btn btn-soft" type="button" onClick={() => { setEditing(null); setImageUrl(''); setGalleryUrls([]); }}>Cancel</button>
             </div>
           </form>
         )}
@@ -1057,7 +1090,7 @@ function ProductManager({ products, auth, run, action }: any) {
                   <div className="product-status-row"><Status value={product.status} /><small>{product.stock} in stock</small></div>
                 </div>
                 <div className="product-manage-actions">
-                  <button type="button" onClick={() => { setEditing(product); setImageUrl(''); setMessage(''); }}><Pencil size={13} /> Edit</button>
+                  <button type="button" onClick={() => { setEditing(product); setImageUrl(''); setGalleryUrls(Array.isArray(product.images) ? product.images : []); setMessage(''); }}><Pencil size={13} /> Edit</button>
                   {product.status === 'active' && <Link href={`/products/${product.slug}`}>View live</Link>}
                   {product.status === 'active' ? (
                     <button disabled={!!action} onClick={() => run(`pause-${product._id}`, () => auth.apiRequest(`/products/${product._id}`, { method: 'PATCH', body: JSON.stringify({ status: 'paused' }) }))}>Pause</button>
